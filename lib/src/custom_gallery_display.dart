@@ -18,8 +18,8 @@ import 'package:shimmer/shimmer.dart';
 enum SelectedPage { left, center, right }
 
 class CustomGalleryDisplay extends StatefulWidget {
-  final AppTheme appTheme;
   final TapsNames tapsNames;
+  final AppTheme appTheme;
   final List<CameraDescription> cameras;
   final AsyncValueSetter<SelectedImageDetails> moveToPage;
   const CustomGalleryDisplay({
