@@ -136,9 +136,9 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                       });
                       currentFlashMode == Flash.on
                           ? widget.controller.setFlashMode(FlashMode.torch)
-                          : (currentFlashMode == Flash.auto
-                              ? widget.controller.setFlashMode(FlashMode.auto)
-                              : widget.controller.setFlashMode(FlashMode.off));
+                          : currentFlashMode == Flash.off
+                              ? widget.controller.setFlashMode(FlashMode.off)
+                              : widget.controller.setFlashMode(FlashMode.auto);
                     },
                     icon: Icon(
                         currentFlashMode == Flash.on
