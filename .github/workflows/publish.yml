@@ -1,9 +1,12 @@
 name: Publish Package
 
 on:
-  release:
-    types: [published]
-
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
 
 jobs:
   build:
