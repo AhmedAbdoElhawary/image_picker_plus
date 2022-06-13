@@ -15,8 +15,8 @@ enum Flash { off, auto, on }
 
 // ignore: must_be_immutable
 class CustomCameraDisplay extends StatefulWidget {
-  final AppTheme appTheme;
   final bool selectedVideo;
+  final AppTheme appTheme;
   final TapsNames tapsNames;
   late CameraController controller;
   final VoidCallback moveToVideoScreen;
