@@ -3,22 +3,6 @@ import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-///** Maybe you will face a problem when you trying to run those lines,
-///** error like "The Android Gradle plugin supports only Kotlin Gradle plugin version 1.3.40 and higher.".
-///** You can solve it with replacing all lines in dependencies in (android\build.gradle)
-/*
-  replace it from ---->
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        }
-
-  To ----------------->
-        classpath 'com.google.gms:google-services:4.3.10'
-        classpath 'com.android.tools.build:gradle:4.1.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-*/
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -48,9 +32,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(elevation: 0),
-      body: SingleChildScrollView(
+    return Container(
+      color: Colors.white,
+      child: SafeArea(
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -94,6 +78,15 @@ class _MyHomePageState extends State<MyHomePage> {
           CupertinoPageRoute(
             builder: (context) => CustomGallery.normalDisplay(
               enableVideo: true,
+              appTheme: AppTheme(
+                  focusColor: Colors.white, primaryColor: Colors.black),
+              tabsNames: TabsNames(
+                videoName: "فيديو",
+                galleryName: "المعرض",
+                deletingName: "حذف",
+                clearImagesName: "الغاء الصور المحدده",
+                limitingName: "اقصي حد للصور هو 10",
+              ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 crossAxisSpacing: 1.7,
@@ -114,8 +107,16 @@ class _MyHomePageState extends State<MyHomePage> {
         await Navigator.of(context).push(
           CupertinoPageRoute(
             builder: (context) => CustomGallery.normalDisplay(
-              enableCamera: true,
               enableVideo: true,
+              enableCamera: true,
+              appTheme: AppTheme(
+                  focusColor: Colors.white, primaryColor: Colors.black),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 1.7,
+                mainAxisSpacing: 1.5,
+                childAspectRatio: .5,
+              ),
               moveToPage: moveToPage,
             ),
           ),
@@ -171,11 +172,12 @@ class _MyHomePageState extends State<MyHomePage> {
   ElevatedButton instagramButton1(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(CupertinoPageRoute(
-            builder: (context) => CustomGallery.instagramDisplay(
-                enableCamera: true,
-                enableVideo: true,
-                moveToPage: moveToPage)));
+        await Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (context) =>
+                CustomGallery.instagramDisplay(moveToPage: moveToPage),
+          ),
+        );
       },
       child: const Text("Instagram display"),
     );
