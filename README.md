@@ -1,2 +1,190 @@
 
-## It's still under development
+<h1 align="left">Custom Gallery Display</h1>
+When trying to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UX of Gallery display.
+
+I have two main views of the gallery to solve this issue:
+- It looks like the Instagram gallery.
+- It's a grid view of gallery images.
+
+You can even customize a display of a camera to take a photo and video from two perspectives 
+
+<p align="left">
+  <a href="https://pub.dartlang.org/packages/custom_gallery_display">
+    <img src="https://img.shields.io/pub/v/custom_gallery_display.svg"
+      alt="Pub Package" />
+  </a>
+    <a href="LICENSE">
+    <img src="https://img.shields.io/apm/l/atomic-design-ui.svg?"
+      alt="License: MIT" />
+  </a>
+ <p/>
+ 
+
+## Note
+
+#### `CustomGallery` is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+
+# Installing
+
+### 1. Depend on it
+
+Add this to your package's `pubspec.yaml` file:
+
+```yaml
+dependencies:
+  custom_gallery_display: ^0.2.2
+```
+
+### 2. Install it
+
+You can install packages from the command line:
+
+with `pub`:
+
+```
+$ pub get custom_gallery_display
+```
+
+with `Flutter`:
+
+```
+$ flutter pub add custom_gallery_display
+```
+
+### 3. Import it
+
+Now in your `Dart` code, you can use:
+
+```dart
+import 'package:custom_gallery_display/custom_gallery_display.dart';
+```
+
+## Android
+
+Change the minimum Android sdk version to 21 (or higher) in your `android/app/build.gradle` file.
+
+```java
+minSdkVersion 21
+```
+
+# Usage
+
+It has many configurable properties, including:
+
+- `appTheme` – Customization of colors If you have diffrent themes
+- `tabsNames` – Changing the names of tabs or even thier languages
+- `enableCamera` – If you want to take photo from camera (front,back)
+- `enableVideo` – If you want to record video from camera (front,back)
+- `cropImage` – If you want crop image with aspect ratio that you are selected
+- `gridDelegate` – Customization of grid view
+
+There are also callback:
+
+- `moveToPage` – It's function that return to you info about selected image/s
+
+# Examples
+<p>
+<img src="https://user-images.githubusercontent.com/88978546/173692850-21ab4cab-abd5-4f68-85e7-c010d13b391e.gif"   width="25%" height="50%">
+
+</p>
+
+```dart
+CustomGallery.instagramDisplay(
+              cropImage: true, // It's true by default
+              enableCamera: true, // It's true by default
+              enableVideo: true, // It's true by default
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 1.7,
+                mainAxisSpacing: 1.5,
+              ), // It's by default
+              moveToPage: (SelectedImageDetails details) async {
+                // You can take this variables and push to another page
+                bool multiSelectionMode = details.multiSelectionMode;
+                bool isThatImage = details.isThatImage;
+                List<File>? selectedFiles = details
+                    .selectedFiles; // If there one image selected it will be null
+                File selectedFile = details.selectedFile;
+                double aspectRatio = details.aspectRatio;
+              },
+            )
+```
+
+<p>
+<img src="https://user-images.githubusercontent.com/88978546/173691000-0b9db0fa-504e-428c-acdf-7b1ab414dcf9.jpg"    width="25%" height="50%">
+
+</p>
+
+
+```dart
+CustomGallery.normalDisplay(
+              enableCamera: false, // It's false by default
+              enableVideo: false, // It's false by default
+              appTheme: AppTheme(
+                  focusColor: Colors.black, primaryColor: Colors.white),
+              moveToPage: (SelectedImageDetails details) async {
+                // You can take this variables and push to another page
+                bool multiSelectionMode = details.multiSelectionMode;
+                bool isThatImage = details.isThatImage;
+                List<File>? selectedFiles = details
+                    .selectedFiles; // If there one image selected it will be null
+                File selectedFile = details.selectedFile;
+                double aspectRatio = details.aspectRatio;
+              },
+            )
+```
+
+<p>
+<img src="https://user-images.githubusercontent.com/88978546/173691016-f5b968ae-545e-4efc-81ff-405873678869.jpg"   width="25%" height="50%">
+<img src="https://user-images.githubusercontent.com/88978546/173691025-5be932e0-0e1d-42c8-b88f-cff0606dd0d1.jpg"    width="25%" height="50%">
+
+</p>
+
+```dart
+CustomGallery.normalDisplay(
+              enableVideo: true,
+              appTheme: AppTheme(
+                  focusColor: Colors.white, primaryColor: Colors.black),
+              tabsNames: TabsNames(
+                videoName: "فيديو",
+                galleryName: "المعرض",
+                deletingName: "حذف",
+                clearImagesName: "الغاء الصور المحدده",
+                limitingName: "اقصي حد للصور هو 10",
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 1.7,
+                mainAxisSpacing: 1.5,
+              ),
+              moveToPage: (_) async {},
+            )
+```
+<p>
+<img src="https://user-images.githubusercontent.com/88978546/173691042-d585a6da-cde6-4f7d-b228-f1384b36ea98.jpg"   width="25%" height="50%">
+
+</p>
+
+```dart
+CustomGallery.normalDisplay(
+              enableVideo: true,
+              enableCamera: true,
+              appTheme: AppTheme(
+                  focusColor: Colors.white, primaryColor: Colors.black),
+              tabsNames: TabsNames(
+                videoName: "視頻",
+                photoName: "照片",
+                galleryName: "畫廊",
+                deletingName: "刪除",
+                clearImagesName: "清除所選圖像",
+                limitingName: "限制為 10 張照片或視頻",
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 1.7,
+                mainAxisSpacing: 1.5,
+                childAspectRatio: .5,
+              ),
+              moveToPage: (_) async {},
+            )
+```
