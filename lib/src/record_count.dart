@@ -1,3 +1,4 @@
+import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
@@ -5,9 +6,11 @@ class RecordCount extends StatefulWidget {
   final ValueNotifier<bool> startVideoCount;
   final ValueNotifier<bool> makeProgressRed;
   final ValueNotifier<bool> clearVideoRecord;
+  final AppTheme appTheme;
 
   const RecordCount({
     Key? key,
+    required this.appTheme,
     required this.startVideoCount,
     required this.makeProgressRed,
     required this.clearVideoRecord,
@@ -103,7 +106,7 @@ class RecordCountState extends State<RecordCount>
         LinearProgressIndicator(
           color: widget.makeProgressRed.value
               ? Colors.red
-              : Theme.of(context).focusColor,
+              : widget.appTheme.focusColor,
           backgroundColor: Colors.transparent,
           value: progress,
           minHeight: 3,
@@ -138,7 +141,7 @@ class RecordCountState extends State<RecordCount>
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.normal,
-                      color: Theme.of(context).focusColor,
+                      color: widget.appTheme.focusColor,
                     ),
                   ),
                 ),
