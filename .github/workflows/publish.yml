@@ -1,15 +1,36 @@
 name: Publish Package
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [ master ]
 
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
 
+  build-distribute-android:
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+
+      - run: echo $SIGNING_KEY | base64 -d > android/app/key.jks
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: 'stable'
+
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+      - uses: subosito/flutter-action@v1
+      - name: 'Run flutter pub get'
+        run: flutter pub get
+
       - uses: actions/checkout@v1
       - name: Install Flutter
         uses: subosito/flutter-action@v1
