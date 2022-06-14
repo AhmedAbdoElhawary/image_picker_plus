@@ -7,7 +7,7 @@ import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
 import 'package:custom_gallery_display/src/custom_memory_image_display.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
-import 'package:custom_gallery_display/src/taps_names.dart';
+import 'package:custom_gallery_display/src/tabs_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ enum Display { instagram, normal, getImages }
 class CustomGallery extends StatefulWidget {
   final Display display;
   final AppTheme? appTheme;
-  final TapsNames? tapsNames;
+  final TabsNames? tabsNames;
   final bool enableCamera;
   final bool enableVideo;
   final bool cropImage;
@@ -36,7 +36,7 @@ class CustomGallery extends StatefulWidget {
       crossAxisSpacing: 1.7,
       mainAxisSpacing: 1.5,
     ),
-    this.tapsNames,
+    this.tabsNames,
     this.cropImage = true,
     this.enableCamera = true,
     this.enableVideo = true,
@@ -53,7 +53,7 @@ class CustomGallery extends StatefulWidget {
       mainAxisSpacing: 1.5,
       childAspectRatio: .5,
     ),
-    this.tapsNames,
+    this.tabsNames,
     this.enableCamera = false,
     this.enableVideo = false,
     required this.moveToPage,
@@ -92,13 +92,13 @@ class CustomGalleryState extends State<CustomGallery>
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
   late int lastPage;
   late AppTheme appTheme;
-  late TapsNames tapsNames;
+  late TabsNames tapsNames;
   late List<CameraDescription> cameras;
 
   @override
   void initState() {
     appTheme = widget.appTheme ?? AppTheme();
-    tapsNames = widget.tapsNames ?? TapsNames();
+    tapsNames = widget.tabsNames ?? TabsNames();
     _initializeCamera();
     isImagesReady.value = false;
     int lengthOfTabs = 1;
@@ -393,6 +393,7 @@ class CustomGalleryState extends State<CustomGallery>
                         appTheme: appTheme,
                         selectedCameraImage: selectedCameraImage,
                         tapsNames: tapsNames,
+                        cameras: cameras,
                         enableCamera: widget.enableCamera,
                         enableVideo: widget.enableVideo,
                         initializeControllerFuture: initializeControllerFuture,
@@ -702,11 +703,11 @@ class CustomGalleryState extends State<CustomGallery>
   SliverAppBar sliverSelectedImage() {
     Color whiteColor = appTheme.primaryColor;
     return SliverAppBar(
-        // automaticallyImplyLeading: false,
         floating: true,
         stretch: true,
         pinned: true,
         snap: true,
+        automaticallyImplyLeading: false,
         backgroundColor: whiteColor,
         expandedHeight: 360,
         flexibleSpace: ValueListenableBuilder(

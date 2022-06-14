@@ -7,7 +7,7 @@ import 'package:custom_gallery_display/src/customPackages/crop_image/crop_option
 import 'package:custom_gallery_display/src/record_count.dart';
 import 'package:custom_gallery_display/src/record_fade_animation.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
-import 'package:custom_gallery_display/src/taps_names.dart';
+import 'package:custom_gallery_display/src/tabs_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +17,7 @@ enum Flash { off, auto, on }
 class CustomCameraDisplay extends StatefulWidget {
   final bool selectedVideo;
   final AppTheme appTheme;
-  final TapsNames tapsNames;
+  final TabsNames tapsNames;
   final bool enableCamera;
   final bool enableVideo;
   late CameraController controller;
@@ -28,6 +28,7 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueNotifier<bool> clearVideoRecord;
   late Future<void> initializeControllerFuture;
   final AsyncValueSetter<SelectedImageDetails> moveToPage;
+  final List<CameraDescription> cameras;
 
   CustomCameraDisplay({
     Key? key,
@@ -42,6 +43,7 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.selectedVideo,
     required this.replacingTabBar,
     required this.clearVideoRecord,
+    required this.cameras,
     required this.moveToVideoScreen,
     required this.initializeControllerFuture,
   }) : super(key: key);
@@ -57,7 +59,6 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   late Widget videoStatusAnimation;
   int selectedCamera = 0;
   File? videoRecordFile;
-  late List<CameraDescription> cameras;
   @override
   void initState() {
     videoStatusAnimation = Container();
@@ -65,9 +66,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   initializeCamera(int cameraIndex) async {
-    cameras = await availableCameras();
     widget.controller = CameraController(
-      cameras[cameraIndex],
+      widget.cameras[cameraIndex],
       ResolutionPreset.high,
       enableAudio: true,
     );
@@ -82,127 +82,125 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  SafeArea buildBody() {
+  FutureBuilder buildBody() {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
-    return SafeArea(
-      child: FutureBuilder<void>(
-        future: widget.initializeControllerFuture,
-        builder: (BuildContext context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Stack(
-              children: [
-                Container(
-                    width: double.infinity,
-                    color: Colors.blue,
-                    child: CameraPreview(widget.controller)),
-                if (selectedImage != null)
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                        color: whiteColor,
-                        height: 360,
-                        width: double.infinity,
-                        child: Crop.file(
-                          selectedImage,
-                          key: cropKey,
-                          alwaysShowGrid: true,
-                        )),
-                  ),
+    return FutureBuilder<void>(
+      future: widget.initializeControllerFuture,
+      builder: (BuildContext context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Stack(
+            children: [
+              Container(
+                  width: double.infinity,
+                  color: Colors.blue,
+                  child: CameraPreview(widget.controller)),
+              if (selectedImage != null)
                 Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: () {
-                      if (cameras.length > 1) {
-                        setState(() {
-                          selectedCamera = selectedCamera == 0 ? 1 : 0;
-                          initializeCamera(selectedCamera);
-                        });
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(widget.tapsNames.notFoundingCameraName),
-                          duration: const Duration(seconds: 2),
-                        ));
-                      }
-                    },
-                    icon: const Icon(Icons.flip_camera_android_rounded,
-                        color: Colors.white),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        currentFlashMode = currentFlashMode == Flash.off
-                            ? Flash.auto
-                            : (currentFlashMode == Flash.auto
-                                ? Flash.on
-                                : Flash.off);
-                      });
-                      currentFlashMode == Flash.on
-                          ? widget.controller.setFlashMode(FlashMode.torch)
-                          : currentFlashMode == Flash.off
-                              ? widget.controller.setFlashMode(FlashMode.off)
-                              : widget.controller.setFlashMode(FlashMode.auto);
-                    },
-                    icon: Icon(
-                        currentFlashMode == Flash.on
-                            ? Icons.flash_on_rounded
-                            : (currentFlashMode == Flash.auto
-                                ? Icons.flash_auto_rounded
-                                : Icons.flash_off_rounded),
-                        color: Colors.white),
-                  ),
-                ),
-                Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      height: 270,
+                  alignment: Alignment.topCenter,
+                  child: Container(
                       color: whiteColor,
+                      height: 360,
                       width: double.infinity,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 1.0),
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              child: RecordCount(
-                                appTheme: widget.appTheme,
-                                startVideoCount: startVideoCount,
-                                makeProgressRed: widget.redDeleteText,
-                                clearVideoRecord: widget.clearVideoRecord,
-                              ),
+                      child: Crop.file(
+                        selectedImage,
+                        key: cropKey,
+                        alwaysShowGrid: true,
+                      )),
+                ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () {
+                    if (widget.cameras.length > 1) {
+                      setState(() {
+                        selectedCamera = selectedCamera == 0 ? 1 : 0;
+                        initializeCamera(selectedCamera);
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(widget.tapsNames.notFoundingCameraName),
+                        duration: const Duration(seconds: 2),
+                      ));
+                    }
+                  },
+                  icon: const Icon(Icons.flip_camera_android_rounded,
+                      color: Colors.white),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      currentFlashMode = currentFlashMode == Flash.off
+                          ? Flash.auto
+                          : (currentFlashMode == Flash.auto
+                              ? Flash.on
+                              : Flash.off);
+                    });
+                    currentFlashMode == Flash.on
+                        ? widget.controller.setFlashMode(FlashMode.torch)
+                        : currentFlashMode == Flash.off
+                            ? widget.controller.setFlashMode(FlashMode.off)
+                            : widget.controller.setFlashMode(FlashMode.auto);
+                  },
+                  icon: Icon(
+                      currentFlashMode == Flash.on
+                          ? Icons.flash_on_rounded
+                          : (currentFlashMode == Flash.auto
+                              ? Icons.flash_auto_rounded
+                              : Icons.flash_off_rounded),
+                      color: Colors.white),
+                ),
+              ),
+              Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: 270,
+                    color: whiteColor,
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 1.0),
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: RecordCount(
+                              appTheme: widget.appTheme,
+                              startVideoCount: startVideoCount,
+                              makeProgressRed: widget.redDeleteText,
+                              clearVideoRecord: widget.clearVideoRecord,
                             ),
                           ),
-                          const Spacer(),
-                          Stack(
-                            alignment: Alignment.topCenter,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(60),
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: cameraButton(context),
-                                ),
+                        ),
+                        const Spacer(),
+                        Stack(
+                          alignment: Alignment.topCenter,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(60),
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: cameraButton(context),
                               ),
-                              Positioned(
-                                  bottom: 120, child: videoStatusAnimation),
-                            ],
-                          ),
-                          const Spacer(),
-                        ],
-                      ),
-                    )),
-              ],
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
+                            ),
+                            Positioned(
+                                bottom: 120, child: videoStatusAnimation),
+                          ],
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
+                  )),
+            ],
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      },
     );
   }
 
