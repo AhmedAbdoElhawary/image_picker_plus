@@ -1,11 +1,15 @@
 import 'dart:typed_data';
+import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/material.dart';
 import 'package:octo_image/octo_image.dart';
 
 class MemoryImageDisplay extends StatefulWidget {
-  final Uint8List imagePath;
+  final Uint8List imageFile;
+  final AppTheme appTheme;
 
-  const MemoryImageDisplay(this.imagePath, {Key? key}) : super(key: key);
+  const MemoryImageDisplay(
+      {Key? key, required this.imageFile, required this.appTheme})
+      : super(key: key);
 
   @override
   State<MemoryImageDisplay> createState() => _NetworkImageDisplayState();
@@ -14,7 +18,7 @@ class MemoryImageDisplay extends StatefulWidget {
 class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
   @override
   void didChangeDependencies() {
-    precacheImage(MemoryImage(widget.imagePath), context);
+    precacheImage(MemoryImage(widget.imageFile), context);
     super.didChangeDependencies();
   }
 
@@ -25,7 +29,7 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
 
   OctoImage buildOctoImage() {
     return OctoImage(
-      image: MemoryImage(widget.imagePath),
+      image: MemoryImage(widget.imageFile),
       errorBuilder: (context, url, error) => buildError(),
       fit: BoxFit.cover,
       width: double.infinity,
@@ -35,10 +39,9 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
 
   SizedBox buildError() {
     return SizedBox(
-      width: double.infinity,
-      child: Icon(Icons.warning_amber_rounded,
-          size: 50, color: Theme.of(context).focusColor),
-    );
+        width: double.infinity,
+        child: Icon(Icons.warning_amber_rounded,
+            size: 50, color: widget.appTheme.focusColor));
   }
 
   Widget buildSizedBox() {
