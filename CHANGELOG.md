@@ -1,3 +1,7 @@
+## 0.2.4+1
+
+* Make example more readable
+
 ## 0.2.4
 
 * Solve front camera bugs
