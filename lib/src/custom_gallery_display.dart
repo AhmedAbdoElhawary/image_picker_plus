@@ -74,10 +74,10 @@ class CustomGalleryState extends State<CustomGallery>
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
   ValueNotifier<SelectedPage> selectedPage = ValueNotifier(SelectedPage.left);
-  late Future<void> initializeControllerFuture;
+  late ValueNotifier<Future<void>> initializeControllerFuture;
   final cropKey = GlobalKey<CropState>();
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
-  late CameraController controller;
+  late ValueNotifier<CameraController> controller;
   ValueNotifier<bool> multiSelectionMode = ValueNotifier(false);
   ValueNotifier<bool> showDeleteText = ValueNotifier(false);
   ValueNotifier<bool> selectedVideo = ValueNotifier(false);
@@ -93,13 +93,15 @@ class CustomGalleryState extends State<CustomGallery>
   late int lastPage;
   late AppTheme appTheme;
   late TabsNames tapsNames;
-  late List<CameraDescription> cameras;
+  late ValueNotifier<List<CameraDescription>> cameras;
 
   @override
   void initState() {
     appTheme = widget.appTheme ?? AppTheme();
     tapsNames = widget.tabsNames ?? TabsNames();
     _initializeCamera();
+    //   initializeControllerFuture.value = controller.value.initialize();
+
     isImagesReady.value = false;
     int lengthOfTabs = 1;
 
@@ -113,13 +115,13 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   _initializeCamera() async {
-    cameras = await availableCameras();
-    controller = CameraController(
-      cameras[0],
+    cameras.value = await availableCameras();
+    controller.value = CameraController(
+      cameras.value[0],
       ResolutionPreset.high,
       enableAudio: true,
     );
-    initializeControllerFuture = controller.initialize();
+    initializeControllerFuture.value = controller.value.initialize();
   }
 
   @override
