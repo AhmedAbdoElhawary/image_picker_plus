@@ -20,15 +20,15 @@ class CustomCameraDisplay extends StatefulWidget {
   final TabsNames tapsNames;
   final bool enableCamera;
   final bool enableVideo;
-  late CameraController controller;
+  late ValueNotifier<CameraController> controller;
   final VoidCallback moveToVideoScreen;
   final ValueNotifier<File?> selectedCameraImage;
   final ValueNotifier<bool> redDeleteText;
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
-  late Future<void> initializeControllerFuture;
+  late ValueNotifier<Future<void>> initializeControllerFuture;
   final AsyncValueSetter<SelectedImageDetails> moveToPage;
-  final List<CameraDescription> cameras;
+  late ValueNotifier<List<CameraDescription>> cameras;
 
   CustomCameraDisplay({
     Key? key,
@@ -57,21 +57,33 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   final cropKey = GlobalKey<CropState>();
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
+  // late List<CameraDescription> cameras;
+  // late CameraController controller;
+  // late Future<void> initializeControllerFuture;
+
   int selectedCamera = 0;
   File? videoRecordFile;
   @override
   void initState() {
     videoStatusAnimation = Container();
+    // initializeCamera(0);
     super.initState();
   }
 
+  @override
+  void dispose() {
+    widget.controller.value.dispose();
+    super.dispose();
+  }
+
   initializeCamera(int cameraIndex) async {
-    widget.controller = CameraController(
-      widget.cameras[cameraIndex],
+    widget.cameras.value = await availableCameras();
+    widget.controller.value = CameraController(
+      widget.cameras.value[cameraIndex],
       ResolutionPreset.high,
       enableAudio: true,
     );
-    widget.initializeControllerFuture = widget.controller.initialize();
+     widget.initializeControllerFuture.value = widget.controller.value.initialize();
   }
 
   @override
@@ -86,7 +98,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
     return FutureBuilder<void>(
-      future: widget.initializeControllerFuture,
+      future:widget. initializeControllerFuture.value,
       builder: (BuildContext context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           return Stack(
@@ -94,7 +106,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
               Container(
                   width: double.infinity,
                   color: Colors.blue,
-                  child: CameraPreview(widget.controller)),
+                  child: CameraPreview(widget.controller.value)),
               if (selectedImage != null)
                 Align(
                   alignment: Alignment.topCenter,
@@ -112,7 +124,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   onPressed: () {
-                    if (widget.cameras.length > 1) {
+                    if (widget.cameras.value.length > 1) {
                       setState(() {
                         selectedCamera = selectedCamera == 0 ? 1 : 0;
                         initializeCamera(selectedCamera);
@@ -140,10 +152,10 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                               : Flash.off);
                     });
                     currentFlashMode == Flash.on
-                        ? widget.controller.setFlashMode(FlashMode.torch)
+                        ? widget.controller.value.setFlashMode(FlashMode.torch)
                         : currentFlashMode == Flash.off
-                            ? widget.controller.setFlashMode(FlashMode.off)
-                            : widget.controller.setFlashMode(FlashMode.auto);
+                            ? widget.controller.value.setFlashMode(FlashMode.off)
+                            : widget.controller.value.setFlashMode(FlashMode.auto);
                   },
                   icon: Icon(
                       currentFlashMode == Flash.on
@@ -292,8 +304,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   onPress() async {
     if (!widget.selectedVideo) {
       try {
-        await widget.initializeControllerFuture;
-        final image = await widget.controller.takePicture();
+        await widget.initializeControllerFuture.value;
+        final image = await widget.controller.value.takePicture();
         File selectedImage = File(image.path);
         setState(() {
           widget.selectedCameraImage.value = selectedImage;
@@ -312,7 +324,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   onLongTap() {
-    widget.controller.startVideoRecording();
+    widget.controller.value.startVideoRecording();
     widget.moveToVideoScreen();
     setState(() {
       startVideoCount.value = true;
@@ -324,7 +336,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       startVideoCount.value = false;
       widget.replacingTabBar(true);
     });
-    XFile w = await widget.controller.stopVideoRecording();
+    XFile w = await widget.controller.value.stopVideoRecording();
     videoRecordFile = File(w.path);
   }
 
