@@ -98,7 +98,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.2.4+1"
+    version: "0.2.5"
   fake_async:
     dependency: transitive
     description:
@@ -269,7 +269,7 @@ packages:
     source: hosted
     version: "2.1.0"
   photo_manager:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: photo_manager
       url: "https://pub.dartlang.org"
