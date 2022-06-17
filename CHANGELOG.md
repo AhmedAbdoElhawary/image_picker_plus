@@ -1,6 +1,6 @@
-## 0.2.4+1
+## 0.2.5
 
-* Make example more readable
+* Ignores deprecation warnings
 
 ## 0.2.4
 
