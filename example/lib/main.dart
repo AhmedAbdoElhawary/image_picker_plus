@@ -2,9 +2,11 @@ import 'dart:io';
 import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PhotoManager.requestPermissionExtend();
   runApp(const MyApp());
 }
 
