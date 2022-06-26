@@ -21,7 +21,7 @@ You can even customize a display of a camera to take a photo and video from two 
  <p/>
  
 
-## Necessary notes
+## Necessary note
 
 #### `CustomGallery` is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
 
