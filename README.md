@@ -1,7 +1,7 @@
 
 <h1 align="left">Custom Gallery Display</h1>
 
-When you try to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UX of Gallery display.
+When you try to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UI of Gallery display.
 
 I have two main views of the gallery to solve this issue:
 - It looks like the Instagram gallery.
