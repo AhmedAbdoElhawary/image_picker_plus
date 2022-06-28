@@ -5,3 +5,4 @@ export 'src/selected_image_details.dart';
 export 'src/camera_display.dart';
 export 'src/tabs_names.dart';
 export 'src/app_theme.dart';
+export 'src/permissions.dart';
