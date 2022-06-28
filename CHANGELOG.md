@@ -1,3 +1,13 @@
+## 0.2.7
+
+* Solve permissions bugs
+* Solve camera initialize bugs
+* Edit README
+
+## 0.2.6
+
+* Edit README
+
 ## 0.2.5
 
 * Ignores deprecation warnings
