@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:camera/camera.dart';
 import 'package:custom_gallery_display/src/app_theme.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
@@ -10,6 +9,7 @@ import 'package:custom_gallery_display/src/selected_image_details.dart';
 import 'package:custom_gallery_display/src/tabs_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 
 enum Flash { off, auto, on }
 
@@ -28,7 +28,9 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueNotifier<bool> clearVideoRecord;
   late ValueNotifier<Future<void>> initializeControllerFuture;
   final AsyncValueSetter<SelectedImageDetails> moveToPage;
-  late ValueNotifier<List<CameraDescription>> cameras;
+  final AsyncValueSetter<int> onNewCameraSelected;
+
+  ValueNotifier<List<CameraDescription>>? cameras;
 
   CustomCameraDisplay({
     Key? key,
@@ -39,6 +41,7 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.enableVideo,
     required this.moveToPage,
     required this.controller,
+    required this.onNewCameraSelected,
     required this.redDeleteText,
     required this.selectedVideo,
     required this.replacingTabBar,
@@ -57,33 +60,13 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   final cropKey = GlobalKey<CropState>();
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
-  // late List<CameraDescription> cameras;
-  // late CameraController controller;
-  // late Future<void> initializeControllerFuture;
-
   int selectedCamera = 0;
   File? videoRecordFile;
+
   @override
   void initState() {
     videoStatusAnimation = Container();
-    // initializeCamera(0);
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    widget.controller.value.dispose();
-    super.dispose();
-  }
-
-  initializeCamera(int cameraIndex) async {
-    widget.cameras.value = await availableCameras();
-    widget.controller.value = CameraController(
-      widget.cameras.value[cameraIndex],
-      ResolutionPreset.high,
-      enableAudio: true,
-    );
-     widget.initializeControllerFuture.value = widget.controller.value.initialize();
   }
 
   @override
@@ -98,7 +81,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
     return FutureBuilder<void>(
-      future:widget. initializeControllerFuture.value,
+      future: widget.initializeControllerFuture.value,
       builder: (BuildContext context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           return Stack(
@@ -124,10 +107,10 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   onPressed: () {
-                    if (widget.cameras.value.length > 1) {
+                    if (widget.cameras!.value.length > 1) {
                       setState(() {
                         selectedCamera = selectedCamera == 0 ? 1 : 0;
-                        initializeCamera(selectedCamera);
+                        widget.onNewCameraSelected(selectedCamera);
                       });
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -154,8 +137,10 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                     currentFlashMode == Flash.on
                         ? widget.controller.value.setFlashMode(FlashMode.torch)
                         : currentFlashMode == Flash.off
-                            ? widget.controller.value.setFlashMode(FlashMode.off)
-                            : widget.controller.value.setFlashMode(FlashMode.auto);
+                            ? widget.controller.value
+                                .setFlashMode(FlashMode.off)
+                            : widget.controller.value
+                                .setFlashMode(FlashMode.auto);
                   },
                   icon: Icon(
                       currentFlashMode == Flash.on
@@ -210,7 +195,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
             ],
           );
         } else {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(strokeWidth: 1));
         }
       },
     );
@@ -230,7 +215,6 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
         },
       ),
       actions: <Widget>[
-        // if (widget.selectedVideo)
         AnimatedSwitcher(
           duration: const Duration(seconds: 1),
           switchInCurve: Curves.easeIn,
@@ -307,6 +291,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
         await widget.initializeControllerFuture.value;
         final image = await widget.controller.value.takePicture();
         File selectedImage = File(image.path);
+
         setState(() {
           widget.selectedCameraImage.value = selectedImage;
           widget.replacingTabBar(true);
@@ -341,44 +326,48 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   RecordFadeAnimation buildFadeAnimation() {
-    Color whiteColor = widget.appTheme.primaryColor;
     return RecordFadeAnimation(
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10.0)),
-              boxShadow: [
-                BoxShadow(
-                    blurRadius: 3, color: Colors.black, offset: Offset(1, 2))
+      child: buildMessage(),
+    );
+  }
+
+  Stack buildMessage() {
+    Color whiteColor = widget.appTheme.primaryColor;
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(10.0)),
+            boxShadow: [
+              BoxShadow(
+                  blurRadius: 3, color: Colors.black, offset: Offset(1, 2))
+            ],
+            color: Color.fromARGB(255, 49, 49, 49),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  widget.tapsNames.holdButtonName,
+                  style: TextStyle(color: whiteColor, fontSize: 12),
+                ),
               ],
+            ),
+          ),
+        ),
+        const Align(
+          alignment: Alignment.bottomCenter,
+          child: Center(
+            child: Icon(
+              Icons.arrow_drop_down_rounded,
               color: Color.fromARGB(255, 49, 49, 49),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: Row(
-                children: [
-                  Text(
-                    widget.tapsNames.holdButtonName,
-                    style: TextStyle(color: whiteColor, fontSize: 12),
-                  ),
-                ],
-              ),
+              size: 65,
             ),
           ),
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: Center(
-              child: Icon(
-                Icons.arrow_drop_down_rounded,
-                color: Color.fromARGB(255, 49, 49, 49),
-                size: 65,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
