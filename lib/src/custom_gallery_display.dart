@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:camera/camera.dart';
 import 'package:custom_gallery_display/src/app_theme.dart';
-import 'package:custom_gallery_display/src/camera_display.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
+import 'package:custom_gallery_display/src/camera_display.dart';
 import 'package:custom_gallery_display/src/custom_memory_image_display.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
 import 'package:custom_gallery_display/src/tabs_names.dart';
@@ -14,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'dart:math' as math;
 import 'package:shimmer/shimmer.dart';
+import 'package:camera/camera.dart';
 
 enum SelectedPage { left, center, right }
 
@@ -93,15 +93,13 @@ class CustomGalleryState extends State<CustomGallery>
   late int lastPage;
   late AppTheme appTheme;
   late TabsNames tapsNames;
-  late ValueNotifier<List<CameraDescription>> cameras;
+  ValueNotifier<List<CameraDescription>>? cameras;
 
   @override
   void initState() {
     appTheme = widget.appTheme ?? AppTheme();
     tapsNames = widget.tabsNames ?? TabsNames();
-    _initializeCamera();
-    //   initializeControllerFuture.value = controller.value.initialize();
-
+    _initializeCamera(0);
     isImagesReady.value = false;
     int lengthOfTabs = 1;
 
@@ -114,19 +112,25 @@ class CustomGalleryState extends State<CustomGallery>
     super.initState();
   }
 
-  _initializeCamera() async {
-    cameras.value = await availableCameras();
-    controller.value = CameraController(
-      cameras.value[0],
-      ResolutionPreset.high,
-      enableAudio: true,
-    );
-    initializeControllerFuture.value = controller.value.initialize();
+  Future<void> _initializeCamera(int index) async {
+    cameras = ValueNotifier(await availableCameras());
+    if (mounted) {
+      setState(() {
+        controller = ValueNotifier(CameraController(
+          cameras!.value[index],
+          ResolutionPreset.high,
+          enableAudio: true,
+        ));
+        initializeControllerFuture =
+            ValueNotifier(controller.value.initialize());
+      });
+    }
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    initializeControllerFuture.dispose();
+    cameras!.dispose();
     super.dispose();
   }
 
@@ -166,6 +170,7 @@ class CustomGalleryState extends State<CustomGallery>
         });
       });
     } else {
+      await PhotoManager.requestPermissionExtend();
       PhotoManager.openSetting();
     }
   }
@@ -286,11 +291,8 @@ class CustomGalleryState extends State<CustomGallery>
                 if (!redDeleteText.value) {
                   redDeleteText.value = true;
                 } else {
-                  if (widget.enableVideo) {
-                    clearVideoRecord.value = true;
-                  } else {
-                    selectedCameraImage.value = null;
-                  }
+                  selectedCameraImage.value = null;
+                  clearVideoRecord.value = true;
                   showDeleteText.value = false;
                   redDeleteText.value = false;
                 }
@@ -395,8 +397,9 @@ class CustomGalleryState extends State<CustomGallery>
                         appTheme: appTheme,
                         selectedCameraImage: selectedCameraImage,
                         tapsNames: tapsNames,
-                        cameras: cameras,
+                        cameras: cameras!,
                         enableCamera: widget.enableCamera,
+                        onNewCameraSelected: _initializeCamera,
                         enableVideo: widget.enableVideo,
                         initializeControllerFuture: initializeControllerFuture,
                         replacingTabBar: replacingDeleteWidget,
@@ -474,22 +477,11 @@ class CustomGalleryState extends State<CustomGallery>
         });
   }
 
-  centerPage(
-      {required bool isThatVideo,
-      required int numPage,
-      required SelectedPage selectedPage}) {
-    selectedPaged.value = numPage;
-    selectedPage = selectedPage;
-    tabController.value.animateTo(numPage);
-    selectedVideo.value = isThatVideo;
-    stopScrollTab.value = isThatVideo;
-    remove.value = isThatVideo;
-  }
-
   Widget tabBar() {
+    double width = MediaQuery.of(context).size.width;
     Color blackColor = appTheme.focusColor;
-    double labelPadding =
-        widget.enableVideo && widget.enableCamera ? 13.0 : 0.0;
+    bool cameraAndVideoEnabled = widget.enableCamera && widget.enableVideo;
+    double labelPadding = cameraAndVideoEnabled ? 13.0 : 0.0;
     return Stack(
       alignment: Alignment.bottomLeft,
       children: [
@@ -512,9 +504,7 @@ class CustomGalleryState extends State<CustomGallery>
                       GestureDetector(
                         onTap: () {
                           centerPage(
-                              isThatVideo: false,
-                              numPage: 0,
-                              selectedPage: SelectedPage.left);
+                              numPage: 0, selectedPage: SelectedPage.left);
                         },
                         child: Text(tapsNames.galleryName,
                             style: const TextStyle(
@@ -530,8 +520,7 @@ class CustomGalleryState extends State<CustomGallery>
                 ),
               ),
             ),
-            if (widget.enableVideo && widget.enableCamera)
-              videoTabBar(blackColor),
+            if (cameraAndVideoEnabled) videoTabBar(blackColor),
           ],
         ),
         ValueListenableBuilder(
@@ -542,8 +531,8 @@ class CustomGalleryState extends State<CustomGallery>
               valueListenable: selectedPage,
               builder: (context, SelectedPage selectedPageValue, child) =>
                   AnimatedPositioned(
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeIn,
+                      duration: const Duration(seconds: 2),
+                      curve: Curves.easeInBack,
                       onEnd: () {
                         if (selectedPageValue != SelectedPage.right) {
                           remove.value = false;
@@ -552,10 +541,14 @@ class CustomGalleryState extends State<CustomGallery>
                       left: selectedPageValue == SelectedPage.left
                           ? 0
                           : (selectedPageValue == SelectedPage.center
-                              ? 120
-                              : 240),
-                      child:
-                          Container(height: 2, width: 120, color: blackColor)),
+                              ? width / 3
+                              : (cameraAndVideoEnabled
+                                  ? width / 1.5
+                                  : width / 2)),
+                      child: Container(
+                          height: 2,
+                          width: cameraAndVideoEnabled ? width / 3 : width / 2,
+                          color: blackColor)),
             ),
           ),
         ),
@@ -566,12 +559,20 @@ class CustomGalleryState extends State<CustomGallery>
   GestureDetector photoTabBar() {
     return GestureDetector(
       onTap: () {
-        centerPage(
-            isThatVideo: false, numPage: 1, selectedPage: SelectedPage.center);
+        centerPage(numPage: 1, selectedPage: SelectedPage.center);
       },
       child: Text(tapsNames.photoName,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
     );
+  }
+
+  centerPage({required int numPage, required SelectedPage selectedPage}) {
+    selectedPaged.value = numPage;
+    selectedPage = selectedPage;
+    tabController.value.animateTo(numPage);
+    selectedVideo.value = false;
+    stopScrollTab.value = false;
+    remove.value = false;
   }
 
   GestureDetector videoTabBar(Color blackColor) {
