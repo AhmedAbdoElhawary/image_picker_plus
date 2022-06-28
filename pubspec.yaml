@@ -1,6 +1,6 @@
 name: custom_gallery_display
 description: It is like instagram gallery display and custom of camera and video
-version: 0.2.5
+version: 0.2.7
 homepage: https://github.com/AhmedAbdoElhawary/custom_gallery_display.git
 
 environment:
@@ -11,11 +11,18 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_ringtone_player: ^3.2.0
-  photo_manager: ^2.1.2
+  photo_manager: ^2.1.4
   shimmer: ^2.0.0
   image_crop: ^0.4.0
   octo_image: ^1.0.2
   camera: ^0.9.8+1
+  image: ^3.2.0
+#  camera_android: ^0.9.8+3
+#  camera_avfoundation: ^0.9.8+2
+#  camera_platform_interface: ^2.2.0
+#  camera_web: ^0.3.0
+#  flutter_plugin_android_lifecycle: ^2.0.6
+#  quiver: ^3.0.0
 
 dev_dependencies:
   flutter_test:
