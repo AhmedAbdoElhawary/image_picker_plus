@@ -26,13 +26,43 @@ You can even customize a display of a camera to take a photo and video from two 
 
 # Installing
 
+## IOS
+
+\* The camera plugin compiles for any version of iOS, but its functionality
+requires iOS 10 or higher. If compiling for iOS 9, make sure to programmatically
+check the version of iOS running on the device before using any camera plugin features.
+The [device_info_plus](https://pub.dev/packages/device_info_plus) plugin, for example, can be used to check the iOS version.
+
+Add two rows to the `ios/Runner/Info.plist`:
+
+* one with the key `Privacy - Camera Usage Description` and a usage description.
+* and one with the key `Privacy - Microphone Usage Description` and a usage description.
+
+If editing `Info.plist` as text, add:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>your usage description here</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>your usage description here</string>
+```
+
+## Android
+
+Change the minimum Android sdk version to 21 (or higher), and compile sdk to 31 (or higher) in your `android/app/build.gradle` file.
+
+```java
+compileSdkVersion 32
+minSdkVersion 21
+```
+
 ### 1. Depend on it
 
 Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  custom_gallery_display: ^0.2.2
+  custom_gallery_display: ^0.2.7
 ```
 
 ### 2. Install it
@@ -50,23 +80,22 @@ with `Flutter`:
 ```
 $ flutter pub add custom_gallery_display
 ```
+### 3. Set it
 
-### 3. Import it
+Now in your `main.dart`, put those permissions:
 
-Now in your `Dart` code, you can use:
+```dart
+  WidgetsFlutterBinding.ensureInitialized();
+  await CustomGalleryPermissions.requestPermissionExtend();
+  ```
+
+### 4. Import it
+
+In your `Dart` code, you can use:
 
 ```dart
 import 'package:custom_gallery_display/custom_gallery_display.dart';
 ```
-
-## Android
-
-Change the minimum Android sdk version to 21 (or higher) in your `android/app/build.gradle` file.
-
-```java
-minSdkVersion 21
-```
-
 # Usage
 
 It has many configurable properties, including:
@@ -89,6 +118,9 @@ There are also callback:
 </p>
 
 ```dart
+/// Remember:
+/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+
 CustomGallery.instagramDisplay(
               cropImage: true, // It's true by default
               enableCamera: true, // It's true by default
@@ -117,6 +149,9 @@ CustomGallery.instagramDisplay(
 
 
 ```dart
+/// Remember:
+/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+
 CustomGallery.normalDisplay(
               enableCamera: false, // It's false by default
               enableVideo: false, // It's false by default
@@ -141,6 +176,9 @@ CustomGallery.normalDisplay(
 </p>
 
 ```dart
+/// Remember:
+/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+
 CustomGallery.normalDisplay(
               enableVideo: true,
               appTheme: AppTheme(
@@ -166,6 +204,9 @@ CustomGallery.normalDisplay(
 </p>
 
 ```dart
+/// Remember:
+/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+
 CustomGallery.normalDisplay(
               enableVideo: true,
               enableCamera: true,
