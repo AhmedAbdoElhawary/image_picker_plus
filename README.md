@@ -114,7 +114,7 @@ There are also callback:
 
 # Examples
 <p>
-<img src="https://user-images.githubusercontent.com/88978546/173692850-21ab4cab-abd5-4f68-85e7-c010d13b391e.gif"   width="25%" height="50%">
+<img src="https://user-images.githubusercontent.com/88978546/173692850-21ab4cab-abd5-4f68-85e7-c010d13b391e.gif"   width="50%" height="50%">
 
 </p>
 
