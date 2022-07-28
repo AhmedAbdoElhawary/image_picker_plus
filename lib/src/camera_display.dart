@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:custom_gallery_display/src/app_theme.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
@@ -9,7 +10,6 @@ import 'package:custom_gallery_display/src/selected_image_details.dart';
 import 'package:custom_gallery_display/src/tabs_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 
 enum Flash { off, auto, on }
 
