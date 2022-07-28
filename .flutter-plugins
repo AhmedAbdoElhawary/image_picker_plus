@@ -1,9 +1,9 @@
 # This is a generated file; do not edit or check into version control.
-camera=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera-0.9.8+1\\
-camera_android=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera_android-0.9.8+3\\
+camera=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera-0.10.0\\
+camera_android=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera_android-0.10.0\\
 camera_avfoundation=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera_avfoundation-0.9.8+2\\
-camera_web=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera_web-0.2.1+6\\
-flutter_plugin_android_lifecycle=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\flutter_plugin_android_lifecycle-2.0.6\\
+camera_web=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\camera_web-0.3.0\\
+flutter_plugin_android_lifecycle=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\flutter_plugin_android_lifecycle-2.0.7\\
 flutter_ringtone_player=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\flutter_ringtone_player-3.2.0\\
 image_crop=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\image_crop-0.4.0\\
 path_provider=C:\\src\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\path_provider-2.0.11\\
