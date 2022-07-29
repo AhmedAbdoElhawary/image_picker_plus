@@ -1,3 +1,7 @@
+
+## 0.2.8
+* change paint color to white
+
 ## 0.2.7
 
 * Solve permissions bugs
