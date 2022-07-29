@@ -3,15 +3,12 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 
 const _kCropGridColumnCount = 3;
 const _kCropGridRowCount = 3;
 const _kCropGridColor = Color.fromRGBO(0xd0, 0xd0, 0xd0, 0.9);
-const _kCropOverlayActiveOpacity = 0.3;
-const _kCropOverlayInactiveOpacity = 0.7;
-const _kCropHandleSize = 10.0;
+const _kCropHandleSize = 0.0;
 const _kCropHandleHitSize = 48.0;
 
 enum _CropAction { none, moving, cropping, scaling }
@@ -574,7 +571,6 @@ class _CropPainter extends CustomPainter {
       size.width - _kCropHandleSize,
       size.height - _kCropHandleSize,
     );
-
     canvas.save();
     canvas.translate(rect.left, rect.top);
 
@@ -601,12 +597,8 @@ class _CropPainter extends CustomPainter {
       canvas.restore();
     }
 
-    paint.color = Color.fromRGBO(
-        0x0,
-        0x0,
-        0x0,
-        _kCropOverlayActiveOpacity * active +
-            _kCropOverlayInactiveOpacity * (1.0 - active));
+    paint.color = Colors.white;
+
     final boundaries = Rect.fromLTWH(
       rect.width * area.left,
       rect.height * area.top,
