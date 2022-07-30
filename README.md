@@ -63,7 +63,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  custom_gallery_display: ^0.2.7
+  custom_gallery_display: [last_version]
 ```
 
 ### 2. Install it

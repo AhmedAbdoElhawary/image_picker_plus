@@ -101,6 +101,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                         selectedImage,
                         key: cropKey,
                         alwaysShowGrid: true,
+                        paintColor: widget.appTheme.primaryColor,
                       )),
                 ),
               Align(
