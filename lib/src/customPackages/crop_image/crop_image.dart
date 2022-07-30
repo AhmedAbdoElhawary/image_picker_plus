@@ -20,6 +20,7 @@ class Crop extends StatefulWidget {
   final double? aspectRatio;
   final double maximumScale;
   final bool alwaysShowGrid;
+  final Color paintColor;
   final ImageErrorListener? onImageError;
   final ValueChanged<bool>? scrollCustomList;
 
@@ -28,6 +29,7 @@ class Crop extends StatefulWidget {
     required this.image,
     this.aspectRatio,
     this.maximumScale = 2.0,
+    this.paintColor = Colors.white,
     this.scrollCustomList,
     this.alwaysShowGrid = false,
     this.onImageError,
@@ -38,6 +40,7 @@ class Crop extends StatefulWidget {
     Key? key,
     double scale = 1.0,
     this.aspectRatio,
+    this.paintColor = Colors.white,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -49,6 +52,7 @@ class Crop extends StatefulWidget {
     Key? key,
     double scale = 1.0,
     this.aspectRatio,
+    this.paintColor = Colors.white,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -63,6 +67,7 @@ class Crop extends StatefulWidget {
     String? package,
     this.aspectRatio,
     this.scrollCustomList,
+    this.paintColor = Colors.white,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
@@ -209,6 +214,7 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
                     area: _area,
                     scale: _scale,
                     active: _activeController.value,
+                    paintColor: widget.paintColor,
                   ),
                 );
               },
@@ -543,6 +549,7 @@ class _CropPainter extends CustomPainter {
   final Rect area;
   final double scale;
   final double active;
+  final Color paintColor;
 
   _CropPainter({
     required this.image,
@@ -551,6 +558,7 @@ class _CropPainter extends CustomPainter {
     required this.area,
     required this.scale,
     required this.active,
+    required this.paintColor,
   });
 
   @override
@@ -597,7 +605,7 @@ class _CropPainter extends CustomPainter {
       canvas.restore();
     }
 
-    paint.color = Colors.white;
+    paint.color = paintColor;
 
     final boundaries = Rect.fromLTWH(
       rect.width * area.left,
