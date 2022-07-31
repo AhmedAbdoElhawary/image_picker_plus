@@ -31,7 +31,7 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
   late ValueNotifier<void> initializeControllerFuture;
-  final AsyncValueSetter<SelectedImageDetails> moveToPage;
+  final AsyncValueSetter<SelectedImagesDetails> moveToPage;
   final CustomAsyncValueSetter<Future<void>, int, bool> onNewCameraSelected;
 
   ValueNotifier<List<CameraDescription>>? cameras;
@@ -199,7 +199,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
             });
           } else {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(widget.tapsNames.notFoundingCameraName),
+              content: Text(widget.tapsNames.notFoundingCameraText),
               duration: const Duration(seconds: 2),
             ));
           }
@@ -241,7 +241,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 color: Colors.blue, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
-                SelectedImageDetails details = SelectedImageDetails(
+                SelectedImagesDetails details = SelectedImagesDetails(
                   selectedFile: videoRecordFile!,
                   multiSelectionMode: false,
                   isThatImage: false,
@@ -252,7 +252,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 if (selectedImage != null) {
                   File? croppedFile = await cropImage(selectedImage);
                   if (croppedFile != null) {
-                    SelectedImageDetails details = SelectedImageDetails(
+                    SelectedImagesDetails details = SelectedImagesDetails(
                       selectedFile: File(croppedFile.path),
                       multiSelectionMode: false,
                       aspectRatio: 1.0,
@@ -374,7 +374,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
             child: Row(
               children: [
                 Text(
-                  widget.tapsNames.holdButtonName,
+                  widget.tapsNames.holdButtonText,
                   style: TextStyle(color: whiteColor, fontSize: 12),
                 ),
               ],
