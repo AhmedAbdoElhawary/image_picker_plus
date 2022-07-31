@@ -1,6 +1,7 @@
 
 <h1 align="left">Custom Gallery Display</h1>
-When you trying to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UX of Gallery display.
+
+When you try to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UI of Gallery display.
 
 I have two main views of the gallery to solve this issue:
 - It looks like the Instagram gallery.
@@ -19,7 +20,7 @@ You can even customize a display of a camera to take a photo and video from two 
   </a> 
 </p>
 
-## Note
+## Necessary note
 
 #### `CustomGallery` is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
 
@@ -112,7 +113,7 @@ There are also callback:
 
 # Examples
 <p>
-<img src="https://user-images.githubusercontent.com/88978546/173692850-21ab4cab-abd5-4f68-85e7-c010d13b391e.gif"   width="25%" height="50%">
+<img src="https://user-images.githubusercontent.com/88978546/173692850-21ab4cab-abd5-4f68-85e7-c010d13b391e.gif"   width="50%" height="50%">
 
 </p>
 
@@ -228,3 +229,4 @@ CustomGallery.normalDisplay(
                 sendRequestFunction: (_) async {},
               )
 ```
+
