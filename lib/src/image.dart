@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:octo_image/octo_image.dart';
 
 class MemoryImageDisplay extends StatefulWidget {
-  final Uint8List imageFile;
+  final Uint8List imageBytes;
   final AppTheme appTheme;
 
   const MemoryImageDisplay(
-      {Key? key, required this.imageFile, required this.appTheme})
+      {Key? key, required this.imageBytes, required this.appTheme})
       : super(key: key);
 
   @override
@@ -18,7 +18,7 @@ class MemoryImageDisplay extends StatefulWidget {
 class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
   @override
   void didChangeDependencies() {
-    precacheImage(MemoryImage(widget.imageFile), context);
+    precacheImage(MemoryImage(widget.imageBytes), context);
     super.didChangeDependencies();
   }
 
@@ -29,7 +29,7 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
 
   OctoImage buildOctoImage() {
     return OctoImage(
-      image: MemoryImage(widget.imageFile),
+      image: MemoryImage(widget.imageBytes),
       errorBuilder: (context, url, error) => buildError(),
       fit: BoxFit.cover,
       width: double.infinity,
