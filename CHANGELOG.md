@@ -1,3 +1,6 @@
+## 0.3.1
+* restructure gallery display
+* handling video lag
 
 ## 0.2.8
 * change paint color to white
