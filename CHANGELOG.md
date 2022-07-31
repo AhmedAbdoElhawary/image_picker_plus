@@ -1,3 +1,6 @@
+## 0.3.2
+* solve box constraints bug
+
 ## 0.3.1
 * restructure gallery display
 * handling video lag
