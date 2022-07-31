@@ -6,7 +6,7 @@ import 'package:custom_gallery_display/src/customPackages/crop_image/crop_option
 import 'package:custom_gallery_display/src/camera_display.dart';
 import 'package:custom_gallery_display/src/image.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
-import 'package:custom_gallery_display/src/tabs_names.dart';
+import 'package:custom_gallery_display/src/tabs_texts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
