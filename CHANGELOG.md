@@ -1,3 +1,5 @@
+## 0.3.3+1
+* reformat the code
 ## 0.3.3
 * rename tabs texts
 
@@ -33,7 +35,7 @@
 ## 0.2.3
 
 * Solve camera package bugs
-* Write a documentation 
+* Write a documentation
 
 ## 0.2.2
 
@@ -45,5 +47,5 @@
 
 ## 0.2.0
 
-* Add normal display 
+* Add normal display
 * Solve multi selection mode bugs
