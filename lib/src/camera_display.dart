@@ -7,7 +7,7 @@ import 'package:custom_gallery_display/src/customPackages/crop_image/crop_option
 import 'package:custom_gallery_display/src/record_count.dart';
 import 'package:custom_gallery_display/src/record_fade_animation.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
-import 'package:custom_gallery_display/src/tabs_names.dart';
+import 'package:custom_gallery_display/src/tabs_texts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
