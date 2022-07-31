@@ -601,8 +601,6 @@ class _CropPainter extends CustomPainter {
         image.width * scale * ratio,
         image.height * scale * ratio,
       );
-      print(
-          "view.bottom: ${view.bottom}, view.top: ${view.top} ---------------------------------------->");
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(0.0, 0.0, rect.width, rect.height));
       canvas.drawImageRect(image, src, dst, paint);

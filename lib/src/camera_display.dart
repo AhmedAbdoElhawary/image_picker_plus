@@ -21,7 +21,7 @@ typedef CustomAsyncValueSetter<A, B, C> = A Function(B value, C value2);
 class CustomCameraDisplay extends StatefulWidget {
   final bool selectedVideo;
   final AppTheme appTheme;
-  final TabsNames tapsNames;
+  final TabsTexts tapsNames;
   final bool enableCamera;
   final bool enableVideo;
   late ValueNotifier<CameraController> controller;

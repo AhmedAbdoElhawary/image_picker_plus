@@ -17,9 +17,8 @@ You can even customize a display of a camera to take a photo and video from two 
     <a href="LICENSE">
     <img src="https://img.shields.io/apm/l/atomic-design-ui.svg?"
       alt="License: MIT" />
-  </a>
- <p/>
- 
+  </a> 
+</p>
 
 ## Necessary note
 
@@ -95,14 +94,14 @@ Now in your `main.dart`, put those permissions:
 In your `Dart` code, you can use:
 
 ```dart
-import 'package:custom_gallery_display/instagram_gallery_display.dart';
+import 'package:custom_gallery_display/custom_gallery_display.dart';
 ```
 # Usage
 
 It has many configurable properties, including:
 
 - `appTheme` – Customization of colors If you have diffrent themes
-- `tabsNames` – Changing the names of tabs or even thier languages
+- `tabsTexts` – Changing the names of tabs or even thier languages
 - `enableCamera` – If you want to take photo from camera (front,back)
 - `enableVideo` – If you want to record video from camera (front,back)
 - `cropImage` – If you want crop image with aspect ratio that you are selected
@@ -110,7 +109,7 @@ It has many configurable properties, including:
 
 There are also callback:
 
-- `moveToPage` – It's function that return to you info about selected image/s
+- `sendRequestFunction` – It's function that return to you info about selected image/s
 
 # Examples
 <p>
@@ -131,7 +130,7 @@ CustomGallery.instagramDisplay(
                 crossAxisSpacing: 1.7,
                 mainAxisSpacing: 1.5,
               ), // It's by default
-              moveToPage: (SelectedImageDetails details) async {
+                sendRequestFunction: (SelectedImagesDetails details) async {
                 // You can take this variables and push to another page
                 bool multiSelectionMode = details.multiSelectionMode;
                 bool isThatImage = details.isThatImage;
@@ -158,7 +157,7 @@ CustomGallery.normalDisplay(
               enableVideo: false, // It's false by default
               appTheme: AppTheme(
                   focusColor: Colors.black, primaryColor: Colors.white),
-              moveToPage: (SelectedImageDetails details) async {
+                sendRequestFunction: (SelectedImagesDetails details) async {
                 // You can take this variables and push to another page
                 bool multiSelectionMode = details.multiSelectionMode;
                 bool isThatImage = details.isThatImage;
@@ -184,19 +183,19 @@ CustomGallery.normalDisplay(
               enableVideo: true,
               appTheme: AppTheme(
                   focusColor: Colors.white, primaryColor: Colors.black),
-              tabsNames: TabsNames(
-                videoName: "فيديو",
-                galleryName: "المعرض",
-                deletingName: "حذف",
-                clearImagesName: "الغاء الصور المحدده",
-                limitingName: "اقصي حد للصور هو 10",
+                tabsTexts: TabsTexts(
+                videoText: "فيديو",
+                galleryText: "المعرض",
+                deletingText: "حذف",
+                clearImagesText: "الغاء الصور المحدده",
+                limitingText: "اقصي حد للصور هو 10",
               ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 crossAxisSpacing: 1.7,
                 mainAxisSpacing: 1.5,
               ),
-              moveToPage: (_) async {},
+              sendRequestFunction: (_) async {},
             )
 ```
 <p>
@@ -213,13 +212,13 @@ CustomGallery.normalDisplay(
               enableCamera: true,
               appTheme: AppTheme(
                   focusColor: Colors.white, primaryColor: Colors.black),
-              tabsNames: TabsNames(
-                videoName: "視頻",
-                photoName: "照片",
-                galleryName: "畫廊",
-                deletingName: "刪除",
-                clearImagesName: "清除所選圖像",
-                limitingName: "限制為 10 張照片或視頻",
+              tabsTexts: TabsTexts(
+                videoText: "視頻",
+                photoText: "照片",
+                galleryText: "畫廊",
+                deletingText: "刪除",
+                clearImagesText: "清除所選圖像",
+                limitingText: "限制為 10 張照片或視頻",
               ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
@@ -227,6 +226,6 @@ CustomGallery.normalDisplay(
                 mainAxisSpacing: 1.5,
                 childAspectRatio: .5,
               ),
-              moveToPage: (_) async {},
+              sendRequestFunction: (_) async {},
             )
 ```

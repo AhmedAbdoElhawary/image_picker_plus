@@ -22,7 +22,7 @@ enum Display { instagram, normal, getImages }
 class CustomGallery extends StatefulWidget {
   final Display display;
   final AppTheme? appTheme;
-  final TabsNames? tabsTexts;
+  final TabsTexts? tabsTexts;
   final bool enableCamera;
   final bool enableVideo;
   final bool cropImage;
@@ -99,7 +99,7 @@ class CustomGalleryState extends State<CustomGallery>
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
   late int lastPage;
   late AppTheme appTheme;
-  late TabsNames tapsNames;
+  late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
   bool noImages = false;
 
@@ -108,7 +108,7 @@ class CustomGalleryState extends State<CustomGallery>
   @override
   void initState() {
     appTheme = widget.appTheme ?? AppTheme();
-    tapsNames = widget.tabsTexts ?? TabsNames();
+    tapsNames = widget.tabsTexts ?? TabsTexts();
     _initializeCamera(0, true);
     isImagesReady.value = false;
     int lengthOfTabs = 1;
@@ -202,12 +202,7 @@ class CustomGalleryState extends State<CustomGallery>
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           )
-        : NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification scroll) {
-              return _handleScrollEvent(scroll);
-            },
-            child: defaultTabController(),
-          );
+        : defaultTabController();
   }
 
   Future<FutureBuilder<Uint8List?>> getImageGallery(
@@ -391,19 +386,19 @@ class CustomGalleryState extends State<CustomGallery>
   DefaultTabController defaultTabController() {
     Color whiteColor = appTheme.primaryColor;
     return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: whiteColor,
-        body: safeArea(),
-      ),
-    );
+        length: 2,
+        child: Material(
+          color: whiteColor,
+          child: safeArea(),
+        ));
   }
 
   SafeArea safeArea() {
     return SafeArea(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
+          Flexible(
             child: ValueListenableBuilder(
               valueListenable: tabController,
               builder: (context, TabController tabControllerValue, child) =>
@@ -412,7 +407,7 @@ class CustomGalleryState extends State<CustomGallery>
                 dragStartBehavior: DragStartBehavior.start,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  Flexible(child: buildGridView()),
+                  buildGridView(),
                   if (widget.enableCamera || widget.enableVideo)
                     ValueListenableBuilder(
                       valueListenable: selectedVideo,
@@ -929,7 +924,7 @@ class CustomGalleryState extends State<CustomGallery>
                   }
                   return AnimatedPositioned(
                     top: topPosition,
-                    duration: const Duration(milliseconds: 350),
+                    duration: const Duration(milliseconds: 400),
                     child: Column(
                       children: [
                         normalAppBar(),
@@ -1048,8 +1043,8 @@ class CustomGalleryState extends State<CustomGallery>
               if (close) return;
             }
             selectedImage.value = image;
-            expandImageView.value = true;
-            expandHeight.value = 0;
+            expandImageView.value = false;
+            moveAwayHeight.value = 0;
             enableVerticalTapping.value = false;
           });
         },
@@ -1061,8 +1056,8 @@ class CustomGalleryState extends State<CustomGallery>
         onLongPressUp: () {
           selectionImageCheck(image, multiSelectedImage.value,
               enableCopy: true);
-          expandImageView.value = true;
-          expandHeight.value = 0;
+          expandImageView.value = false;
+          moveAwayHeight.value = 0;
           enableVerticalTapping.value = false;
         },
         child: childWidget);
