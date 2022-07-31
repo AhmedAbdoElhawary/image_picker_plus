@@ -1,4 +1,4 @@
-class TabsNames {
+class TabsTexts {
   final String videoText;
   final String photoText;
   final String galleryText;
@@ -8,7 +8,7 @@ class TabsNames {
   final String clearImagesText;
   final String notFoundingCameraText;
 
-  TabsNames({
+  TabsTexts({
     this.videoText = "VIDEO",
     this.photoText = "PHOTO",
     this.clearImagesText = "Clear selected images",
