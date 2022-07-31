@@ -95,7 +95,7 @@ Now in your `main.dart`, put those permissions:
 In your `Dart` code, you can use:
 
 ```dart
-import 'package:custom_gallery_display/custom_gallery_display.dart';
+import 'package:custom_gallery_display/instagram_gallery_display.dart';
 ```
 # Usage
 

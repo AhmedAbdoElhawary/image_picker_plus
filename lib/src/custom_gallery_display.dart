@@ -4,7 +4,7 @@ import 'package:custom_gallery_display/src/app_theme.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
 import 'package:custom_gallery_display/src/camera_display.dart';
-import 'package:custom_gallery_display/src/custom_memory_image_display.dart';
+import 'package:custom_gallery_display/src/image.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
 import 'package:custom_gallery_display/src/tabs_names.dart';
 import 'package:flutter/foundation.dart';
@@ -74,7 +74,7 @@ class CustomGalleryState extends State<CustomGallery>
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
   ValueNotifier<SelectedPage> selectedPage = ValueNotifier(SelectedPage.left);
-  late ValueNotifier<Future<void>> initializeControllerFuture;
+  late ValueNotifier<void> initializeControllerFuture;
   final cropKey = GlobalKey<CropState>();
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
   late ValueNotifier<CameraController> controller;
@@ -85,6 +85,13 @@ class CustomGalleryState extends State<CustomGallery>
   ValueNotifier<bool> isImagesReady = ValueNotifier(true);
   ValueNotifier<bool> expandImage = ValueNotifier(false);
   ValueNotifier<int> selectedPaged = ValueNotifier(0);
+  ValueNotifier<double> expandHeight = ValueNotifier(0);
+  ValueNotifier<double> moveAwayHeight = ValueNotifier(0);
+  ValueNotifier<bool> expandImageView = ValueNotifier(false);
+
+  /// To avoid lag when you interacting with image when it expanded
+  ValueNotifier<bool> enableVerticalTapping = ValueNotifier(false);
+
   final remove = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
   int currentPage = 0;
@@ -94,12 +101,15 @@ class CustomGalleryState extends State<CustomGallery>
   late AppTheme appTheme;
   late TabsNames tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
+  bool noImages = false;
+
+  ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     appTheme = widget.appTheme ?? AppTheme();
     tapsNames = widget.tabsNames ?? TabsNames();
-    _initializeCamera(0);
+    _initializeCamera(0, true);
     isImagesReady.value = false;
     int lengthOfTabs = 1;
 
@@ -112,18 +122,17 @@ class CustomGalleryState extends State<CustomGallery>
     super.initState();
   }
 
-  Future<void> _initializeCamera(int index) async {
+  Future<void> _initializeCamera(int index, bool checkCamera) async {
     cameras = ValueNotifier(await availableCameras());
     if (mounted) {
-      setState(() {
-        controller = ValueNotifier(CameraController(
-          cameras!.value[index],
-          ResolutionPreset.high,
-          enableAudio: true,
-        ));
-        initializeControllerFuture =
-            ValueNotifier(controller.value.initialize());
-      });
+      controller = ValueNotifier(CameraController(
+        cameras!.value[index],
+        ResolutionPreset.high,
+        enableAudio: true,
+      ));
+      initializeControllerFuture =
+          ValueNotifier(await controller.value.initialize());
+      setState(() {});
     }
   }
 
@@ -150,6 +159,14 @@ class CustomGalleryState extends State<CustomGallery>
     if (result.isAuth) {
       List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
           onlyAll: true, type: RequestType.image);
+      if (albums.isEmpty) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => setState(() => noImages = true));
+        return;
+      } else if (noImages) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => setState(() => noImages = false));
+      }
       List<AssetEntity> media =
           await albums[0].getAssetListPaged(page: currentPage, size: 60);
       List<FutureBuilder<Uint8List?>> temp = [];
@@ -158,6 +175,7 @@ class CustomGalleryState extends State<CustomGallery>
         FutureBuilder<Uint8List?> gridViewImage =
             await getImageGallery(media, i);
         File? image = await highQualityImage(media, i);
+        if (selectedImage.value == null && i == 0) selectedImage.value = image;
         temp.add(gridViewImage);
         imageTemp.add(image);
       }
@@ -177,12 +195,19 @@ class CustomGalleryState extends State<CustomGallery>
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (ScrollNotification scroll) {
-        return _handleScrollEvent(scroll);
-      },
-      child: defaultTabController(),
-    );
+    return noImages
+        ? const Center(
+            child: Text(
+              "There is no images",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          )
+        : NotificationListener<ScrollNotification>(
+            onNotification: (ScrollNotification scroll) {
+              return _handleScrollEvent(scroll);
+            },
+            child: defaultTabController(),
+          );
   }
 
   Future<FutureBuilder<Uint8List?>> getImageGallery(
@@ -387,7 +412,7 @@ class CustomGalleryState extends State<CustomGallery>
                 dragStartBehavior: DragStartBehavior.start,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  buildGridView(),
+                  Flexible(child: buildGridView()),
                   if (widget.enableCamera || widget.enableVideo)
                     ValueListenableBuilder(
                       valueListenable: selectedVideo,
@@ -452,29 +477,32 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   ValueListenableBuilder<bool> buildGridView() {
-    bool isThatNormalDisplay = widget.display == Display.normal;
     return ValueListenableBuilder(
-        valueListenable: isImagesReady,
-        builder: (context, bool isImagesReadyValue, child) {
-          if (isImagesReadyValue) {
-            return ValueListenableBuilder(
-              valueListenable: _mediaList,
-              builder: (context, List<FutureBuilder<Uint8List?>> mediaListValue,
-                      child) =>
-                  isThatNormalDisplay
-                      ? normalGridView(mediaListValue)
-                      : CustomScrollView(
-                          slivers: [
-                            sliverAppBar(),
-                            sliverSelectedImage(),
-                            sliverGridView(mediaListValue),
-                          ],
-                        ),
-            );
-          } else {
-            return loadingWidget();
-          }
-        });
+      valueListenable: isImagesReady,
+      builder: (context, bool isImagesReadyValue, child) {
+        if (isImagesReadyValue) {
+          return ValueListenableBuilder(
+            valueListenable: _mediaList,
+            builder: (context, List<FutureBuilder<Uint8List?>> mediaListValue,
+                child) {
+              if (widget.display == Display.normal) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    normalAppBar(),
+                    Flexible(child: normalGridView(mediaListValue)),
+                  ],
+                );
+              } else {
+                return instagramGridView(mediaListValue);
+              }
+            },
+          );
+        } else {
+          return loadingWidget();
+        }
+      },
+    );
   }
 
   Widget tabBar() {
@@ -494,6 +522,7 @@ class CustomGalleryState extends State<CustomGallery>
                     ValueListenableBuilder(
                   valueListenable: selectedVideo,
                   builder: (context, bool selectedVideoValue, child) => TabBar(
+                    indicatorWeight: 1,
                     controller: tabControllerValue,
                     unselectedLabelColor: Colors.grey,
                     labelColor: selectedVideoValue ? Colors.grey : blackColor,
@@ -546,7 +575,7 @@ class CustomGalleryState extends State<CustomGallery>
                                   ? width / 1.5
                                   : width / 2)),
                       child: Container(
-                          height: 2,
+                          height: 1,
                           width: cameraAndVideoEnabled ? width / 3 : width / 2,
                           color: blackColor)),
             ),
@@ -600,32 +629,23 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
-  AppBar normalAppBar() {
+  Widget normalAppBar() {
     Color whiteColor = appTheme.primaryColor;
     Color blackColor = appTheme.focusColor;
-    return AppBar(
-      backgroundColor: whiteColor,
-      elevation: 0,
-      leading: existButton(blackColor),
-      actions: [
-        doneButton(),
-      ],
-    );
-  }
-
-  SliverAppBar sliverAppBar() {
-    Color whiteColor = appTheme.primaryColor;
-    Color blackColor = appTheme.focusColor;
-    return SliverAppBar(
-      backgroundColor: whiteColor,
-      floating: true,
-      stretch: true,
-      snap: true,
-      elevation: 0,
-      leading: existButton(blackColor),
-      actions: [
-        doneButton(),
-      ],
+    double width = MediaQuery.of(context).size.width;
+    return Container(
+      color: whiteColor,
+      height: 60,
+      width: width,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          existButton(blackColor),
+          const Spacer(),
+          // SizedBox(width: 1),
+          doneButton(),
+        ],
+      ),
     );
   }
 
@@ -703,37 +723,14 @@ class CustomGalleryState extends State<CustomGallery>
     }
   }
 
-  SliverAppBar sliverSelectedImage() {
-    Color whiteColor = appTheme.primaryColor;
-    return SliverAppBar(
-        floating: true,
-        stretch: true,
-        pinned: true,
-        snap: true,
-        automaticallyImplyLeading: false,
-        backgroundColor: whiteColor,
-        expandedHeight: 360,
-        flexibleSpace: ValueListenableBuilder(
-          valueListenable: selectedImage,
-          builder: (context, File? selectedImageValue, child) {
-            if (selectedImageValue != null) {
-              return showSelectedImage(context, selectedImageValue, whiteColor);
-            } else {
-              return Container(
-                key: GlobalKey(debugLabel: "do not have"),
-              );
-            }
-          },
-        ));
-  }
-
   Container showSelectedImage(
       BuildContext context, File selectedImageValue, Color whiteColor) {
+    double width = MediaQuery.of(context).size.width;
     return Container(
       key: GlobalKey(debugLabel: "have image"),
       color: whiteColor,
       height: 360,
-      width: double.infinity,
+      width: width,
       child: ValueListenableBuilder(
         valueListenable: multiSelectionMode,
         builder: (context, bool multiSelectionModeValue, child) => Stack(
@@ -743,6 +740,7 @@ class CustomGalleryState extends State<CustomGallery>
               builder: (context, bool expandImageValue, child) => Crop.file(
                   selectedImageValue,
                   key: cropKey,
+                  alwaysShowGrid: true,
                   aspectRatio: expandImageValue ? 6 / 8 : 1.0),
             ),
             Align(
@@ -785,7 +783,9 @@ class CustomGalleryState extends State<CustomGallery>
                 padding: const EdgeInsets.all(10.0),
                 child: GestureDetector(
                   onTap: () {
-                    expandImage.value = !expandImage.value;
+                    setState(() {
+                      expandImage.value = !expandImage.value;
+                    });
                   },
                   child: Container(
                     height: 35,
@@ -867,32 +867,127 @@ class CustomGalleryState extends State<CustomGallery>
     }
   }
 
-  SliverGrid sliverGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
-    return SliverGrid(
-      gridDelegate: widget.gridDelegate,
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          return buildImage(mediaListValue, index);
-        },
-        childCount: mediaListValue.length,
-      ),
+  Widget instagramGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
+    Color whiteColor = appTheme.primaryColor;
+    return ValueListenableBuilder(
+      valueListenable: expandHeight,
+      builder: (context, double expandedHeightValue, child) {
+        return Stack(
+          clipBehavior: Clip.antiAlias,
+          children: [
+            /// padding for
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification notification) {
+                  expandImageView.value = false;
+                  moveAwayHeight.value = scrollController.position.pixels;
+                  if (notification is ScrollEndNotification) {
+                    expandHeight.value = expandedHeightValue > 240 ? 360 : 0;
+                  }
+                  _handleScrollEvent(notification);
+                  return true;
+                },
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 420),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        primary: false,
+                        gridDelegate: widget.gridDelegate,
+                        itemBuilder: (context, index) {
+                          return buildImage(mediaListValue, index);
+                        },
+                        itemCount: mediaListValue.length,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            ValueListenableBuilder(
+              valueListenable: moveAwayHeight,
+              builder: (context, double moveAwayHeightValue, child) =>
+                  ValueListenableBuilder(
+                valueListenable: expandImageView,
+                builder: (context, bool expandImageValue, child) {
+                  double a = expandedHeightValue - 360;
+                  double expandHeight = a < 0 ? a : 0;
+                  double moveAwayHeight = moveAwayHeightValue < 360
+                      ? moveAwayHeightValue * -1
+                      : -360;
+
+                  double topPosition =
+                      expandImageValue ? expandHeight : moveAwayHeight;
+                  if (topPosition == 0) {
+                    enableVerticalTapping.value = false;
+                  } else {
+                    enableVerticalTapping.value = true;
+                  }
+                  return AnimatedPositioned(
+                    top: topPosition,
+                    duration: const Duration(milliseconds: 350),
+                    child: Column(
+                      children: [
+                        normalAppBar(),
+                        buildImageView(
+                            whiteColor, expandedHeightValue, topPosition),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget normalGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
-    return Column(
-      children: [
-        normalAppBar(),
-        Expanded(
-          child: GridView.builder(
-            gridDelegate: widget.gridDelegate,
-            itemBuilder: (context, index) {
-              return buildImage(mediaListValue, index);
-            },
-            itemCount: mediaListValue.length,
-          ),
+    return GridView.builder(
+      gridDelegate: widget.gridDelegate,
+      itemBuilder: (context, index) {
+        return buildImage(mediaListValue, index);
+      },
+      itemCount: mediaListValue.length,
+    );
+  }
+
+  Widget buildImageView(
+      Color whiteColor, double expandedHeightValue, double topPositionValue) {
+    return ValueListenableBuilder(
+      valueListenable: enableVerticalTapping,
+      builder: (context, bool enableTappingValue, child) => GestureDetector(
+        onVerticalDragUpdate: enableTappingValue
+            ? (details) {
+                expandImageView.value = true;
+                expandHeight.value = details.globalPosition.dy;
+              }
+            : null,
+        onVerticalDragEnd: enableTappingValue
+            ? (details) {
+                expandHeight.value = expandedHeightValue > 260 ? 360 : 0;
+                if (topPositionValue == -360) {
+                  enableVerticalTapping.value = true;
+                }
+                if (topPositionValue == 0) enableVerticalTapping.value = false;
+              }
+            : null,
+        child: ValueListenableBuilder(
+          valueListenable: selectedImage,
+          builder: (context, File? selectedImageValue, child) {
+            if (selectedImageValue != null) {
+              return showSelectedImage(context, selectedImageValue, whiteColor);
+            } else {
+              return Container(key: GlobalKey(debugLabel: "do not have"));
+            }
+          },
         ),
-      ],
+      ),
     );
   }
 
@@ -953,6 +1048,9 @@ class CustomGalleryState extends State<CustomGallery>
               if (close) return;
             }
             selectedImage.value = image;
+            expandImageView.value = true;
+            expandHeight.value = 0;
+            enableVerticalTapping.value = false;
           });
         },
         onLongPress: () {
@@ -963,6 +1061,9 @@ class CustomGalleryState extends State<CustomGallery>
         onLongPressUp: () {
           selectionImageCheck(image, multiSelectedImage.value,
               enableCopy: true);
+          expandImageView.value = true;
+          expandHeight.value = 0;
+          enableVerticalTapping.value = false;
         },
         child: childWidget);
   }

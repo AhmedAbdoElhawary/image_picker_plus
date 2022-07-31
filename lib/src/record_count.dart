@@ -52,7 +52,6 @@ class RecordCountState extends State<RecordCount>
     );
 
     controller.addListener(() {
-      notify();
       if (controller.isAnimating) {
         setState(() {
           progress = controller.value;

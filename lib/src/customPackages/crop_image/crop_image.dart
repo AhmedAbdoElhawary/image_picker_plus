@@ -193,7 +193,11 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
   }
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
+  Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    return SizedBox(
+      width: width,
+      child: ConstrainedBox(
         constraints: const BoxConstraints.expand(),
         child: Listener(
           onPointerDown: (event) => pointers++,
@@ -222,7 +226,9 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   void _activate() {
     _activeController.animateTo(
@@ -314,7 +320,6 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
     if (aspectRatio != null) {
       _maxAreaWidthMap[aspectRatio] = width;
     }
-
     return Rect.fromLTWH((1.0 - width) / 2, (1.0 - height) / 2, width, height);
   }
 
@@ -493,7 +498,6 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
         _action = _CropAction.cropping;
       }
     }
-
     if (_action == _CropAction.cropping) {
       final boundaries = _boundaries;
       if (boundaries == null) {
@@ -530,7 +534,6 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
         final dy = boundaries.height *
             (1.0 - details.scale) /
             (image.height * _scale * _ratio);
-
         _view = Rect.fromLTWH(
           _startView.left + dx / 2,
           _startView.top + dy / 2,
@@ -598,7 +601,8 @@ class _CropPainter extends CustomPainter {
         image.width * scale * ratio,
         image.height * scale * ratio,
       );
-
+      print(
+          "view.bottom: ${view.bottom}, view.top: ${view.top} ---------------------------------------->");
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(0.0, 0.0, rect.width, rect.height));
       canvas.drawImageRect(image, src, dst, paint);
@@ -631,6 +635,14 @@ class _CropPainter extends CustomPainter {
     canvas.restore();
   }
 
+  // I/flutter (14842): boundaries.top: 0.0
+  // I/flutter (14842): boundaries.bottom: 360.0
+  // I/flutter (14842): boundaries.left: 0.0
+  // I/flutter (14842): boundaries.right: 360.0
+  // I/flutter (14842): rect.width: 360.0
+  // I/flutter (14842): rect.height: 360.0
+  // I/flutter (14842): area.left: 0.0
+  // I/flutter (14842): area.top: 0.0
   void _drawGrid(Canvas canvas, Rect boundaries) {
     if (active == 0.0) return;
 
@@ -646,7 +658,6 @@ class _CropPainter extends CustomPainter {
       ..lineTo(boundaries.right, boundaries.bottom)
       ..lineTo(boundaries.left, boundaries.bottom)
       ..lineTo(boundaries.left, boundaries.top);
-
     for (var column = 1; column < _kCropGridColumnCount; column++) {
       path
         ..moveTo(
