@@ -10,8 +10,12 @@ import 'package:custom_gallery_display/src/selected_image_details.dart';
 import 'package:custom_gallery_display/src/tabs_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+import 'package:image/image.dart' as img;
 
 enum Flash { off, auto, on }
+
+typedef CustomAsyncValueSetter<A, B, C> = A Function(B value, C value2);
 
 // ignore: must_be_immutable
 class CustomCameraDisplay extends StatefulWidget {
@@ -26,9 +30,9 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueNotifier<bool> redDeleteText;
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
-  late ValueNotifier<Future<void>> initializeControllerFuture;
+  late ValueNotifier<void> initializeControllerFuture;
   final AsyncValueSetter<SelectedImageDetails> moveToPage;
-  final AsyncValueSetter<int> onNewCameraSelected;
+  final CustomAsyncValueSetter<Future<void>, int, bool> onNewCameraSelected;
 
   ValueNotifier<List<CameraDescription>>? cameras;
 
@@ -77,128 +81,141 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  FutureBuilder buildBody() {
+  Widget buildBody() {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
-    return FutureBuilder<void>(
-      future: widget.initializeControllerFuture.value,
-      builder: (BuildContext context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Stack(
-            children: [
-              Container(
-                  width: double.infinity,
-                  color: Colors.blue,
-                  child: CameraPreview(widget.controller.value)),
-              if (selectedImage != null)
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                      color: whiteColor,
-                      height: 360,
-                      width: double.infinity,
-                      child: Crop.file(
-                        selectedImage,
-                        key: cropKey,
-                        alwaysShowGrid: true,
-                        paintColor: widget.appTheme.primaryColor,
-                      )),
-                ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  onPressed: () {
-                    if (widget.cameras!.value.length > 1) {
-                      setState(() {
-                        selectedCamera = selectedCamera == 0 ? 1 : 0;
-                        widget.onNewCameraSelected(selectedCamera);
-                      });
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(widget.tapsNames.notFoundingCameraName),
-                        duration: const Duration(seconds: 2),
-                      ));
-                    }
-                  },
-                  icon: const Icon(Icons.flip_camera_android_rounded,
-                      color: Colors.white),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      currentFlashMode = currentFlashMode == Flash.off
-                          ? Flash.auto
-                          : (currentFlashMode == Flash.auto
-                              ? Flash.on
-                              : Flash.off);
-                    });
-                    currentFlashMode == Flash.on
-                        ? widget.controller.value.setFlashMode(FlashMode.torch)
-                        : currentFlashMode == Flash.off
-                            ? widget.controller.value
-                                .setFlashMode(FlashMode.off)
-                            : widget.controller.value
-                                .setFlashMode(FlashMode.auto);
-                  },
-                  icon: Icon(
-                      currentFlashMode == Flash.on
-                          ? Icons.flash_on_rounded
-                          : (currentFlashMode == Flash.auto
-                              ? Icons.flash_auto_rounded
-                              : Icons.flash_off_rounded),
-                      color: Colors.white),
-                ),
-              ),
-              Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    height: 270,
-                    color: whiteColor,
-                    width: double.infinity,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 1.0),
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: RecordCount(
-                              appTheme: widget.appTheme,
-                              startVideoCount: startVideoCount,
-                              makeProgressRed: widget.redDeleteText,
-                              clearVideoRecord: widget.clearVideoRecord,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Stack(
-                          alignment: Alignment.topCenter,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(60),
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: cameraButton(context),
-                              ),
-                            ),
-                            Positioned(
-                                bottom: 120, child: videoStatusAnimation),
-                          ],
-                        ),
-                        const Spacer(),
-                      ],
+    return Stack(
+      children: [
+        if (selectedImage == null) ...[
+          Container(
+            width: double.infinity,
+            color: Colors.blue,
+            child: CameraPreview(widget.controller.value),
+          ),
+        ] else ...[
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              color: whiteColor,
+              height: 360,
+              width: double.infinity,
+              child: selectedCamera == 0
+                  ? buildCrop(selectedImage)
+                  : Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.rotationY(math.pi),
+                      child: buildCrop(selectedImage),
                     ),
-                  )),
-            ],
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 1));
-        }
-      },
+            ),
+          )
+        ],
+        buildRotationIcon(context),
+        buildFlashIcons(),
+        buildPickImageContainer(whiteColor, context),
+      ],
+    );
+  }
+
+  Align buildPickImageContainer(Color whiteColor, BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        height: 270,
+        color: whiteColor,
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 1.0),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: RecordCount(
+                  appTheme: widget.appTheme,
+                  startVideoCount: startVideoCount,
+                  makeProgressRed: widget.redDeleteText,
+                  clearVideoRecord: widget.clearVideoRecord,
+                ),
+              ),
+            ),
+            const Spacer(),
+            Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(60),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: cameraButton(context),
+                  ),
+                ),
+                Positioned(bottom: 120, child: videoStatusAnimation),
+              ],
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Align buildFlashIcons() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: IconButton(
+        onPressed: () {
+          setState(() {
+            currentFlashMode = currentFlashMode == Flash.off
+                ? Flash.auto
+                : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
+          });
+          currentFlashMode == Flash.on
+              ? widget.controller.value.setFlashMode(FlashMode.torch)
+              : currentFlashMode == Flash.off
+                  ? widget.controller.value.setFlashMode(FlashMode.off)
+                  : widget.controller.value.setFlashMode(FlashMode.auto);
+        },
+        icon: Icon(
+            currentFlashMode == Flash.on
+                ? Icons.flash_on_rounded
+                : (currentFlashMode == Flash.auto
+                    ? Icons.flash_auto_rounded
+                    : Icons.flash_off_rounded),
+            color: Colors.white),
+      ),
+    );
+  }
+
+  Align buildRotationIcon(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: IconButton(
+        onPressed: () async {
+          if (widget.cameras!.value.length > 1) {
+            setState(() {
+              selectedCamera = selectedCamera == 0 ? 1 : 0;
+              widget.onNewCameraSelected(selectedCamera, false);
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(widget.tapsNames.notFoundingCameraName),
+              duration: const Duration(seconds: 2),
+            ));
+          }
+        },
+        icon:
+            const Icon(Icons.flip_camera_android_rounded, color: Colors.white),
+      ),
+    );
+  }
+
+  Crop buildCrop(File selectedImage) {
+    return Crop.file(
+      selectedImage,
+      key: cropKey,
+      alwaysShowGrid: true,
+      paintColor: widget.appTheme.primaryColor,
     );
   }
 
@@ -287,25 +304,31 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   onPress() async {
-    if (!widget.selectedVideo) {
-      try {
-        await widget.initializeControllerFuture.value;
+    try {
+      if (!widget.selectedVideo) {
         final image = await widget.controller.value.takePicture();
         File selectedImage = File(image.path);
 
+        /// To fix the orientation of the front camera
+        if (selectedCamera == 1) {
+          List<int> imageBytes = await selectedImage.readAsBytes();
+          final originalImage = img.decodeImage(imageBytes);
+          if (originalImage != null) {
+            img.Image fixedImage;
+            fixedImage = img.copyRotate(originalImage, -360);
+            selectedImage =
+                await selectedImage.writeAsBytes(img.encodeJpg(fixedImage));
+          }
+        }
         setState(() {
           widget.selectedCameraImage.value = selectedImage;
           widget.replacingTabBar(true);
         });
-      } catch (e) {
-        if (kDebugMode) {
-          print(e);
-        }
+      } else {
+        setState(() => videoStatusAnimation = buildFadeAnimation());
       }
-    } else {
-      setState(() {
-        videoStatusAnimation = buildFadeAnimation();
-      });
+    } catch (e) {
+      if (kDebugMode) print(e);
     }
   }
 
