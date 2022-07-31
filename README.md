@@ -6,7 +6,7 @@ I have two main views of the gallery to solve this issue:
 - It looks like the Instagram gallery.
 - It's a grid view of gallery images.
 
-You can even customize a display of a camera to take a photo and video from two perspectives 
+You can even customize a display of a camera to take a photo and video from two perspectives
 
 <p align="left">
   <a href="https://pub.dartlang.org/packages/custom_gallery_display">
@@ -207,24 +207,24 @@ CustomGallery.normalDisplay(
 /// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
 
 CustomGallery.normalDisplay(
-              enableVideo: true,
-              enableCamera: true,
-              appTheme: AppTheme(
-                  focusColor: Colors.white, primaryColor: Colors.black),
-              tabsTexts: TabsTexts(
-                videoText: "視頻",
-                photoText: "照片",
-                galleryText: "畫廊",
-                deletingText: "刪除",
-                clearImagesText: "清除所選圖像",
-                limitingText: "限制為 10 張照片或視頻",
-              ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-                childAspectRatio: .5,
-              ),
-              sendRequestFunction: (_) async {},
-            )
+                enableVideo: true,
+                enableCamera: true,
+                appTheme: AppTheme(
+                    focusColor: Colors.white, primaryColor: Colors.black),
+                tabsTexts: TabsTexts(
+                    videoText: "視頻",
+                    photoText: "照片",
+                    galleryText: "畫廊",
+                    deletingText: "刪除",
+                    clearImagesText: "清除所選圖像",
+                    limitingText: "限制為 10 張照片或視頻",
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 1.7,
+                    mainAxisSpacing: 1.5,
+                    childAspectRatio: .5,
+                ),
+                sendRequestFunction: (_) async {},
+              )
 ```
