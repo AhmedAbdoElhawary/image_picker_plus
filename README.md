@@ -129,7 +129,7 @@ CustomGallery.instagramDisplay(
                 crossAxisSpacing: 1.7,
                 mainAxisSpacing: 1.5,
               ), // It's by default
-                sendRequestFunction: (SelectedImageDetails details) async {
+                sendRequestFunction: (SelectedImagesDetails details) async {
                 // You can take this variables and push to another page
                 bool multiSelectionMode = details.multiSelectionMode;
                 bool isThatImage = details.isThatImage;
@@ -156,7 +156,7 @@ CustomGallery.normalDisplay(
               enableVideo: false, // It's false by default
               appTheme: AppTheme(
                   focusColor: Colors.black, primaryColor: Colors.white),
-                sendRequestFunction: (SelectedImageDetails details) async {
+                sendRequestFunction: (SelectedImagesDetails details) async {
                 // You can take this variables and push to another page
                 bool multiSelectionMode = details.multiSelectionMode;
                 bool isThatImage = details.isThatImage;
