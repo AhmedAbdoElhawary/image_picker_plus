@@ -1,3 +1,6 @@
+## 0.3.3
+* rename tabs texts
+
 ## 0.3.2
 * solve box constraints bug
 
