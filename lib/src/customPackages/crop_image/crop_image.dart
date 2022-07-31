@@ -633,14 +633,6 @@ class _CropPainter extends CustomPainter {
     canvas.restore();
   }
 
-  // I/flutter (14842): boundaries.top: 0.0
-  // I/flutter (14842): boundaries.bottom: 360.0
-  // I/flutter (14842): boundaries.left: 0.0
-  // I/flutter (14842): boundaries.right: 360.0
-  // I/flutter (14842): rect.width: 360.0
-  // I/flutter (14842): rect.height: 360.0
-  // I/flutter (14842): area.left: 0.0
-  // I/flutter (14842): area.top: 0.0
   void _drawGrid(Canvas canvas, Rect boundaries) {
     if (active == 0.0) return;
 
