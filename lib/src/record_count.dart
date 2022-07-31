@@ -1,6 +1,5 @@
 import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 class RecordCount extends StatefulWidget {
   final ValueNotifier<bool> startVideoCount;
@@ -36,12 +35,6 @@ class RecordCountState extends State<RecordCount>
   }
 
   double progress = 0;
-
-  void notify() {
-    if (countText == '0:00') {
-      FlutterRingtonePlayer.playNotification();
-    }
-  }
 
   @override
   void initState() {

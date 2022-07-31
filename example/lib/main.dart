@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSpacing: 1.5,
                 childAspectRatio: .5,
               ),
-              moveToPage: moveToPage,
+              sendRequestFunction: moveToPage,
             ),
           ),
         );
@@ -82,19 +82,19 @@ class _MyHomePageState extends State<MyHomePage> {
               enableVideo: true,
               appTheme: AppTheme(
                   focusColor: Colors.white, primaryColor: Colors.black),
-              tabsNames: TabsNames(
-                videoName: "فيديو",
-                galleryName: "المعرض",
-                deletingName: "حذف",
-                clearImagesName: "الغاء الصور المحدده",
-                limitingName: "اقصي حد للصور هو 10",
+              tabsTexts: TabsNames(
+                videoText: "فيديو",
+                galleryText: "المعرض",
+                deletingText: "حذف",
+                clearImagesText: "الغاء الصور المحدده",
+                limitingText: "اقصي حد للصور هو 10",
               ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 crossAxisSpacing: 1.7,
                 mainAxisSpacing: 1.5,
               ),
-              moveToPage: moveToPage,
+              sendRequestFunction: moveToPage,
             ),
           ),
         );
@@ -119,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSpacing: 1.5,
                 childAspectRatio: .5,
               ),
-              moveToPage: moveToPage,
+              sendRequestFunction: moveToPage,
             ),
           ),
         );
@@ -140,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSpacing: 1.5,
                 childAspectRatio: .5,
               ),
-              moveToPage: moveToPage,
+              sendRequestFunction: moveToPage,
             ),
           ),
         );
@@ -162,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisSpacing: 1.7,
                 mainAxisSpacing: 1.5,
               ),
-              moveToPage: moveToPage,
+              sendRequestFunction: moveToPage,
             ),
           ),
         );
@@ -177,7 +177,7 @@ class _MyHomePageState extends State<MyHomePage> {
         await Navigator.of(context).push(
           CupertinoPageRoute(
             builder: (context) =>
-                CustomGallery.instagramDisplay(moveToPage: moveToPage),
+                CustomGallery.instagramDisplay(sendRequestFunction: moveToPage),
           ),
         );
       },
@@ -185,13 +185,16 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> moveToPage(SelectedImageDetails details) async {
-    await Navigator.of(context).push(CupertinoPageRoute(
+  Future<void> moveToPage(SelectedImagesDetails details) async {
+    await Navigator.of(context).push(
+      CupertinoPageRoute(
         builder: (context) => SelectedImage(
             selectedFiles: details.selectedFiles != null
                 ? details.selectedFiles!
                 : [details.selectedFile],
-            aspectRatio: details.aspectRatio)));
+            aspectRatio: details.aspectRatio),
+      ),
+    );
   }
 }
 

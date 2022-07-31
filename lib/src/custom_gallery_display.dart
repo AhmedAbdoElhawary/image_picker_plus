@@ -22,12 +22,12 @@ enum Display { instagram, normal, getImages }
 class CustomGallery extends StatefulWidget {
   final Display display;
   final AppTheme? appTheme;
-  final TabsNames? tabsNames;
+  final TabsNames? tabsTexts;
   final bool enableCamera;
   final bool enableVideo;
   final bool cropImage;
   final SliverGridDelegate gridDelegate;
-  final AsyncValueSetter<SelectedImageDetails> moveToPage;
+  final AsyncValueSetter<SelectedImagesDetails> sendRequestFunction;
 
   const CustomGallery.instagramDisplay({
     Key? key,
@@ -36,11 +36,11 @@ class CustomGallery extends StatefulWidget {
       crossAxisSpacing: 1.7,
       mainAxisSpacing: 1.5,
     ),
-    this.tabsNames,
+    this.tabsTexts,
     this.cropImage = true,
     this.enableCamera = true,
     this.enableVideo = true,
-    required this.moveToPage,
+    required this.sendRequestFunction,
     this.appTheme,
   })  : display = Display.instagram,
         super(key: key);
@@ -53,10 +53,10 @@ class CustomGallery extends StatefulWidget {
       mainAxisSpacing: 1.5,
       childAspectRatio: .5,
     ),
-    this.tabsNames,
+    this.tabsTexts,
     this.enableCamera = false,
     this.enableVideo = false,
-    required this.moveToPage,
+    required this.sendRequestFunction,
     this.appTheme,
   })  : display = Display.normal,
         cropImage = false,
@@ -108,7 +108,7 @@ class CustomGalleryState extends State<CustomGallery>
   @override
   void initState() {
     appTheme = widget.appTheme ?? AppTheme();
-    tapsNames = widget.tabsNames ?? TabsNames();
+    tapsNames = widget.tabsTexts ?? TabsNames();
     _initializeCamera(0, true);
     isImagesReady.value = false;
     int lengthOfTabs = 1;
@@ -227,7 +227,7 @@ class CustomGalleryState extends State<CustomGallery>
                 children: <Widget>[
                   Positioned.fill(
                     child: MemoryImageDisplay(
-                        imageFile: image, appTheme: appTheme),
+                        imageBytes: image, appTheme: appTheme),
                   ),
                   if (media[i].type == AssetType.video)
                     const Align(
@@ -333,8 +333,8 @@ class CustomGalleryState extends State<CustomGallery>
                     color: deleteColor, size: 15),
               Text(
                   isThatDeleteText
-                      ? tapsNames.deletingName
-                      : tapsNames.limitingName,
+                      ? tapsNames.deletingText
+                      : tapsNames.limitingText,
                   style: TextStyle(
                       fontSize: 14,
                       color: deleteColor,
@@ -363,7 +363,7 @@ class CustomGalleryState extends State<CustomGallery>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(tapsNames.clearImagesName,
+              Text(tapsNames.clearImagesText,
                   style: TextStyle(
                       fontSize: 14,
                       color: appTheme.focusColor,
@@ -430,7 +430,7 @@ class CustomGalleryState extends State<CustomGallery>
                         replacingTabBar: replacingDeleteWidget,
                         clearVideoRecord: clearVideoRecord,
                         redDeleteText: redDeleteText,
-                        moveToPage: widget.moveToPage,
+                        moveToPage: widget.sendRequestFunction,
                         moveToVideoScreen: moveToVideo,
                         selectedVideo: selectedVideoValue,
                       ),
@@ -535,7 +535,7 @@ class CustomGalleryState extends State<CustomGallery>
                           centerPage(
                               numPage: 0, selectedPage: SelectedPage.left);
                         },
-                        child: Text(tapsNames.galleryName,
+                        child: Text(tapsNames.galleryText,
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w500)),
                       ),
@@ -590,7 +590,7 @@ class CustomGalleryState extends State<CustomGallery>
       onTap: () {
         centerPage(numPage: 1, selectedPage: SelectedPage.center);
       },
-      child: Text(tapsNames.photoName,
+      child: Text(tapsNames.photoText,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
     );
   }
@@ -619,7 +619,7 @@ class CustomGalleryState extends State<CustomGallery>
         child: ValueListenableBuilder(
           valueListenable: selectedVideo,
           builder: (context, bool selectedVideoValue, child) => Text(
-              tapsNames.videoName,
+              tapsNames.videoText,
               style: TextStyle(
                   fontSize: 14,
                   color: selectedVideoValue ? blackColor : Colors.grey,
@@ -669,12 +669,12 @@ class CustomGalleryState extends State<CustomGallery>
           if (image != null) {
             File? croppedImage = await cropImage(image);
             if (croppedImage != null) {
-              SelectedImageDetails details = SelectedImageDetails(
+              SelectedImagesDetails details = SelectedImagesDetails(
                 selectedFile: croppedImage,
                 multiSelectionMode: false,
                 aspectRatio: aspect,
               );
-              widget.moveToPage(details);
+              widget.sendRequestFunction(details);
             }
           }
         } else {
@@ -686,13 +686,13 @@ class CustomGalleryState extends State<CustomGallery>
             }
           }
           if (selectedImages.isNotEmpty) {
-            SelectedImageDetails details = SelectedImageDetails(
+            SelectedImagesDetails details = SelectedImagesDetails(
               selectedFile: selectedImages[0],
               selectedFiles: selectedImages,
               multiSelectionMode: true,
               aspectRatio: aspect,
             );
-            widget.moveToPage(details);
+            widget.sendRequestFunction(details);
           }
         }
       },

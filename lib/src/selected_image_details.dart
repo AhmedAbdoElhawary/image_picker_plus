@@ -1,13 +1,13 @@
 import 'dart:io';
 
-class SelectedImageDetails {
+class SelectedImagesDetails {
   File selectedFile;
   List<File>? selectedFiles;
   bool isThatImage;
   double aspectRatio;
   bool multiSelectionMode;
 
-  SelectedImageDetails({
+  SelectedImagesDetails({
     this.selectedFiles,
     this.isThatImage = true,
     required this.aspectRatio,
