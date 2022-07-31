@@ -82,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
               enableVideo: true,
               appTheme: AppTheme(
                   focusColor: Colors.white, primaryColor: Colors.black),
-              tabsTexts: TabsNames(
+              tabsTexts: TabsTexts(
                 videoText: "فيديو",
                 galleryText: "المعرض",
                 deletingText: "حذف",
