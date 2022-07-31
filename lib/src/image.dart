@@ -47,7 +47,7 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
   Widget buildSizedBox() {
     return Container(
       width: double.infinity,
-      color: Colors.black26,
+      color: widget.appTheme.shimmerBaseColor,
     );
   }
 }
