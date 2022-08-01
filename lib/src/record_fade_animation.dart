@@ -11,10 +11,7 @@ class RecordFadeAnimation extends StatefulWidget {
 
 class RecordFadeAnimationState extends State<RecordFadeAnimation>
     with TickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    duration: const Duration(seconds: 2),
-    vsync: this,
-  );
+  late AnimationController _controller;
   late final Animation<double> _animation = CurvedAnimation(
     parent: _controller,
     curve: Curves.fastOutSlowIn,
@@ -28,14 +25,17 @@ class RecordFadeAnimationState extends State<RecordFadeAnimation>
 
   @override
   void initState() {
-    super.initState();
+    _controller =
+        AnimationController(duration: const Duration(seconds: 1), vsync: this);
     _controller.addListener(() async {
       if (_controller.isCompleted) {
-        await Future.delayed(const Duration(seconds: 2)).then((value) {
+        await Future.delayed(const Duration(seconds: 3)).then((value) {
           _controller.reverse();
         });
       }
     });
+    super.initState();
+
   }
 
   @override
