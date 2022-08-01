@@ -907,58 +907,54 @@ class CustomGalleryState extends State<CustomGallery>
     return ValueListenableBuilder(
       valueListenable: expandHeight,
       builder: (context, double expandedHeightValue, child) {
-        return Stack(
-          clipBehavior: Clip.antiAlias,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (ScrollNotification notification) {
-                  expandImageView.value = false;
-                  moveAwayHeight.value = scrollController.position.pixels;
-                  if (notification is ScrollEndNotification) {
-                    expandHeight.value = expandedHeightValue > 240 ? 360 : 0;
-                  }
-                  _handleScrollEvent(notification,
-                      currentPageValue: currentPageValue,
-                      lastPageValue: lastPageValue);
-                  return true;
-                },
-                /// I avoid make column with singleChildScrollView because the dropping in frames
-                child: GridView.builder(
-                  gridDelegate: widget.gridDelegate,
-                  controller: scrollController,
-                  itemBuilder: (context, index) {
-                    if (index == 0) return const SizedBox(height: 420);
-                    return buildImage(mediaListValue, index);
-                  },
+        return ValueListenableBuilder(
+          valueListenable: moveAwayHeight,
+          builder: (context, double moveAwayHeightValue, child) =>
+              ValueListenableBuilder(
+            valueListenable: expandImageView,
+            builder: (context, bool expandImageValue, child) {
+              double a = expandedHeightValue - 360;
+              double expandHeightV = a < 0 ? a : 0;
+              double moveAwayHeightV =
+                  moveAwayHeightValue < 360 ? moveAwayHeightValue * -1 : -360;
+              double topPosition =
+                  expandImageValue ? expandHeightV : moveAwayHeightV;
+              enableVerticalTapping.value = !(topPosition == 0);
+              return Stack(
+                clipBehavior: Clip.antiAlias,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(top:expandImageValue ? 62 :  topPosition + 422),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification notification) {
+                        expandImageView.value = false;
+                        moveAwayHeight.value = scrollController.position.pixels;
+                        if (notification is ScrollEndNotification) {
+                          expandHeight.value =
+                              expandedHeightValue > 240 ? 360 : 0;
+                        }
+                        _handleScrollEvent(notification,
+                            currentPageValue: currentPageValue,
+                            lastPageValue: lastPageValue);
+                        return true;
+                      },
 
-                  itemCount: mediaListValue.length + 1,
-                ),
-              ),
-            ),
-            ValueListenableBuilder(
-              valueListenable: moveAwayHeight,
-              builder: (context, double moveAwayHeightValue, child) =>
-                  ValueListenableBuilder(
-                valueListenable: expandImageView,
-                builder: (context, bool expandImageValue, child) {
-                  double a = expandedHeightValue - 360;
-                  double expandHeight = a < 0 ? a : 0;
-                  double moveAwayHeight = moveAwayHeightValue < 360
-                      ? moveAwayHeightValue * -1
-                      : -360;
-
-                  double topPosition =
-                      expandImageValue ? expandHeight : moveAwayHeight;
-                  if (topPosition == 0) {
-                    enableVerticalTapping.value = false;
-                  } else {
-                    enableVerticalTapping.value = true;
-                  }
-                  return AnimatedPositioned(
+                      /// I avoid make column with singleChildScrollView because the dropping in frames
+                      child: GridView.builder(
+                        gridDelegate: widget.gridDelegate,
+                        controller: scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return buildImage(mediaListValue, index);
+                        },
+                        itemCount: mediaListValue.length,
+                      ),
+                    ),
+                  ),
+                  AnimatedPositioned(
                     top: topPosition,
-                    duration: const Duration(milliseconds: 250),
+                    duration: Duration(
+                        milliseconds: moveAwayHeightValue < 420 ? 0 : 250),
                     child: Column(
                       children: [
                         normalAppBar(),
@@ -966,15 +962,20 @@ class CustomGalleryState extends State<CustomGallery>
                             whiteColor, expandedHeightValue, topPosition),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
   }
+
+  Container container() => Container(
+        height: 620,
+        color: Colors.red,
+      );
 
   Widget normalGridView(List<FutureBuilder<Uint8List?>> mediaListValue,
       int currentPageValue, int lastPageValue) {
@@ -986,6 +987,7 @@ class CustomGalleryState extends State<CustomGallery>
       },
       child: GridView.builder(
         gridDelegate: widget.gridDelegate,
+        physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           return buildImage(mediaListValue, index);
         },
