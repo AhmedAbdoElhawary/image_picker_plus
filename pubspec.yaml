@@ -1,6 +1,6 @@
 name: custom_gallery_display
-description: It is like instagram gallery display and custom of camera and video
-version: 0.3.3+1
+description: Customization of the gallery display or even camera and video.
+version: 0.3.4
 homepage: https://github.com/AhmedAbdoElhawary/custom_gallery_display.git
 
 environment:
@@ -16,7 +16,6 @@ dependencies:
   octo_image: ^1.0.2
   camera: ^0.10.0
   image: ^3.2.0
-
 
 dev_dependencies:
   flutter_test:
