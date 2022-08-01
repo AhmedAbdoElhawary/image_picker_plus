@@ -84,7 +84,7 @@ class CustomGalleryState extends State<CustomGallery>
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
   ValueNotifier<bool> isImagesReady = ValueNotifier(true);
   ValueNotifier<bool> expandImage = ValueNotifier(false);
-  ValueNotifier<int> selectedPaged = ValueNotifier(0);
+  // ValueNotifier<int> selectedPaged = ValueNotifier(0);
   ValueNotifier<double> expandHeight = ValueNotifier(0);
   ValueNotifier<double> moveAwayHeight = ValueNotifier(0);
   ValueNotifier<bool> expandImageView = ValueNotifier(false);
@@ -94,10 +94,10 @@ class CustomGalleryState extends State<CustomGallery>
 
   final remove = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
-  int currentPage = 0;
+  ValueNotifier<int> currentPage = ValueNotifier(0);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
-  late int lastPage;
+  ValueNotifier<int> lastPage = ValueNotifier(0);
   late AppTheme appTheme;
   late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
@@ -118,7 +118,7 @@ class CustomGalleryState extends State<CustomGallery>
     }
     tabController =
         ValueNotifier(TabController(length: lengthOfTabs, vsync: this));
-    _fetchNewMedia();
+    _fetchNewMedia(currentPageValue: 0, lastPageValue: 0);
     super.initState();
   }
 
@@ -139,22 +139,44 @@ class CustomGalleryState extends State<CustomGallery>
   @override
   void dispose() {
     initializeControllerFuture.dispose();
+    multiSelectionMode.dispose();
+    showDeleteText.dispose();
+    selectedVideo.dispose();
+    allImages.dispose();
+    isImagesReady.dispose();
+    expandImage.dispose();
+    // selectedPaged.dispose();
+    expandHeight.dispose();
+    moveAwayHeight.dispose();
+    expandImageView.dispose();
+    enableVerticalTapping.dispose();
+    remove.dispose();
+    stopScrollTab.dispose();
+    selectedCameraImage.dispose();
+    selectedImage.dispose();
+    tabController.dispose();
+    clearVideoRecord.dispose();
+    redDeleteText.dispose();
+    _mediaList.dispose();
     cameras!.dispose();
     super.dispose();
   }
 
-  bool _handleScrollEvent(ScrollNotification scroll) {
+  bool _handleScrollEvent(ScrollNotification scroll,
+      {required int currentPageValue, required int lastPageValue}) {
     if (scroll.metrics.pixels / scroll.metrics.maxScrollExtent > 0.33) {
-      if (currentPage != lastPage) {
-        _fetchNewMedia();
+      if (currentPageValue != lastPageValue) {
+        _fetchNewMedia(
+            currentPageValue: currentPageValue, lastPageValue: lastPageValue);
         return true;
       }
     }
     return false;
   }
 
-  _fetchNewMedia() async {
-    lastPage = currentPage;
+  _fetchNewMedia(
+      {required int currentPageValue, required int lastPageValue}) async {
+    lastPage.value = currentPageValue;
     var result = await PhotoManager.requestPermissionExtend();
     if (result.isAuth) {
       List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
@@ -168,7 +190,7 @@ class CustomGalleryState extends State<CustomGallery>
             .addPostFrameCallback((_) => setState(() => noImages = false));
       }
       List<AssetEntity> media =
-          await albums[0].getAssetListPaged(page: currentPage, size: 60);
+          await albums[0].getAssetListPaged(page: currentPageValue, size: 60);
       List<FutureBuilder<Uint8List?>> temp = [];
       List<File?> imageTemp = [];
       for (int i = 0; i < media.length; i++) {
@@ -179,14 +201,10 @@ class CustomGalleryState extends State<CustomGallery>
         temp.add(gridViewImage);
         imageTemp.add(image);
       }
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        setState(() {
-          _mediaList.value.addAll(temp);
-          allImages.value.addAll(imageTemp);
-          currentPage++;
-          isImagesReady.value = true;
-        });
-      });
+      _mediaList.value.addAll(temp);
+      allImages.value.addAll(imageTemp);
+      currentPage.value++;
+      isImagesReady.value = true;
     } else {
       await PhotoManager.requestPermissionExtend();
       PhotoManager.openSetting();
@@ -375,12 +393,14 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   moveToVideo() {
-    selectedPaged.value = 2;
-    selectedPage.value = SelectedPage.right;
-    tabController.value.animateTo(1);
-    selectedVideo.value = true;
-    stopScrollTab.value = true;
-    remove.value = true;
+    // selectedPaged.value = 2;
+    setState(() {
+      selectedPage.value = SelectedPage.right;
+      tabController.value.animateTo(1);
+      selectedVideo.value = true;
+      stopScrollTab.value = true;
+      remove.value = true;
+    });
   }
 
   DefaultTabController defaultTabController() {
@@ -480,17 +500,29 @@ class CustomGalleryState extends State<CustomGallery>
             valueListenable: _mediaList,
             builder: (context, List<FutureBuilder<Uint8List?>> mediaListValue,
                 child) {
-              if (widget.display == Display.normal) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    normalAppBar(),
-                    Flexible(child: normalGridView(mediaListValue)),
-                  ],
-                );
-              } else {
-                return instagramGridView(mediaListValue);
-              }
+              return ValueListenableBuilder(
+                valueListenable: lastPage,
+                builder: (context, int lastPageValue, child) =>
+                    ValueListenableBuilder(
+                  valueListenable: currentPage,
+                  builder: (context, int currentPageValue, child) {
+                    if (widget.display == Display.normal) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          normalAppBar(),
+                          Flexible(
+                              child: normalGridView(mediaListValue,
+                                  currentPageValue, lastPageValue)),
+                        ],
+                      );
+                    } else {
+                      return instagramGridView(
+                          mediaListValue, currentPageValue, lastPageValue);
+                    }
+                  },
+                ),
+              );
             },
           );
         } else {
@@ -527,8 +559,10 @@ class CustomGalleryState extends State<CustomGallery>
                     tabs: [
                       GestureDetector(
                         onTap: () {
-                          centerPage(
-                              numPage: 0, selectedPage: SelectedPage.left);
+                          setState(() {
+                            centerPage(
+                                numPage: 0, selectedPage: SelectedPage.left);
+                          });
                         },
                         child: Text(tapsNames.galleryText,
                             style: const TextStyle(
@@ -591,23 +625,27 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   centerPage({required int numPage, required SelectedPage selectedPage}) {
-    selectedPaged.value = numPage;
-    selectedPage = selectedPage;
-    tabController.value.animateTo(numPage);
-    selectedVideo.value = false;
-    stopScrollTab.value = false;
-    remove.value = false;
+    // selectedPaged.value = numPage;
+    setState(() {
+      this.selectedPage.value = selectedPage;
+      tabController.value.animateTo(numPage);
+      selectedVideo.value = false;
+      stopScrollTab.value = false;
+      remove.value = false;
+    });
   }
 
   GestureDetector videoTabBar(Color blackColor) {
     return GestureDetector(
       onTap: () {
-        selectedPaged.value = 2;
-        tabController.value.animateTo(1);
-        selectedPage.value = SelectedPage.right;
-        selectedVideo.value = true;
-        stopScrollTab.value = true;
-        remove.value = true;
+        // selectedPaged.value = 2;
+        setState(() {
+          tabController.value.animateTo(1);
+          selectedPage.value = SelectedPage.right;
+          selectedVideo.value = true;
+          stopScrollTab.value = true;
+          remove.value = true;
+        });
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 40),
@@ -733,10 +771,13 @@ class CustomGalleryState extends State<CustomGallery>
             ValueListenableBuilder(
               valueListenable: expandImage,
               builder: (context, bool expandImageValue, child) => Crop.file(
-                  selectedImageValue,
-                  key: cropKey,
-                  alwaysShowGrid: true,
-                  aspectRatio: expandImageValue ? 6 / 8 : 1.0),
+                selectedImageValue,
+                key: cropKey,
+                paintColor: widget.appTheme != null
+                    ? widget.appTheme!.primaryColor
+                    : null,
+                aspectRatio: expandImageValue ? 6 / 8 : 1.0,
+              ),
             ),
             Align(
               alignment: Alignment.bottomRight,
@@ -862,7 +903,8 @@ class CustomGalleryState extends State<CustomGallery>
     }
   }
 
-  Widget instagramGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
+  Widget instagramGridView(List<FutureBuilder<Uint8List?>> mediaListValue,
+      int currentPageValue, int lastPageValue) {
     Color whiteColor = appTheme.primaryColor;
     return ValueListenableBuilder(
       valueListenable: expandHeight,
@@ -870,7 +912,6 @@ class CustomGalleryState extends State<CustomGallery>
         return Stack(
           clipBehavior: Clip.antiAlias,
           children: [
-            /// padding for
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: NotificationListener<ScrollNotification>(
@@ -880,26 +921,21 @@ class CustomGalleryState extends State<CustomGallery>
                   if (notification is ScrollEndNotification) {
                     expandHeight.value = expandedHeightValue > 240 ? 360 : 0;
                   }
-                  _handleScrollEvent(notification);
+                  _handleScrollEvent(notification,
+                      currentPageValue: currentPageValue,
+                      lastPageValue: lastPageValue);
                   return true;
                 },
-                child: SingleChildScrollView(
+                /// I avoid make column with singleChildScrollView because the dropping in frames
+                child: GridView.builder(
+                  gridDelegate: widget.gridDelegate,
                   controller: scrollController,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 420),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        primary: false,
-                        gridDelegate: widget.gridDelegate,
-                        itemBuilder: (context, index) {
-                          return buildImage(mediaListValue, index);
-                        },
-                        itemCount: mediaListValue.length,
-                      ),
-                    ],
-                  ),
+                  itemBuilder: (context, index) {
+                    if (index == 0) return const SizedBox(height: 420);
+                    return buildImage(mediaListValue, index);
+                  },
+
+                  itemCount: mediaListValue.length + 1,
                 ),
               ),
             ),
@@ -924,7 +960,7 @@ class CustomGalleryState extends State<CustomGallery>
                   }
                   return AnimatedPositioned(
                     top: topPosition,
-                    duration: const Duration(milliseconds: 400),
+                    duration: const Duration(milliseconds: 250),
                     child: Column(
                       children: [
                         normalAppBar(),
@@ -942,13 +978,21 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
-  Widget normalGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
-    return GridView.builder(
-      gridDelegate: widget.gridDelegate,
-      itemBuilder: (context, index) {
-        return buildImage(mediaListValue, index);
+  Widget normalGridView(List<FutureBuilder<Uint8List?>> mediaListValue,
+      int currentPageValue, int lastPageValue) {
+    return NotificationListener(
+      onNotification: (ScrollNotification notification) {
+        _handleScrollEvent(notification,
+            currentPageValue: currentPageValue, lastPageValue: lastPageValue);
+        return true;
       },
-      itemCount: mediaListValue.length,
+      child: GridView.builder(
+        gridDelegate: widget.gridDelegate,
+        itemBuilder: (context, index) {
+          return buildImage(mediaListValue, index);
+        },
+        itemCount: mediaListValue.length,
+      ),
     );
   }
 
@@ -998,13 +1042,6 @@ class CustomGalleryState extends State<CustomGallery>
               File? image = allImagesValue[index];
               if (image != null) {
                 bool imageSelected = multiSelectedImage.value.contains(image);
-                if (index == 0 && selectedImageValue == null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    setState(() {
-                      selectedImage.value = image;
-                    });
-                  });
-                }
                 return Stack(
                   children: [
                     gestureDetector(image, index, mediaList),
