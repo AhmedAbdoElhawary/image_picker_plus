@@ -1,3 +1,7 @@
+## 0.3.4
+* solve dropped frames issue in grid view when scrolling
+* solve issue in grid view when tap bar is moved
+
 ## 0.3.3+1
 * reformat the code
 ## 0.3.3
