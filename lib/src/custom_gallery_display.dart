@@ -69,35 +69,33 @@ class CustomGallery extends StatefulWidget {
 class CustomGalleryState extends State<CustomGallery>
     with TickerProviderStateMixin {
   late ValueNotifier<TabController> tabController;
-  ValueNotifier<bool> clearVideoRecord = ValueNotifier(false);
-  ValueNotifier<bool> redDeleteText = ValueNotifier(false);
+  final clearVideoRecord = ValueNotifier(false);
+  final redDeleteText = ValueNotifier(false);
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
-  ValueNotifier<SelectedPage> selectedPage = ValueNotifier(SelectedPage.left);
+  final selectedPage = ValueNotifier(SelectedPage.left);
   late ValueNotifier<void> initializeControllerFuture;
   final cropKey = GlobalKey<CropState>();
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
   late ValueNotifier<CameraController> controller;
-  ValueNotifier<bool> multiSelectionMode = ValueNotifier(false);
-  ValueNotifier<bool> showDeleteText = ValueNotifier(false);
-  ValueNotifier<bool> selectedVideo = ValueNotifier(false);
+  final multiSelectionMode = ValueNotifier(false);
+  final showDeleteText = ValueNotifier(false);
+  final selectedVideo = ValueNotifier(false);
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
-  ValueNotifier<bool> isImagesReady = ValueNotifier(true);
-  ValueNotifier<bool> expandImage = ValueNotifier(false);
-  // ValueNotifier<int> selectedPaged = ValueNotifier(0);
-  ValueNotifier<double> expandHeight = ValueNotifier(0);
-  ValueNotifier<double> moveAwayHeight = ValueNotifier(0);
-  ValueNotifier<bool> expandImageView = ValueNotifier(false);
+  final isImagesReady = ValueNotifier(true);
+  final expandImage = ValueNotifier(false);
+  final expandHeight = ValueNotifier(0.0);
+  final moveAwayHeight = ValueNotifier(0.0);
+  final expandImageView = ValueNotifier(false);
 
   /// To avoid lag when you interacting with image when it expanded
-  ValueNotifier<bool> enableVerticalTapping = ValueNotifier(false);
-
+  final enableVerticalTapping = ValueNotifier(false);
   final remove = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
-  ValueNotifier<int> currentPage = ValueNotifier(0);
+  final currentPage = ValueNotifier(0);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
-  ValueNotifier<int> lastPage = ValueNotifier(0);
+  final lastPage = ValueNotifier(0);
   late AppTheme appTheme;
   late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
@@ -145,12 +143,12 @@ class CustomGalleryState extends State<CustomGallery>
     allImages.dispose();
     isImagesReady.dispose();
     expandImage.dispose();
-    // selectedPaged.dispose();
     expandHeight.dispose();
     moveAwayHeight.dispose();
     expandImageView.dispose();
     enableVerticalTapping.dispose();
     remove.dispose();
+    selectedPage.dispose();
     stopScrollTab.dispose();
     selectedCameraImage.dispose();
     selectedImage.dispose();
@@ -159,6 +157,10 @@ class CustomGalleryState extends State<CustomGallery>
     redDeleteText.dispose();
     _mediaList.dispose();
     cameras!.dispose();
+    multiSelectedImage.dispose();
+    scrollController.dispose();
+    controller.dispose();
+
     super.dispose();
   }
 
@@ -393,7 +395,6 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   moveToVideo() {
-    // selectedPaged.value = 2;
     setState(() {
       selectedPage.value = SelectedPage.right;
       tabController.value.animateTo(1);
@@ -625,7 +626,6 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   centerPage({required int numPage, required SelectedPage selectedPage}) {
-    // selectedPaged.value = numPage;
     setState(() {
       this.selectedPage.value = selectedPage;
       tabController.value.animateTo(numPage);
@@ -638,7 +638,6 @@ class CustomGalleryState extends State<CustomGallery>
   GestureDetector videoTabBar(Color blackColor) {
     return GestureDetector(
       onTap: () {
-        // selectedPaged.value = 2;
         setState(() {
           tabController.value.animateTo(1);
           selectedPage.value = SelectedPage.right;
@@ -675,7 +674,6 @@ class CustomGalleryState extends State<CustomGallery>
         children: [
           existButton(blackColor),
           const Spacer(),
-          // SizedBox(width: 1),
           doneButton(),
         ],
       ),
