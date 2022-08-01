@@ -41,7 +41,7 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
     return SizedBox(
         width: double.infinity,
         child: Icon(Icons.warning_amber_rounded,
-            size: 50, color: widget.appTheme.focusColor));
+            color: widget.appTheme.focusColor));
   }
 
   Widget buildSizedBox() {
