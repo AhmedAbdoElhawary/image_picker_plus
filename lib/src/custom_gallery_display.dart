@@ -965,7 +965,6 @@ class CustomGalleryState extends State<CustomGallery>
                       child: GridView.builder(
                         gridDelegate: widget.gridDelegate,
                         controller: scrollController,
-                        physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
                           return buildImage(mediaListValue, index);
                         },

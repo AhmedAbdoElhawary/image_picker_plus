@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -188,33 +189,110 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> moveToPage(SelectedImagesDetails details) async {
     await Navigator.of(context).push(
       CupertinoPageRoute(
-        builder: (context) => SelectedImage(
-            selectedFiles: details.selectedFiles != null
-                ? details.selectedFiles!
-                : [details.selectedFile],
-            aspectRatio: details.aspectRatio),
+        builder: (context) {
+          if (details.isThatImage) {
+            return DisplayImages(
+                selectedFiles: details.selectedFiles != null
+                    ? details.selectedFiles!
+                    : [details.selectedFile],
+                aspectRatio: details.aspectRatio);
+          } else {
+            return DisplayVideo(
+                video: details.selectedFile, aspectRatio: details.aspectRatio);
+          }
+        },
       ),
     );
   }
 }
 
-class SelectedImage extends StatelessWidget {
+class DisplayImages extends StatelessWidget {
   final List<File> selectedFiles;
   final double aspectRatio;
-  const SelectedImage(
-      {Key? key, required this.selectedFiles, required this.aspectRatio})
-      : super(key: key);
+  const DisplayImages({
+    Key? key,
+    required this.selectedFiles,
+    required this.aspectRatio,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(elevation: 0),
+      appBar: AppBar(title: const Text('Image')),
       body: ListView.builder(
         itemBuilder: (context, index) {
           File image = selectedFiles[index];
           return SizedBox(width: double.infinity, child: Image.file(image));
         },
         itemCount: selectedFiles.length,
+      ),
+    );
+  }
+}
+
+class DisplayVideo extends StatefulWidget {
+  final File video;
+  final double aspectRatio;
+  const DisplayVideo({
+    Key? key,
+    required this.video,
+    required this.aspectRatio,
+  }) : super(key: key);
+
+  @override
+  State<DisplayVideo> createState() => _DisplayVideoState();
+}
+
+class _DisplayVideoState extends State<DisplayVideo> {
+  late VideoPlayerController _controller;
+  late Future<void> _initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(widget.video);
+    _initializeVideoPlayerFuture = _controller.initialize();
+    _controller.setLooping(true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Video')),
+      body: FutureBuilder(
+        future: _initializeVideoPlayerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            );
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            if (_controller.value.isPlaying) {
+              _controller.pause();
+            } else {
+              _controller.play();
+            }
+          });
+        },
+        child: Icon(
+          _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+        ),
       ),
     );
   }

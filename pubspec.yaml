@@ -13,7 +13,6 @@ dependencies:
   photo_manager: ^2.1.4
   shimmer: ^2.0.0
   image_crop: ^0.4.0
-  octo_image: ^1.0.2
   camera: ^0.10.0
   image: ^3.2.0
 

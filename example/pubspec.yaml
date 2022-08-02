@@ -14,6 +14,7 @@ dependencies:
 
   custom_gallery_display:  
     path: ../
+  video_player: ^2.4.5
 
   cupertino_icons: ^1.0.2
 

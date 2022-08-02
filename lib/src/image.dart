@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:flutter/material.dart';
-import 'package:octo_image/octo_image.dart';
 
 class MemoryImageDisplay extends StatefulWidget {
   final Uint8List imageBytes;
@@ -27,13 +26,14 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
     return buildOctoImage();
   }
 
-  OctoImage buildOctoImage() {
-    return OctoImage(
-      image: MemoryImage(widget.imageBytes),
-      errorBuilder: (context, url, error) => buildError(),
-      fit: BoxFit.cover,
+  Widget buildOctoImage() {
+   return Container(
       width: double.infinity,
-      placeholderBuilder: (context) => Center(child: buildSizedBox()),
+      color: widget.appTheme.shimmerBaseColor,
+      child: Image.memory(widget.imageBytes,
+        errorBuilder: (context, url, error) => buildError(),
+        fit: BoxFit.cover,
+        width: double.infinity,),
     );
   }
 
@@ -42,12 +42,5 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
         width: double.infinity,
         child: Icon(Icons.warning_amber_rounded,
             color: widget.appTheme.focusColor));
-  }
-
-  Widget buildSizedBox() {
-    return Container(
-      width: double.infinity,
-      color: widget.appTheme.shimmerBaseColor,
-    );
   }
 }
