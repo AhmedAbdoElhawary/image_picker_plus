@@ -20,7 +20,7 @@ class Crop extends StatefulWidget {
   final double? aspectRatio;
   final double maximumScale;
   final bool alwaysShowGrid;
-  final Color paintColor;
+  final Color? paintColor;
   final ImageErrorListener? onImageError;
   final ValueChanged<bool>? scrollCustomList;
 
@@ -29,7 +29,7 @@ class Crop extends StatefulWidget {
     required this.image,
     this.aspectRatio,
     this.maximumScale = 2.0,
-    this.paintColor = Colors.white,
+    this.paintColor,
     this.scrollCustomList,
     this.alwaysShowGrid = false,
     this.onImageError,
@@ -40,7 +40,7 @@ class Crop extends StatefulWidget {
     Key? key,
     double scale = 1.0,
     this.aspectRatio,
-    this.paintColor = Colors.white,
+    this.paintColor,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -218,7 +218,7 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
                     area: _area,
                     scale: _scale,
                     active: _activeController.value,
-                    paintColor: widget.paintColor,
+                    paintColor: widget.paintColor ?? Colors.white,
                   ),
                 );
               },

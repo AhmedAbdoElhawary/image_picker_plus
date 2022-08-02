@@ -350,24 +350,17 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   RecordFadeAnimation buildFadeAnimation() {
-    return RecordFadeAnimation(
-      child: buildMessage(),
-    );
+    return RecordFadeAnimation(child: buildMessage());
   }
 
-  Stack buildMessage() {
-    Color whiteColor = widget.appTheme.primaryColor;
+  Widget buildMessage() {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
         Container(
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(10.0)),
-            boxShadow: [
-              BoxShadow(
-                  blurRadius: 3, color: Colors.black, offset: Offset(1, 2))
-            ],
-            color: Color.fromARGB(255, 49, 49, 49),
+            color: Color.fromARGB(255, 54, 53, 53),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -375,7 +368,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
               children: [
                 Text(
                   widget.tapsNames.holdButtonText,
-                  style: TextStyle(color: whiteColor, fontSize: 12),
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
             ),

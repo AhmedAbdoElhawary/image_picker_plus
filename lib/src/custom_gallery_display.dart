@@ -69,41 +69,41 @@ class CustomGallery extends StatefulWidget {
 class CustomGalleryState extends State<CustomGallery>
     with TickerProviderStateMixin {
   late ValueNotifier<TabController> tabController;
-  ValueNotifier<bool> clearVideoRecord = ValueNotifier(false);
-  ValueNotifier<bool> redDeleteText = ValueNotifier(false);
+  final clearVideoRecord = ValueNotifier(false);
+  final redDeleteText = ValueNotifier(false);
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
-  ValueNotifier<SelectedPage> selectedPage = ValueNotifier(SelectedPage.left);
+  final selectedPage = ValueNotifier(SelectedPage.left);
   late ValueNotifier<void> initializeControllerFuture;
   final cropKey = GlobalKey<CropState>();
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
   late ValueNotifier<CameraController> controller;
-  ValueNotifier<bool> multiSelectionMode = ValueNotifier(false);
-  ValueNotifier<bool> showDeleteText = ValueNotifier(false);
-  ValueNotifier<bool> selectedVideo = ValueNotifier(false);
+  final multiSelectionMode = ValueNotifier(false);
+  final showDeleteText = ValueNotifier(false);
+  final selectedVideo = ValueNotifier(false);
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
-  ValueNotifier<bool> isImagesReady = ValueNotifier(true);
-  ValueNotifier<bool> expandImage = ValueNotifier(false);
-  ValueNotifier<int> selectedPaged = ValueNotifier(0);
-  ValueNotifier<double> expandHeight = ValueNotifier(0);
-  ValueNotifier<double> moveAwayHeight = ValueNotifier(0);
-  ValueNotifier<bool> expandImageView = ValueNotifier(false);
+  ScrollController scrollController = ScrollController();
+  final isImagesReady = ValueNotifier(true);
+  final expandImage = ValueNotifier(false);
+  final expandHeight = ValueNotifier(0.0);
+  final moveAwayHeight = ValueNotifier(0.0);
+  final expandImageView = ValueNotifier(false);
 
   /// To avoid lag when you interacting with image when it expanded
-  ValueNotifier<bool> enableVerticalTapping = ValueNotifier(false);
-
+  final enableVerticalTapping = ValueNotifier(false);
   final remove = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
-  int currentPage = 0;
+  final currentPage = ValueNotifier(0);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
-  late int lastPage;
+  final lastPage = ValueNotifier(0);
   late AppTheme appTheme;
   late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
   bool noImages = false;
-
-  ScrollController scrollController = ScrollController();
+  bool noPaddingForGridView = false;
+  bool noDuration = false;
+  double scrollPixels = 0.0;
 
   @override
   void initState() {
@@ -118,7 +118,7 @@ class CustomGalleryState extends State<CustomGallery>
     }
     tabController =
         ValueNotifier(TabController(length: lengthOfTabs, vsync: this));
-    _fetchNewMedia();
+    _fetchNewMedia(currentPageValue: 0, lastPageValue: 0);
     super.initState();
   }
 
@@ -139,22 +139,48 @@ class CustomGalleryState extends State<CustomGallery>
   @override
   void dispose() {
     initializeControllerFuture.dispose();
+    multiSelectionMode.dispose();
+    showDeleteText.dispose();
+    selectedVideo.dispose();
+    allImages.dispose();
+    isImagesReady.dispose();
+    expandImage.dispose();
+    expandHeight.dispose();
+    moveAwayHeight.dispose();
+    expandImageView.dispose();
+    enableVerticalTapping.dispose();
+    remove.dispose();
+    selectedPage.dispose();
+    stopScrollTab.dispose();
+    selectedCameraImage.dispose();
+    selectedImage.dispose();
+    tabController.dispose();
+    clearVideoRecord.dispose();
+    redDeleteText.dispose();
+    _mediaList.dispose();
     cameras!.dispose();
+    multiSelectedImage.dispose();
+    scrollController.dispose();
+    controller.dispose();
+
     super.dispose();
   }
 
-  bool _handleScrollEvent(ScrollNotification scroll) {
+  bool _handleScrollEvent(ScrollNotification scroll,
+      {required int currentPageValue, required int lastPageValue}) {
     if (scroll.metrics.pixels / scroll.metrics.maxScrollExtent > 0.33) {
-      if (currentPage != lastPage) {
-        _fetchNewMedia();
+      if (currentPageValue != lastPageValue) {
+        _fetchNewMedia(
+            currentPageValue: currentPageValue, lastPageValue: lastPageValue);
         return true;
       }
     }
     return false;
   }
 
-  _fetchNewMedia() async {
-    lastPage = currentPage;
+  _fetchNewMedia(
+      {required int currentPageValue, required int lastPageValue}) async {
+    lastPage.value = currentPageValue;
     var result = await PhotoManager.requestPermissionExtend();
     if (result.isAuth) {
       List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
@@ -168,7 +194,7 @@ class CustomGalleryState extends State<CustomGallery>
             .addPostFrameCallback((_) => setState(() => noImages = false));
       }
       List<AssetEntity> media =
-          await albums[0].getAssetListPaged(page: currentPage, size: 60);
+          await albums[0].getAssetListPaged(page: currentPageValue, size: 60);
       List<FutureBuilder<Uint8List?>> temp = [];
       List<File?> imageTemp = [];
       for (int i = 0; i < media.length; i++) {
@@ -179,14 +205,10 @@ class CustomGalleryState extends State<CustomGallery>
         temp.add(gridViewImage);
         imageTemp.add(image);
       }
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        setState(() {
-          _mediaList.value.addAll(temp);
-          allImages.value.addAll(imageTemp);
-          currentPage++;
-          isImagesReady.value = true;
-        });
-      });
+      _mediaList.value.addAll(temp);
+      allImages.value.addAll(imageTemp);
+      currentPage.value++;
+      isImagesReady.value = true;
     } else {
       await PhotoManager.requestPermissionExtend();
       PhotoManager.openSetting();
@@ -375,12 +397,13 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   moveToVideo() {
-    selectedPaged.value = 2;
-    selectedPage.value = SelectedPage.right;
-    tabController.value.animateTo(1);
-    selectedVideo.value = true;
-    stopScrollTab.value = true;
-    remove.value = true;
+    setState(() {
+      selectedPage.value = SelectedPage.right;
+      tabController.value.animateTo(1);
+      selectedVideo.value = true;
+      stopScrollTab.value = true;
+      remove.value = true;
+    });
   }
 
   DefaultTabController defaultTabController() {
@@ -480,17 +503,29 @@ class CustomGalleryState extends State<CustomGallery>
             valueListenable: _mediaList,
             builder: (context, List<FutureBuilder<Uint8List?>> mediaListValue,
                 child) {
-              if (widget.display == Display.normal) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    normalAppBar(),
-                    Flexible(child: normalGridView(mediaListValue)),
-                  ],
-                );
-              } else {
-                return instagramGridView(mediaListValue);
-              }
+              return ValueListenableBuilder(
+                valueListenable: lastPage,
+                builder: (context, int lastPageValue, child) =>
+                    ValueListenableBuilder(
+                  valueListenable: currentPage,
+                  builder: (context, int currentPageValue, child) {
+                    if (widget.display == Display.normal) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          normalAppBar(),
+                          Flexible(
+                              child: normalGridView(mediaListValue,
+                                  currentPageValue, lastPageValue)),
+                        ],
+                      );
+                    } else {
+                      return instagramGridView(
+                          mediaListValue, currentPageValue, lastPageValue);
+                    }
+                  },
+                ),
+              );
             },
           );
         } else {
@@ -527,8 +562,10 @@ class CustomGalleryState extends State<CustomGallery>
                     tabs: [
                       GestureDetector(
                         onTap: () {
-                          centerPage(
-                              numPage: 0, selectedPage: SelectedPage.left);
+                          setState(() {
+                            centerPage(
+                                numPage: 0, selectedPage: SelectedPage.left);
+                          });
                         },
                         child: Text(tapsNames.galleryText,
                             style: const TextStyle(
@@ -591,23 +628,25 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   centerPage({required int numPage, required SelectedPage selectedPage}) {
-    selectedPaged.value = numPage;
-    selectedPage = selectedPage;
-    tabController.value.animateTo(numPage);
-    selectedVideo.value = false;
-    stopScrollTab.value = false;
-    remove.value = false;
+    setState(() {
+      this.selectedPage.value = selectedPage;
+      tabController.value.animateTo(numPage);
+      selectedVideo.value = false;
+      stopScrollTab.value = false;
+      remove.value = false;
+    });
   }
 
   GestureDetector videoTabBar(Color blackColor) {
     return GestureDetector(
       onTap: () {
-        selectedPaged.value = 2;
-        tabController.value.animateTo(1);
-        selectedPage.value = SelectedPage.right;
-        selectedVideo.value = true;
-        stopScrollTab.value = true;
-        remove.value = true;
+        setState(() {
+          tabController.value.animateTo(1);
+          selectedPage.value = SelectedPage.right;
+          selectedVideo.value = true;
+          stopScrollTab.value = true;
+          remove.value = true;
+        });
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 40),
@@ -637,7 +676,6 @@ class CustomGalleryState extends State<CustomGallery>
         children: [
           existButton(blackColor),
           const Spacer(),
-          // SizedBox(width: 1),
           doneButton(),
         ],
       ),
@@ -733,10 +771,13 @@ class CustomGalleryState extends State<CustomGallery>
             ValueListenableBuilder(
               valueListenable: expandImage,
               builder: (context, bool expandImageValue, child) => Crop.file(
-                  selectedImageValue,
-                  key: cropKey,
-                  alwaysShowGrid: true,
-                  aspectRatio: expandImageValue ? 6 / 8 : 1.0),
+                selectedImageValue,
+                key: cropKey,
+                paintColor: widget.appTheme != null
+                    ? widget.appTheme!.primaryColor
+                    : null,
+                aspectRatio: expandImageValue ? 6 / 8 : 1.0,
+              ),
             ),
             Align(
               alignment: Alignment.bottomRight,
@@ -862,69 +903,79 @@ class CustomGalleryState extends State<CustomGallery>
     }
   }
 
-  Widget instagramGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
+  bool isScrolling = false;
+
+  Widget instagramGridView(List<FutureBuilder<Uint8List?>> mediaListValue,
+      int currentPageValue, int lastPageValue) {
     Color whiteColor = appTheme.primaryColor;
     return ValueListenableBuilder(
       valueListenable: expandHeight,
       builder: (context, double expandedHeightValue, child) {
-        return Stack(
-          clipBehavior: Clip.antiAlias,
-          children: [
-            /// padding for
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (ScrollNotification notification) {
-                  expandImageView.value = false;
-                  moveAwayHeight.value = scrollController.position.pixels;
-                  if (notification is ScrollEndNotification) {
-                    expandHeight.value = expandedHeightValue > 240 ? 360 : 0;
-                  }
-                  _handleScrollEvent(notification);
-                  return true;
-                },
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 420),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        primary: false,
+        return ValueListenableBuilder(
+          valueListenable: moveAwayHeight,
+          builder: (context, double moveAwayHeightValue, child) =>
+              ValueListenableBuilder(
+            valueListenable: expandImageView,
+            builder: (context, bool expandImageValue, child) {
+              double a = expandedHeightValue - 360;
+              double expandHeightV = a < 0 ? a : 0;
+              double moveAwayHeightV =
+                  moveAwayHeightValue < 360 ? moveAwayHeightValue * -1 : -360;
+              double topPosition =
+                  expandImageValue ? expandHeightV : moveAwayHeightV;
+              enableVerticalTapping.value = !(topPosition == 0);
+              double padding = 2;
+              if (scrollPixels < 420) {
+                double pixels = 420 - scrollPixels;
+                padding = pixels >= 62 ? pixels + 2 : 62;
+              } else if (expandImageValue) {
+                padding = 62;
+              } else if (noPaddingForGridView) {
+                padding = 62;
+              } else {
+                padding = topPosition + 422;
+              }
+              int duration = noDuration ? 0 : 250;
+
+              return Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(top: padding),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification notification) {
+                        expandImageView.value = false;
+                        moveAwayHeight.value = scrollController.position.pixels;
+                        scrollPixels = scrollController.position.pixels;
+                        setState(() {
+                          isScrolling = true;
+                          noPaddingForGridView = false;
+                          noDuration = false;
+                          if (notification is ScrollEndNotification) {
+                            expandHeight.value =
+                                expandedHeightValue > 240 ? 360 : 0;
+                            isScrolling = false;
+                          }
+                        });
+
+                        _handleScrollEvent(notification,
+                            currentPageValue: currentPageValue,
+                            lastPageValue: lastPageValue);
+                        return true;
+                      },
+                      child: GridView.builder(
                         gridDelegate: widget.gridDelegate,
+                        controller: scrollController,
+                        physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
                           return buildImage(mediaListValue, index);
                         },
                         itemCount: mediaListValue.length,
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
-            ValueListenableBuilder(
-              valueListenable: moveAwayHeight,
-              builder: (context, double moveAwayHeightValue, child) =>
-                  ValueListenableBuilder(
-                valueListenable: expandImageView,
-                builder: (context, bool expandImageValue, child) {
-                  double a = expandedHeightValue - 360;
-                  double expandHeight = a < 0 ? a : 0;
-                  double moveAwayHeight = moveAwayHeightValue < 360
-                      ? moveAwayHeightValue * -1
-                      : -360;
-
-                  double topPosition =
-                      expandImageValue ? expandHeight : moveAwayHeight;
-                  if (topPosition == 0) {
-                    enableVerticalTapping.value = false;
-                  } else {
-                    enableVerticalTapping.value = true;
-                  }
-                  return AnimatedPositioned(
+                  AnimatedPositioned(
                     top: topPosition,
-                    duration: const Duration(milliseconds: 400),
+                    duration: Duration(milliseconds: duration),
                     child: Column(
                       children: [
                         normalAppBar(),
@@ -932,23 +983,37 @@ class CustomGalleryState extends State<CustomGallery>
                             whiteColor, expandedHeightValue, topPosition),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
   }
 
-  Widget normalGridView(List<FutureBuilder<Uint8List?>> mediaListValue) {
-    return GridView.builder(
-      gridDelegate: widget.gridDelegate,
-      itemBuilder: (context, index) {
-        return buildImage(mediaListValue, index);
+  Container container() => Container(
+        height: 620,
+        color: Colors.red,
+      );
+
+  Widget normalGridView(List<FutureBuilder<Uint8List?>> mediaListValue,
+      int currentPageValue, int lastPageValue) {
+    return NotificationListener(
+      onNotification: (ScrollNotification notification) {
+        _handleScrollEvent(notification,
+            currentPageValue: currentPageValue, lastPageValue: lastPageValue);
+        return true;
       },
-      itemCount: mediaListValue.length,
+      child: GridView.builder(
+        gridDelegate: widget.gridDelegate,
+        physics: const BouncingScrollPhysics(),
+        itemBuilder: (context, index) {
+          return buildImage(mediaListValue, index);
+        },
+        itemCount: mediaListValue.length,
+      ),
     );
   }
 
@@ -960,7 +1025,8 @@ class CustomGalleryState extends State<CustomGallery>
         onVerticalDragUpdate: enableTappingValue
             ? (details) {
                 expandImageView.value = true;
-                expandHeight.value = details.globalPosition.dy;
+                expandHeight.value = details.globalPosition.dy - 60;
+                setState(() => noDuration = true);
               }
             : null,
         onVerticalDragEnd: enableTappingValue
@@ -970,6 +1036,7 @@ class CustomGalleryState extends State<CustomGallery>
                   enableVerticalTapping.value = true;
                 }
                 if (topPositionValue == 0) enableVerticalTapping.value = false;
+                setState(() => noDuration = false);
               }
             : null,
         child: ValueListenableBuilder(
@@ -998,13 +1065,6 @@ class CustomGalleryState extends State<CustomGallery>
               File? image = allImagesValue[index];
               if (image != null) {
                 bool imageSelected = multiSelectedImage.value.contains(image);
-                if (index == 0 && selectedImageValue == null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    setState(() {
-                      selectedImage.value = image;
-                    });
-                  });
-                }
                 return Stack(
                   children: [
                     gestureDetector(image, index, mediaList),
@@ -1046,6 +1106,7 @@ class CustomGalleryState extends State<CustomGallery>
             expandImageView.value = false;
             moveAwayHeight.value = 0;
             enableVerticalTapping.value = false;
+            noPaddingForGridView = true;
           });
         },
         onLongPress: () {
@@ -1058,7 +1119,9 @@ class CustomGalleryState extends State<CustomGallery>
               enableCopy: true);
           expandImageView.value = false;
           moveAwayHeight.value = 0;
+
           enableVerticalTapping.value = false;
+          setState(() => noPaddingForGridView = true);
         },
         child: childWidget);
   }
@@ -1084,27 +1147,28 @@ class _MultiSelectionMode extends StatelessWidget {
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
-            padding: const EdgeInsets.all(3),
-            child: Container(
-              height: 25,
-              width: 25,
-              decoration: BoxDecoration(
-                color: imageSelected
-                    ? Colors.blue
-                    : const Color.fromARGB(115, 222, 222, 222),
-                border: Border.all(
-                  color: Colors.white,
-                ),
-                shape: BoxShape.circle,
+          padding: const EdgeInsets.all(3),
+          child: Container(
+            height: 25,
+            width: 25,
+            decoration: BoxDecoration(
+              color: imageSelected
+                  ? Colors.blue
+                  : const Color.fromARGB(115, 222, 222, 222),
+              border: Border.all(
+                color: Colors.white,
               ),
-              child: imageSelected
-                  ? Center(
-                      child: Text(
-                      "${multiSelectedImageValue.indexOf(image) + 1}",
-                      style: const TextStyle(color: Colors.white),
-                    ))
-                  : Container(),
-            )),
+              shape: BoxShape.circle,
+            ),
+            child: imageSelected
+                ? Center(
+                    child: Text(
+                    "${multiSelectedImageValue.indexOf(image) + 1}",
+                    style: const TextStyle(color: Colors.white),
+                  ))
+                : Container(),
+          ),
+        ),
       ),
     );
   }
