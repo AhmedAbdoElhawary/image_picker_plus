@@ -82,6 +82,7 @@ class CustomGalleryState extends State<CustomGallery>
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
+  ScrollController scrollController = ScrollController();
   final isImagesReady = ValueNotifier(true);
   final expandImage = ValueNotifier(false);
   final expandHeight = ValueNotifier(0.0);
@@ -100,8 +101,9 @@ class CustomGalleryState extends State<CustomGallery>
   late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
   bool noImages = false;
-
-  ScrollController scrollController = ScrollController();
+  bool noPaddingForGridView = false;
+  bool noDuration = false;
+  double scrollPixels = 0.0;
 
   @override
   void initState() {
@@ -901,6 +903,8 @@ class CustomGalleryState extends State<CustomGallery>
     }
   }
 
+  bool isScrolling = false;
+
   Widget instagramGridView(List<FutureBuilder<Uint8List?>> mediaListValue,
       int currentPageValue, int lastPageValue) {
     Color whiteColor = appTheme.primaryColor;
@@ -920,26 +924,44 @@ class CustomGalleryState extends State<CustomGallery>
               double topPosition =
                   expandImageValue ? expandHeightV : moveAwayHeightV;
               enableVerticalTapping.value = !(topPosition == 0);
+              double padding = 2;
+              if (scrollPixels < 420) {
+                double pixels = 420 - scrollPixels;
+                padding = pixels >= 62 ? pixels + 2 : 62;
+              } else if (expandImageValue) {
+                padding = 62;
+              } else if (noPaddingForGridView) {
+                padding = 62;
+              } else {
+                padding = topPosition + 422;
+              }
+              int duration = noDuration ? 0 : 250;
+
               return Stack(
-                clipBehavior: Clip.antiAlias,
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(top:expandImageValue ? 62 :  topPosition + 422),
+                    padding: EdgeInsets.only(top: padding),
                     child: NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification notification) {
                         expandImageView.value = false;
                         moveAwayHeight.value = scrollController.position.pixels;
-                        if (notification is ScrollEndNotification) {
-                          expandHeight.value =
-                              expandedHeightValue > 240 ? 360 : 0;
-                        }
+                        scrollPixels = scrollController.position.pixels;
+                        setState(() {
+                          isScrolling = true;
+                          noPaddingForGridView = false;
+                          noDuration = false;
+                          if (notification is ScrollEndNotification) {
+                            expandHeight.value =
+                                expandedHeightValue > 240 ? 360 : 0;
+                            isScrolling = false;
+                          }
+                        });
+
                         _handleScrollEvent(notification,
                             currentPageValue: currentPageValue,
                             lastPageValue: lastPageValue);
                         return true;
                       },
-
-                      /// I avoid make column with singleChildScrollView because the dropping in frames
                       child: GridView.builder(
                         gridDelegate: widget.gridDelegate,
                         controller: scrollController,
@@ -953,8 +975,7 @@ class CustomGalleryState extends State<CustomGallery>
                   ),
                   AnimatedPositioned(
                     top: topPosition,
-                    duration: Duration(
-                        milliseconds: moveAwayHeightValue < 420 ? 0 : 250),
+                    duration: Duration(milliseconds: duration),
                     child: Column(
                       children: [
                         normalAppBar(),
@@ -1004,7 +1025,8 @@ class CustomGalleryState extends State<CustomGallery>
         onVerticalDragUpdate: enableTappingValue
             ? (details) {
                 expandImageView.value = true;
-                expandHeight.value = details.globalPosition.dy;
+                expandHeight.value = details.globalPosition.dy - 60;
+                setState(() => noDuration = true);
               }
             : null,
         onVerticalDragEnd: enableTappingValue
@@ -1014,6 +1036,7 @@ class CustomGalleryState extends State<CustomGallery>
                   enableVerticalTapping.value = true;
                 }
                 if (topPositionValue == 0) enableVerticalTapping.value = false;
+                setState(() => noDuration = false);
               }
             : null,
         child: ValueListenableBuilder(
@@ -1083,6 +1106,7 @@ class CustomGalleryState extends State<CustomGallery>
             expandImageView.value = false;
             moveAwayHeight.value = 0;
             enableVerticalTapping.value = false;
+            noPaddingForGridView = true;
           });
         },
         onLongPress: () {
@@ -1095,7 +1119,9 @@ class CustomGalleryState extends State<CustomGallery>
               enableCopy: true);
           expandImageView.value = false;
           moveAwayHeight.value = 0;
+
           enableVerticalTapping.value = false;
+          setState(() => noPaddingForGridView = true);
         },
         child: childWidget);
   }
@@ -1121,27 +1147,28 @@ class _MultiSelectionMode extends StatelessWidget {
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
-            padding: const EdgeInsets.all(3),
-            child: Container(
-              height: 25,
-              width: 25,
-              decoration: BoxDecoration(
-                color: imageSelected
-                    ? Colors.blue
-                    : const Color.fromARGB(115, 222, 222, 222),
-                border: Border.all(
-                  color: Colors.white,
-                ),
-                shape: BoxShape.circle,
+          padding: const EdgeInsets.all(3),
+          child: Container(
+            height: 25,
+            width: 25,
+            decoration: BoxDecoration(
+              color: imageSelected
+                  ? Colors.blue
+                  : const Color.fromARGB(115, 222, 222, 222),
+              border: Border.all(
+                color: Colors.white,
               ),
-              child: imageSelected
-                  ? Center(
-                      child: Text(
-                      "${multiSelectedImageValue.indexOf(image) + 1}",
-                      style: const TextStyle(color: Colors.white),
-                    ))
-                  : Container(),
-            )),
+              shape: BoxShape.circle,
+            ),
+            child: imageSelected
+                ? Center(
+                    child: Text(
+                    "${multiSelectedImageValue.indexOf(image) + 1}",
+                    style: const TextStyle(color: Colors.white),
+                  ))
+                : Container(),
+          ),
+        ),
       ),
     );
   }
