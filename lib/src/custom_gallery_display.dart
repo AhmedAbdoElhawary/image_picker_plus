@@ -532,7 +532,7 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   Widget tabBar() {
-   double widthOfScreen = MediaQuery.of(context).size.width;
+    double widthOfScreen = MediaQuery.of(context).size.width;
 
     Color blackColor = appTheme.focusColor;
     bool cameraAndVideoEnabled = widget.enableCamera && widget.enableVideo;
@@ -575,14 +575,14 @@ class CustomGalleryState extends State<CustomGallery>
                       if (widget.enableCamera) ...[
                         photoTabBar(widthOfScreen)
                       ] else ...[
-                        videoTabBar(blackColor,  widthOfScreen)
+                        videoTabBar(blackColor, widthOfScreen)
                       ]
                     ],
                   ),
                 ),
               ),
             ),
-            if (cameraAndVideoEnabled) videoTabBar(blackColor,widthOfScreen),
+            if (cameraAndVideoEnabled) videoTabBar(blackColor, widthOfScreen),
           ],
         ),
         ValueListenableBuilder(
@@ -609,7 +609,9 @@ class CustomGalleryState extends State<CustomGallery>
                                   : widthOfScreen / 2)),
                       child: Container(
                           height: 1,
-                          width: cameraAndVideoEnabled ? widthOfScreen / 3 : widthOfScreen / 2,
+                          width: cameraAndVideoEnabled
+                              ? widthOfScreen / 3
+                              : widthOfScreen / 2,
                           color: blackColor)),
             ),
           ),
@@ -618,7 +620,7 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
-  GestureDetector photoTabBar(double  widthOfScreen) {
+  GestureDetector photoTabBar(double widthOfScreen) {
     return GestureDetector(
       onTap: () {
         centerPage(numPage: 1, selectedPage: SelectedPage.center);
@@ -628,7 +630,8 @@ class CustomGalleryState extends State<CustomGallery>
         height: 40,
         child: Center(
           child: Text(tapsNames.photoText,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         ),
       ),
     );
@@ -644,8 +647,7 @@ class CustomGalleryState extends State<CustomGallery>
     });
   }
 
-  GestureDetector videoTabBar(Color blackColor,double  widthOfScreen) {
-
+  GestureDetector videoTabBar(Color blackColor, double widthOfScreen) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -662,8 +664,7 @@ class CustomGalleryState extends State<CustomGallery>
         child: ValueListenableBuilder(
           valueListenable: selectedVideo,
           builder: (context, bool selectedVideoValue, child) => Center(
-            child: Text(
-                tapsNames.videoText,
+            child: Text(tapsNames.videoText,
                 style: TextStyle(
                     fontSize: 14,
                     color: selectedVideoValue ? blackColor : Colors.grey,
