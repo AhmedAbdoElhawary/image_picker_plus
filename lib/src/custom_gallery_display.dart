@@ -409,11 +409,7 @@ class CustomGalleryState extends State<CustomGallery>
   DefaultTabController defaultTabController() {
     Color whiteColor = appTheme.primaryColor;
     return DefaultTabController(
-        length: 2,
-        child: Material(
-          color: whiteColor,
-          child: safeArea(),
-        ));
+        length: 2, child: Material(color: whiteColor, child: safeArea()));
   }
 
   SafeArea safeArea() {
@@ -536,10 +532,10 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   Widget tabBar() {
-    double width = MediaQuery.of(context).size.width;
+   double widthOfScreen = MediaQuery.of(context).size.width;
+
     Color blackColor = appTheme.focusColor;
     bool cameraAndVideoEnabled = widget.enableCamera && widget.enableVideo;
-    double labelPadding = cameraAndVideoEnabled ? 13.0 : 0.0;
     return Stack(
       alignment: Alignment.bottomLeft,
       children: [
@@ -558,7 +554,6 @@ class CustomGalleryState extends State<CustomGallery>
                     labelColor: selectedVideoValue ? Colors.grey : blackColor,
                     indicatorColor:
                         !selectedVideoValue ? blackColor : Colors.transparent,
-                    labelPadding: EdgeInsets.all(labelPadding),
                     tabs: [
                       GestureDetector(
                         onTap: () {
@@ -567,21 +562,27 @@ class CustomGalleryState extends State<CustomGallery>
                                 numPage: 0, selectedPage: SelectedPage.left);
                           });
                         },
-                        child: Text(tapsNames.galleryText,
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w500)),
+                        child: SizedBox(
+                          width: widthOfScreen / 3,
+                          height: 40,
+                          child: Center(
+                            child: Text(tapsNames.galleryText,
+                                style: const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                          ),
+                        ),
                       ),
                       if (widget.enableCamera) ...[
-                        photoTabBar()
+                        photoTabBar(widthOfScreen)
                       ] else ...[
-                        videoTabBar(blackColor)
+                        videoTabBar(blackColor,  widthOfScreen)
                       ]
                     ],
                   ),
                 ),
               ),
             ),
-            if (cameraAndVideoEnabled) videoTabBar(blackColor),
+            if (cameraAndVideoEnabled) videoTabBar(blackColor,widthOfScreen),
           ],
         ),
         ValueListenableBuilder(
@@ -602,13 +603,13 @@ class CustomGalleryState extends State<CustomGallery>
                       left: selectedPageValue == SelectedPage.left
                           ? 0
                           : (selectedPageValue == SelectedPage.center
-                              ? width / 3
+                              ? widthOfScreen / 3
                               : (cameraAndVideoEnabled
-                                  ? width / 1.5
-                                  : width / 2)),
+                                  ? widthOfScreen / 1.5
+                                  : widthOfScreen / 2)),
                       child: Container(
                           height: 1,
-                          width: cameraAndVideoEnabled ? width / 3 : width / 2,
+                          width: cameraAndVideoEnabled ? widthOfScreen / 3 : widthOfScreen / 2,
                           color: blackColor)),
             ),
           ),
@@ -617,13 +618,19 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
-  GestureDetector photoTabBar() {
+  GestureDetector photoTabBar(double  widthOfScreen) {
     return GestureDetector(
       onTap: () {
         centerPage(numPage: 1, selectedPage: SelectedPage.center);
       },
-      child: Text(tapsNames.photoText,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      child: SizedBox(
+        width: widthOfScreen / 3,
+        height: 40,
+        child: Center(
+          child: Text(tapsNames.photoText,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        ),
+      ),
     );
   }
 
@@ -637,7 +644,8 @@ class CustomGalleryState extends State<CustomGallery>
     });
   }
 
-  GestureDetector videoTabBar(Color blackColor) {
+  GestureDetector videoTabBar(Color blackColor,double  widthOfScreen) {
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -648,16 +656,19 @@ class CustomGalleryState extends State<CustomGallery>
           remove.value = true;
         });
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 40),
+      child: SizedBox(
+        width: widthOfScreen / 3,
+        height: 40,
         child: ValueListenableBuilder(
           valueListenable: selectedVideo,
-          builder: (context, bool selectedVideoValue, child) => Text(
-              tapsNames.videoText,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: selectedVideoValue ? blackColor : Colors.grey,
-                  fontWeight: FontWeight.w500)),
+          builder: (context, bool selectedVideoValue, child) => Center(
+            child: Text(
+                tapsNames.videoText,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: selectedVideoValue ? blackColor : Colors.grey,
+                    fontWeight: FontWeight.w500)),
+          ),
         ),
       ),
     );
@@ -770,14 +781,8 @@ class CustomGalleryState extends State<CustomGallery>
           children: [
             ValueListenableBuilder(
               valueListenable: expandImage,
-              builder: (context, bool expandImageValue, child) => Crop.file(
-                selectedImageValue,
-                key: cropKey,
-                paintColor: widget.appTheme != null
-                    ? widget.appTheme!.primaryColor
-                    : null,
-                aspectRatio: expandImageValue ? 6 / 8 : 1.0,
-              ),
+              builder: (context, bool expandImageValue, child) =>
+                  cropImageWidget(selectedImageValue, expandImageValue),
             ),
             Align(
               alignment: Alignment.bottomRight,
@@ -841,6 +846,16 @@ class CustomGalleryState extends State<CustomGallery>
           ],
         ),
       ),
+    );
+  }
+
+  Crop cropImageWidget(File selectedImageValue, bool expandImageValue) {
+    return Crop.file(
+      selectedImageValue,
+      key: cropKey,
+      paintColor:
+          widget.appTheme != null ? widget.appTheme!.primaryColor : null,
+      aspectRatio: expandImageValue ? 6 / 8 : 1.0,
     );
   }
 

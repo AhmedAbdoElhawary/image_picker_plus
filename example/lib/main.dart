@@ -195,6 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 selectedFiles: details.selectedFiles != null
                     ? details.selectedFiles!
                     : [details.selectedFile],
+                details: details,
                 aspectRatio: details.aspectRatio);
           } else {
             return DisplayVideo(
@@ -209,8 +210,10 @@ class _MyHomePageState extends State<MyHomePage> {
 class DisplayImages extends StatelessWidget {
   final List<File> selectedFiles;
   final double aspectRatio;
+  final SelectedImagesDetails details;
   const DisplayImages({
     Key? key,
+    required this.details,
     required this.selectedFiles,
     required this.aspectRatio,
   }) : super(key: key);
@@ -221,8 +224,9 @@ class DisplayImages extends StatelessWidget {
       appBar: AppBar(title: const Text('Image')),
       body: ListView.builder(
         itemBuilder: (context, index) {
-          File image = selectedFiles[index];
-          return SizedBox(width: double.infinity, child: Image.file(image));
+          return SizedBox(
+              width: double.infinity,
+              child: Image.file(selectedFiles[index]));
         },
         itemCount: selectedFiles.length,
       ),

@@ -27,13 +27,15 @@ class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
   }
 
   Widget buildOctoImage() {
-   return Container(
+    return Container(
       width: double.infinity,
       color: widget.appTheme.shimmerBaseColor,
-      child: Image.memory(widget.imageBytes,
+      child: Image.memory(
+        widget.imageBytes,
         errorBuilder: (context, url, error) => buildError(),
         fit: BoxFit.cover,
-        width: double.infinity,),
+        width: double.infinity,
+      ),
     );
   }
 
