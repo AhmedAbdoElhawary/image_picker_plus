@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:custom_gallery_display/src/app_theme.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
-import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
 import 'package:custom_gallery_display/src/record_count.dart';
 import 'package:custom_gallery_display/src/record_fade_animation.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
@@ -12,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:image/image.dart' as img;
+import 'package:image_crop/image_crop.dart';
 
 enum Flash { off, auto, on }
 
@@ -61,7 +61,7 @@ class CustomCameraDisplay extends StatefulWidget {
 
 class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   ValueNotifier<bool> startVideoCount = ValueNotifier(false);
-  final cropKey = GlobalKey<CropState>();
+  final cropKey = GlobalKey<CustomCropState>();
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
   int selectedCamera = 0;
@@ -210,8 +210,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  Crop buildCrop(File selectedImage) {
-    return Crop.file(
+  CustomCrop buildCrop(File selectedImage) {
+    return CustomCrop.file(
       selectedImage,
       key: cropKey,
       alwaysShowGrid: true,
