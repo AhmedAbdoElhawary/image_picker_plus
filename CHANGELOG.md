@@ -1,3 +1,10 @@
+## 0.3.7
+* solve drop frames bug when page view is moving 
+## 0.3.6
+* fix permission bug
+* add INTERNET permission in manifest.xml
+* update README.md
+
 ## 0.3.5
 * solve warning of uses or overrides a deprecated API.
 
