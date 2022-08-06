@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:custom_gallery_display/src/app_theme.dart';
 import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
-import 'package:custom_gallery_display/src/customPackages/crop_image/crop_options.dart';
 import 'package:custom_gallery_display/src/camera_display.dart';
 import 'package:custom_gallery_display/src/image.dart';
+import 'package:custom_gallery_display/src/image_editor.dart';
 import 'package:custom_gallery_display/src/selected_image_details.dart';
 import 'package:custom_gallery_display/src/tabs_texts.dart';
 import 'package:flutter/foundation.dart';
@@ -68,14 +68,15 @@ class CustomGallery extends StatefulWidget {
 
 class CustomGalleryState extends State<CustomGallery>
     with TickerProviderStateMixin {
-  late ValueNotifier<TabController> tabController;
+  final pageController = ValueNotifier(PageController());
+
   final clearVideoRecord = ValueNotifier(false);
   final redDeleteText = ValueNotifier(false);
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
   final selectedPage = ValueNotifier(SelectedPage.left);
   late ValueNotifier<void> initializeControllerFuture;
-  final cropKey = GlobalKey<CropState>();
+  final cropKey = GlobalKey<CustomCropState>();
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
   late ValueNotifier<CameraController> controller;
   final multiSelectionMode = ValueNotifier(false);
@@ -91,7 +92,6 @@ class CustomGalleryState extends State<CustomGallery>
 
   /// To avoid lag when you interacting with image when it expanded
   final enableVerticalTapping = ValueNotifier(false);
-  final remove = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
   final currentPage = ValueNotifier(0);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
@@ -111,13 +111,7 @@ class CustomGalleryState extends State<CustomGallery>
     tapsNames = widget.tabsTexts ?? TabsTexts();
     _initializeCamera(0, true);
     isImagesReady.value = false;
-    int lengthOfTabs = 1;
 
-    if (widget.enableCamera || widget.enableVideo) {
-      lengthOfTabs = 2;
-    }
-    tabController =
-        ValueNotifier(TabController(length: lengthOfTabs, vsync: this));
     _fetchNewMedia(currentPageValue: 0, lastPageValue: 0);
     super.initState();
   }
@@ -149,12 +143,11 @@ class CustomGalleryState extends State<CustomGallery>
     moveAwayHeight.dispose();
     expandImageView.dispose();
     enableVerticalTapping.dispose();
-    remove.dispose();
     selectedPage.dispose();
     stopScrollTab.dispose();
     selectedCameraImage.dispose();
     selectedImage.dispose();
-    tabController.dispose();
+    pageController.dispose();
     clearVideoRecord.dispose();
     redDeleteText.dispose();
     _mediaList.dispose();
@@ -399,10 +392,11 @@ class CustomGalleryState extends State<CustomGallery>
   moveToVideo() {
     setState(() {
       selectedPage.value = SelectedPage.right;
-      tabController.value.animateTo(1);
+      pageController.value.animateTo(1,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutQuad);
       selectedVideo.value = true;
       stopScrollTab.value = true;
-      remove.value = true;
     });
   }
 
@@ -419,10 +413,10 @@ class CustomGalleryState extends State<CustomGallery>
         children: [
           Flexible(
             child: ValueListenableBuilder(
-              valueListenable: tabController,
-              builder: (context, TabController tabControllerValue, child) =>
-                  TabBarView(
-                controller: tabControllerValue,
+              valueListenable: pageController,
+              builder: (context, PageController pageControllerValue, child) =>
+                  PageView(
+                controller: pageControllerValue,
                 dragStartBehavior: DragStartBehavior.start,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
@@ -532,103 +526,80 @@ class CustomGalleryState extends State<CustomGallery>
   }
 
   Widget tabBar() {
-   double widthOfScreen = MediaQuery.of(context).size.width;
+    double widthOfScreen = MediaQuery.of(context).size.width;
 
     Color blackColor = appTheme.focusColor;
     bool cameraAndVideoEnabled = widget.enableCamera && widget.enableVideo;
     return Stack(
       alignment: Alignment.bottomLeft,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: ValueListenableBuilder(
-                valueListenable: tabController,
-                builder: (context, TabController tabControllerValue, child) =>
-                    ValueListenableBuilder(
-                  valueListenable: selectedVideo,
-                  builder: (context, bool selectedVideoValue, child) => TabBar(
-                    indicatorWeight: 1,
-                    controller: tabControllerValue,
-                    unselectedLabelColor: Colors.grey,
-                    labelColor: selectedVideoValue ? Colors.grey : blackColor,
-                    indicatorColor:
-                        !selectedVideoValue ? blackColor : Colors.transparent,
-                    tabs: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            centerPage(
-                                numPage: 0, selectedPage: SelectedPage.left);
-                          });
-                        },
-                        child: SizedBox(
-                          width: widthOfScreen / 3,
-                          height: 40,
-                          child: Center(
-                            child: Text(tapsNames.galleryText,
-                                style: const TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
-                          ),
-                        ),
-                      ),
-                      if (widget.enableCamera) ...[
-                        photoTabBar(widthOfScreen)
-                      ] else ...[
-                        videoTabBar(blackColor,  widthOfScreen)
-                      ]
-                    ],
+        ValueListenableBuilder(
+          valueListenable: selectedPage,
+          builder: (context, SelectedPage selectedPageValue, child) {
+            Color photoColor = selectedPageValue == SelectedPage.center
+                ? blackColor
+                : Colors.grey;
+            return Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      centerPage(numPage: 0, selectedPage: SelectedPage.left);
+                    });
+                  },
+                  child: SizedBox(
+                    width: widthOfScreen / 3,
+                    height: 40,
+                    child: Center(
+                      child: Text(tapsNames.galleryText,
+                          style: TextStyle(
+                              color: selectedPageValue == SelectedPage.left
+                                  ? blackColor
+                                  : Colors.grey,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500)),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            if (cameraAndVideoEnabled) videoTabBar(blackColor,widthOfScreen),
-          ],
+                if (widget.enableCamera) photoTabBar(widthOfScreen, photoColor),
+                if (widget.enableVideo) videoTabBar(blackColor, widthOfScreen),
+              ],
+            );
+          },
         ),
         ValueListenableBuilder(
-          valueListenable: remove,
-          builder: (context, bool removeValue, child) => Visibility(
-            visible: removeValue,
-            child: ValueListenableBuilder(
-              valueListenable: selectedPage,
-              builder: (context, SelectedPage selectedPageValue, child) =>
-                  AnimatedPositioned(
-                      duration: const Duration(seconds: 2),
-                      curve: Curves.easeInBack,
-                      onEnd: () {
-                        if (selectedPageValue != SelectedPage.right) {
-                          remove.value = false;
-                        }
-                      },
-                      left: selectedPageValue == SelectedPage.left
-                          ? 0
-                          : (selectedPageValue == SelectedPage.center
-                              ? widthOfScreen / 3
-                              : (cameraAndVideoEnabled
-                                  ? widthOfScreen / 1.5
-                                  : widthOfScreen / 2)),
-                      child: Container(
-                          height: 1,
-                          width: cameraAndVideoEnabled ? widthOfScreen / 3 : widthOfScreen / 2,
-                          color: blackColor)),
-            ),
+          valueListenable: selectedPage,
+          builder: (context, SelectedPage selectedPageValue, child) =>
+              AnimatedPositioned(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOutQuad,
+            right: (selectedPageValue == SelectedPage.center
+                ? widthOfScreen / 3
+                : (selectedPageValue == SelectedPage.right
+                    ? 0
+                    : widthOfScreen / 1.5)),
+            child: Container(
+                height: 1,
+                width: cameraAndVideoEnabled
+                    ? widthOfScreen / 3
+                    : widthOfScreen / 2,
+                color: blackColor),
           ),
         ),
       ],
     );
   }
 
-  GestureDetector photoTabBar(double  widthOfScreen) {
+  GestureDetector photoTabBar(double widthOfScreen, Color textColor) {
     return GestureDetector(
-      onTap: () {
-        centerPage(numPage: 1, selectedPage: SelectedPage.center);
-      },
+      onTap: () => centerPage(numPage: 1, selectedPage: SelectedPage.center),
       child: SizedBox(
         width: widthOfScreen / 3,
         height: 40,
         child: Center(
           child: Text(tapsNames.photoText,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              style: TextStyle(
+                  color: textColor, fontSize: 14, fontWeight: FontWeight.w500)),
         ),
       ),
     );
@@ -637,23 +608,24 @@ class CustomGalleryState extends State<CustomGallery>
   centerPage({required int numPage, required SelectedPage selectedPage}) {
     setState(() {
       this.selectedPage.value = selectedPage;
-      tabController.value.animateTo(numPage);
+      pageController.value.animateToPage(numPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutQuad);
       selectedVideo.value = false;
       stopScrollTab.value = false;
-      remove.value = false;
     });
   }
 
-  GestureDetector videoTabBar(Color blackColor,double  widthOfScreen) {
-
+  GestureDetector videoTabBar(Color blackColor, double widthOfScreen) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          tabController.value.animateTo(1);
+          pageController.value.animateToPage(1,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutQuad);
           selectedPage.value = SelectedPage.right;
           selectedVideo.value = true;
           stopScrollTab.value = true;
-          remove.value = true;
         });
       },
       child: SizedBox(
@@ -662,8 +634,7 @@ class CustomGalleryState extends State<CustomGallery>
         child: ValueListenableBuilder(
           valueListenable: selectedVideo,
           builder: (context, bool selectedVideoValue, child) => Center(
-            child: Text(
-                tapsNames.videoText,
+            child: Text(tapsNames.videoText,
                 style: TextStyle(
                     fontSize: 14,
                     color: selectedVideoValue ? blackColor : Colors.grey,
@@ -711,23 +682,28 @@ class CustomGalleryState extends State<CustomGallery>
         if (!multiSelectionMode.value) {
           File? image = selectedImage.value;
           if (image != null) {
-            File? croppedImage = await cropImage(image);
-            if (croppedImage != null) {
-              SelectedImagesDetails details = SelectedImagesDetails(
-                selectedFile: croppedImage,
-                multiSelectionMode: false,
-                aspectRatio: aspect,
-              );
-              widget.sendRequestFunction(details);
-            }
+            SelectedImagesDetails details = SelectedImagesDetails(
+              selectedFile: image,
+              multiSelectionMode: false,
+              aspectRatio: aspect,
+              selectedFiles: [image],
+            );
+            Uint8List uint8Image = await image.readAsBytes();
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ImageEditor(
+                  details: details,
+                  appTheme: appTheme,
+                  selectedImage: uint8Image,
+                  // cropKey: filterCropKey,
+                  sendRequestFunction: widget.sendRequestFunction,
+                ),
+              ),
+            );
           }
         } else {
           List<File> selectedImages = [];
           for (int i = 0; i < multiSelectedImage.value.length; i++) {
-            File? croppedImage = await cropImage(multiSelectedImage.value[i]);
-            if (croppedImage != null) {
-              selectedImages.add(croppedImage);
-            }
           }
           if (selectedImages.isNotEmpty) {
             SelectedImagesDetails details = SelectedImagesDetails(
@@ -741,30 +717,6 @@ class CustomGalleryState extends State<CustomGallery>
         }
       },
     );
-  }
-
-  Future<File?> cropImage(File imageFile) async {
-    if (widget.cropImage) {
-      await ImageCrop.requestPermissions();
-      final scale = cropKey.currentState!.scale;
-      final area = cropKey.currentState!.area;
-      if (area == null) {
-        return null;
-      }
-      final sample = await ImageCrop.sampleImage(
-        file: imageFile,
-        preferredSize: (2000 / scale).round(),
-      );
-
-      final File file = await ImageCrop.cropImage(
-        file: sample,
-        area: area,
-      );
-      sample.delete();
-      return file;
-    } else {
-      return imageFile;
-    }
   }
 
   Container showSelectedImage(
@@ -849,8 +801,8 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
-  Crop cropImageWidget(File selectedImageValue, bool expandImageValue) {
-    return Crop.file(
+  CustomCrop cropImageWidget(File selectedImageValue, bool expandImageValue) {
+    return CustomCrop.file(
       selectedImageValue,
       key: cropKey,
       paintColor:
