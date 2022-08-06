@@ -35,7 +35,6 @@ class RecordFadeAnimationState extends State<RecordFadeAnimation>
       }
     });
     super.initState();
-
   }
 
   @override
