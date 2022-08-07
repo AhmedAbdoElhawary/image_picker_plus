@@ -60,10 +60,11 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   final expandHeight = ValueNotifier(0.0);
   final moveAwayHeight = ValueNotifier(0.0);
   final expandImageView = ValueNotifier(false);
-  final ValueNotifier<GlobalKey> globalKey=ValueNotifier(GlobalKey());
+  final ValueNotifier<GlobalKey> globalKey = ValueNotifier(GlobalKey());
+
   /// To avoid lag when you interacting with image when it expanded
   final enableVerticalTapping = ValueNotifier(false);
-  final cropKey=ValueNotifier(GlobalKey<CustomCropState>());
+  final cropKey = ValueNotifier(GlobalKey<CustomCropState>());
   bool noPaddingForGridView = false;
   final isImagesReady = ValueNotifier(true);
   final currentPage = ValueNotifier(0);
@@ -91,6 +92,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     noDuration.dispose();
     super.dispose();
   }
+
   @override
   void initState() {
     _fetchNewMedia(currentPageValue: 0, lastPageValue: 0);
@@ -541,6 +543,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
         onPressed: () {
           setState(() {
             widget.isThatImageFilter.value = false;
+            indexOfFilter.value = 0;
           });
           // Navigator.pop(context);
         },
@@ -640,8 +643,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                     child: NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification notification) {
                         expandImageView.value = false;
-                        moveAwayHeight.value =
-                            scrollController.position.pixels;
+                        moveAwayHeight.value = scrollController.position.pixels;
                         scrollPixels = scrollController.position.pixels;
                         setState(() {
                           isScrolling = true;
@@ -687,7 +689,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                           globalKey: globalKey,
                           indexOfFilter: indexOfFilter,
                           multiSelectedImage: widget.multiSelectedImage,
-                          noDuration:  noDuration,
+                          noDuration: noDuration,
                           topPosition: topPosition,
                           whiteColor: widget.whiteColor,
                         ),
