@@ -16,7 +16,6 @@ class CropImageView extends StatefulWidget {
   /// To avoid lag when you interacting with image when it expanded
   final ValueNotifier<bool> enableVerticalTapping;
   final ValueNotifier<File?> selectedImage;
-  final ValueNotifier<GlobalKey> globalKey;
   final ValueNotifier<int> indexOfFilter;
   final AppTheme appTheme;
   final ValueNotifier<bool> noDuration;
@@ -33,7 +32,6 @@ class CropImageView extends StatefulWidget {
       required this.expandImageView,
       required this.enableVerticalTapping,
       required this.selectedImage,
-      required this.globalKey,
       required this.indexOfFilter,
       required this.appTheme,
       required this.noDuration,
@@ -173,7 +171,6 @@ class _CropImageViewState extends State<CropImageView> {
       builder: (context, int indexOfFilterValue, child) => CustomCrop.file(
         selectedImageValue,
         key: widget.cropKey.value,
-        paintKey: widget.globalKey.value,
         filter: filters[indexOfFilterValue],
         paintColor: widget.appTheme.primaryColor,
         aspectRatio: expandImageValue ? 6 / 8 : 1.0,
