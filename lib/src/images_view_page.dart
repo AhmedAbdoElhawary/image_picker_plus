@@ -8,6 +8,7 @@ import 'package:custom_gallery_display/src/image_editor.dart';
 import 'package:custom_gallery_display/src/multi_selection_mode.dart';
 import 'package:custom_gallery_display/src/entities/selected_image_details.dart';
 import 'package:custom_gallery_display/src/utilities/enum.dart';
+import 'package:custom_gallery_display/src/utilities/filters.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -60,7 +61,6 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   final expandHeight = ValueNotifier(0.0);
   final moveAwayHeight = ValueNotifier(0.0);
   final expandImageView = ValueNotifier(false);
-  final ValueNotifier<GlobalKey> globalKey = ValueNotifier(GlobalKey());
 
   /// To avoid lag when you interacting with image when it expanded
   final enableVerticalTapping = ValueNotifier(false);
@@ -73,6 +73,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   bool isScrolling = false;
   bool noImages = false;
   final noDuration = ValueNotifier(false);
+  final reelGlobalKey = GlobalKey();
 
   @override
   void dispose() {
@@ -235,7 +236,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                       );
                     } else {
                       return widget.isThatImageFilter.value
-                          ? buildImageFilterView()
+                          ? buildImageEditorView()
                           : instagramGridView(
                               mediaListValue, currentPageValue, lastPageValue);
                     }
@@ -496,36 +497,55 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     }
   }
 
-  Widget buildImageFilterView() {
+  Widget buildImageEditorView() {
     return ValueListenableBuilder(
       valueListenable: widget.selectedImage,
       builder: (context, File? selectedImageValue, child) {
-        return Column(
+        return Stack(
           children: [
-            editViewAppBar(),
-            CropImageView(
-              cropKey: cropKey,
-              selectedImage: widget.selectedImage,
-              appTheme: widget.appTheme,
-              multiSelectionMode: widget.multiSelectionMode,
-              enableVerticalTapping: enableVerticalTapping,
-              expandHeight: expandHeight,
-              expandImage: expandImage,
-              expandImageView: expandImageView,
-              globalKey: globalKey,
-              indexOfFilter: indexOfFilter,
-              multiSelectedImage: widget.multiSelectedImage,
-              noDuration: noDuration,
-              whiteColor: widget.whiteColor,
+            ValueListenableBuilder(
+              valueListenable: indexOfFilter,
+              builder: (context, int indexOfFilterValue, child) =>
+                  ValueListenableBuilder(
+                valueListenable: widget.selectedImage,
+                builder: (context, File? selectedImageValue, child) =>
+                    RepaintBoundary(
+                  key: reelGlobalKey,
+                  child: ColorFiltered(
+                    colorFilter:
+                        ColorFilter.matrix(filters[indexOfFilterValue]),
+                    child: Image.file(selectedImageValue!),
+                  ),
+                ),
+              ),
             ),
-            Flexible(
-                child: ImageEditor(
-              indexOfFilter: indexOfFilter,
-              appTheme: widget.appTheme,
-              selectedImage: selectedImageValue,
-              editViewTabController: widget.editViewTabController,
-              whiteColor: widget.whiteColor,
-            )),
+            Column(
+              children: [
+                editViewAppBar(),
+                CropImageView(
+                  cropKey: cropKey,
+                  selectedImage: widget.selectedImage,
+                  appTheme: widget.appTheme,
+                  multiSelectionMode: widget.multiSelectionMode,
+                  enableVerticalTapping: enableVerticalTapping,
+                  expandHeight: expandHeight,
+                  expandImage: expandImage,
+                  expandImageView: expandImageView,
+                  indexOfFilter: indexOfFilter,
+                  multiSelectedImage: widget.multiSelectedImage,
+                  noDuration: noDuration,
+                  whiteColor: widget.whiteColor,
+                ),
+                Flexible(
+                    child: ImageEditor(
+                  indexOfFilter: indexOfFilter,
+                  appTheme: widget.appTheme,
+                  selectedImage: selectedImageValue,
+                  editViewTabController: widget.editViewTabController,
+                  whiteColor: widget.whiteColor,
+                )),
+              ],
+            ),
           ],
         );
       },
@@ -557,25 +577,33 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             builder: (context, bool expandImageValue, child) => IconButton(
               icon: const Icon(Icons.arrow_forward_rounded, color: Colors.blue),
               onPressed: () async {
+                double aspect = expandImage.value ? 6 / 8 : 1.0;
                 RenderRepaintBoundary? repaintBoundary =
-                    globalKey.value.currentContext?.findRenderObject()
+                    reelGlobalKey.currentContext?.findRenderObject()
                         as RenderRepaintBoundary?;
-                ui.Image? boxImage =
-                    await repaintBoundary?.toImage(pixelRatio: 10);
+                if (repaintBoundary == null) return;
+                ui.Image boxImage =
+                    await repaintBoundary.toImage(pixelRatio: 10);
                 ByteData? byteData =
-                    await boxImage?.toByteData(format: ui.ImageByteFormat.png);
-                Uint8List? image = byteData?.buffer.asUint8List();
-                if (image == null) return;
+                    await boxImage.toByteData(format: ui.ImageByteFormat.png);
+                if (byteData == null) return;
+
+                Uint8List image = byteData.buffer.asUint8List();
                 final tempDir = await getTemporaryDirectory();
                 File img = await File('${tempDir.path}/image.png').create();
                 img.writeAsBytesSync(image);
 
                 File? croppedImage = await cropImage(img, cropKeyValue);
                 if (croppedImage == null) return;
-                // Navigator.of(context).push(MaterialPageRoute(
-                //     builder: (context) => SecondScreen(
-                //         imageData: expandImageValue ? croppedImage : img)));
-                // widget.details.selectedBytes =i!;
+
+                SelectedImagesDetails details = SelectedImagesDetails(
+                    selectedFile: croppedImage,
+                    aspectRatio: aspect,
+                    multiSelectionMode: false,
+                    isThatImage: true,
+                    selectedFiles: [croppedImage]);
+
+                widget.sendRequestFunction(details);
               },
             ),
           ),
@@ -686,7 +714,6 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                           expandHeight: expandHeight,
                           expandImage: expandImage,
                           expandImageView: expandImageView,
-                          globalKey: globalKey,
                           indexOfFilter: indexOfFilter,
                           multiSelectedImage: widget.multiSelectedImage,
                           noDuration: noDuration,
