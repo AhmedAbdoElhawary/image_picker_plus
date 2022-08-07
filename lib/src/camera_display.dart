@@ -1,21 +1,20 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:custom_gallery_display/src/app_theme.dart';
-import 'package:custom_gallery_display/src/customPackages/crop_image/crop_image.dart';
-import 'package:custom_gallery_display/src/record_count.dart';
-import 'package:custom_gallery_display/src/record_fade_animation.dart';
-import 'package:custom_gallery_display/src/selected_image_details.dart';
-import 'package:custom_gallery_display/src/tabs_texts.dart';
+import 'package:custom_gallery_display/src/entities/app_theme.dart';
+import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
+import 'package:custom_gallery_display/src/utilities/enum.dart';
+import 'package:custom_gallery_display/src/utilities/typedef.dart';
+import 'package:custom_gallery_display/src/video_layout/record_count.dart';
+import 'package:custom_gallery_display/src/video_layout/record_fade_animation.dart';
+import 'package:custom_gallery_display/src/entities/selected_image_details.dart';
+import 'package:custom_gallery_display/src/entities/tabs_texts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:image/image.dart' as img;
 import 'package:image_crop/image_crop.dart';
 
-enum Flash { off, auto, on }
-
-typedef CustomAsyncValueSetter<A, B, C> = A Function(B value, C value2);
 
 // ignore: must_be_immutable
 class CustomCameraDisplay extends StatefulWidget {
