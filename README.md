@@ -49,12 +49,21 @@ If editing `Info.plist` as text, add:
 
 ## Android
 
-Change the minimum Android sdk version to 21 (or higher), and compile sdk to 31 (or higher) in your `android/app/build.gradle` file.
+* Change the minimum Android sdk version to 21 (or higher), and compile sdk to 31 (or higher) in your `android/app/build.gradle` file.
 
 ```java
 compileSdkVersion 32
 minSdkVersion 21
 ```
+
+* Add this permission into your AndroidManifest.xml
+````xml
+<manifest>
+  ...
+    <uses-permission android:name="android.permission.INTERNET"/>
+  ...
+</manifest>
+````
 
 ### 1. Depend on it
 

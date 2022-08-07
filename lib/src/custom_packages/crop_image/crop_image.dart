@@ -15,7 +15,7 @@ enum _CropAction { none, moving, cropping, scaling }
 
 enum _CropHandleSide { none, topLeft, topRight, bottomLeft, bottomRight }
 
-class Crop extends StatefulWidget {
+class CustomCrop extends StatefulWidget {
   final ImageProvider image;
   final double? aspectRatio;
   final double maximumScale;
@@ -23,10 +23,12 @@ class Crop extends StatefulWidget {
   final Color? paintColor;
   final ImageErrorListener? onImageError;
   final ValueChanged<bool>? scrollCustomList;
+  final List<double>? filter;
 
-  const Crop({
+  const CustomCrop({
     Key? key,
     required this.image,
+    this.filter,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.paintColor,
@@ -35,22 +37,24 @@ class Crop extends StatefulWidget {
     this.onImageError,
   }) : super(key: key);
 
-  Crop.file(
+  CustomCrop.file(
     File file, {
     Key? key,
     double scale = 1.0,
     this.aspectRatio,
     this.paintColor,
+    this.filter,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
   })  : image = FileImage(file, scale: scale),
         super(key: key);
-  Crop.memory(
+  CustomCrop.memory(
     Uint8List byte, {
     Key? key,
     double scale = 1.0,
+    this.filter,
     this.aspectRatio,
     this.paintColor = Colors.white,
     this.scrollCustomList,
@@ -60,11 +64,12 @@ class Crop extends StatefulWidget {
   })  : image = MemoryImage(byte, scale: scale),
         super(key: key);
 
-  Crop.asset(
+  CustomCrop.asset(
     String assetName, {
     Key? key,
     AssetBundle? bundle,
     String? package,
+    this.filter,
     this.aspectRatio,
     this.scrollCustomList,
     this.paintColor = Colors.white,
@@ -75,13 +80,14 @@ class Crop extends StatefulWidget {
         super(key: key);
 
   @override
-  State<StatefulWidget> createState() => CropState();
+  State<StatefulWidget> createState() => CustomCropState();
 
-  static CropState? of(BuildContext context) =>
-      context.findAncestorStateOfType<CropState>();
+  static CustomCropState? of(BuildContext context) =>
+      context.findAncestorStateOfType<CustomCropState>();
 }
 
-class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
+class CustomCropState extends State<CustomCrop>
+    with TickerProviderStateMixin, Drag {
   final _surfaceKey = GlobalKey();
 
   late final AnimationController _activeController;
@@ -114,7 +120,6 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
           _area.width * _view.width / _scale,
           _area.height * _view.height / _scale,
         );
-
   bool get _isEnabled => _view.isEmpty == false && _image != null;
 
   final Map<double, double> _maxAreaWidthMap = {};
@@ -153,7 +158,7 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
   }
 
   @override
-  void didUpdateWidget(Crop oldWidget) {
+  void didUpdateWidget(CustomCrop oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.image != oldWidget.image) {
@@ -210,22 +215,31 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
             onScaleEnd: _isEnabled ? _handleScaleEnd : null,
             child: AnimatedBuilder(
               builder: (context, child) {
-                return CustomPaint(
-                  painter: _CropPainter(
-                    image: _image,
-                    ratio: _ratio,
-                    view: _view,
-                    area: _area,
-                    scale: _scale,
-                    active: _activeController.value,
-                    paintColor: widget.paintColor ?? Colors.white,
-                  ),
-                );
+                return widget.filter != null
+                    ? ColorFiltered(
+                        colorFilter: ColorFilter.matrix(widget.filter!),
+                        child: buildCustomPaint(),
+                      )
+                    : buildCustomPaint();
               },
               animation: _activeController,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  CustomPaint buildCustomPaint() {
+    return CustomPaint(
+      painter: _CropPainter(
+        image: _image,
+        ratio: _ratio,
+        view: _view,
+        area: _area,
+        scale: _scale,
+        active: _activeController.value,
+        paintColor: widget.paintColor ?? Colors.white,
       ),
     );
   }
@@ -320,7 +334,9 @@ class CropState extends State<Crop> with TickerProviderStateMixin, Drag {
     if (aspectRatio != null) {
       _maxAreaWidthMap[aspectRatio] = width;
     }
-    return Rect.fromLTWH((1.0 - width) / 2, (1.0 - height) / 2, width, height);
+    ui.Rect rect =
+        Rect.fromLTWH((1.0 - width) / 2, (1.0 - height) / 2, width, height);
+    return rect;
   }
 
   void _updateImage(ImageInfo imageInfo, bool synchronousCall) {

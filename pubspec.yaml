@@ -1,6 +1,6 @@
 name: custom_gallery_display
 description: Customization of the gallery display or even camera and video.
-version: 0.3.5
+version: 0.3.7
 homepage: https://github.com/AhmedAbdoElhawary/custom_gallery_display.git
 
 environment:
@@ -14,14 +14,12 @@ dependencies:
   shimmer: ^2.0.0
 # I disable this package because warning of uses or overrides a deprecated API.
 # But i mentioned the owner in his file (owner_of_this_package.dart).
-#  image_crop: ^0.4.0
-#  photofilters: ^3.0.1
+  image_crop: ^0.4.1
   camera: ^0.10.0
   image: ^3.2.0
+  path_provider: ^2.0.11
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
-
-flutter:
