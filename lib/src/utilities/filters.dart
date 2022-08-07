@@ -1,4 +1,3 @@
-
 List<List<double>> filters = [
   [
     0.39,
