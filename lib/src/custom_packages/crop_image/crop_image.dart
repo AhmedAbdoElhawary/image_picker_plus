@@ -24,13 +24,11 @@ class CustomCrop extends StatefulWidget {
   final ImageErrorListener? onImageError;
   final ValueChanged<bool>? scrollCustomList;
   final List<double>? filter;
-  final GlobalKey? paintKey;
 
   const CustomCrop({
     Key? key,
     required this.image,
     this.filter,
-    this.paintKey,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.paintColor,
@@ -46,7 +44,6 @@ class CustomCrop extends StatefulWidget {
     this.aspectRatio,
     this.paintColor,
     this.filter,
-    this.paintKey,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -59,7 +56,6 @@ class CustomCrop extends StatefulWidget {
     double scale = 1.0,
     this.filter,
     this.aspectRatio,
-    this.paintKey,
     this.paintColor = Colors.white,
     this.scrollCustomList,
     this.maximumScale = 2.0,
@@ -75,7 +71,6 @@ class CustomCrop extends StatefulWidget {
     String? package,
     this.filter,
     this.aspectRatio,
-    this.paintKey,
     this.scrollCustomList,
     this.paintColor = Colors.white,
     this.maximumScale = 2.0,
@@ -125,7 +120,6 @@ class CustomCropState extends State<CustomCrop>
           _area.width * _view.width / _scale,
           _area.height * _view.height / _scale,
         );
-
   bool get _isEnabled => _view.isEmpty == false && _image != null;
 
   final Map<double, double> _maxAreaWidthMap = {};
@@ -221,13 +215,10 @@ class CustomCropState extends State<CustomCrop>
             onScaleEnd: _isEnabled ? _handleScaleEnd : null,
             child: AnimatedBuilder(
               builder: (context, child) {
-                return widget.filter != null && widget.paintKey != null
-                    ? RepaintBoundary(
-                        key: widget.paintKey!,
-                        child: ColorFiltered(
-                          colorFilter: ColorFilter.matrix(widget.filter!),
-                          child: buildCustomPaint(),
-                        ),
+                return widget.filter != null
+                    ? ColorFiltered(
+                        colorFilter: ColorFilter.matrix(widget.filter!),
+                        child: buildCustomPaint(),
                       )
                     : buildCustomPaint();
               },
@@ -343,7 +334,9 @@ class CustomCropState extends State<CustomCrop>
     if (aspectRatio != null) {
       _maxAreaWidthMap[aspectRatio] = width;
     }
-    return Rect.fromLTWH((1.0 - width) / 2, (1.0 - height) / 2, width, height);
+    ui.Rect rect =
+        Rect.fromLTWH((1.0 - width) / 2, (1.0 - height) / 2, width, height);
+    return rect;
   }
 
   void _updateImage(ImageInfo imageInfo, bool synchronousCall) {
