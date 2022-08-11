@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,10 +9,10 @@ class MultiSelectionMode extends StatelessWidget {
   final File image;
   const MultiSelectionMode(
       {Key? key,
-        required this.image,
-        required this.imageSelected,
-        required this.multiSelectedImageValue,
-        required this.multiSelectionModeValue})
+      required this.image,
+      required this.imageSelected,
+      required this.multiSelectedImageValue,
+      required this.multiSelectionModeValue})
       : super(key: key);
 
   @override
@@ -38,10 +37,10 @@ class MultiSelectionMode extends StatelessWidget {
             ),
             child: imageSelected
                 ? Center(
-                child: Text(
-                  "${multiSelectedImageValue.indexOf(image) + 1}",
-                  style: const TextStyle(color: Colors.white),
-                ))
+                    child: Text(
+                    "${multiSelectedImageValue.indexOf(image) + 1}",
+                    style: const TextStyle(color: Colors.white),
+                  ))
                 : Container(),
           ),
         ),
