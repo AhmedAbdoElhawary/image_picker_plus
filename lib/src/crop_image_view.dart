@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 class CropImageView extends StatefulWidget {
   final ValueNotifier<GlobalKey<CustomCropState>> cropKey;
   final ValueNotifier<List<int>> indexOfSelectedImages;
+  final ValueNotifier<List<double>> scaleOfCropsKeys;
+  final ValueNotifier<List<Rect?>> areaOfCropsKeys;
 
   final ValueNotifier<bool> multiSelectionMode;
   final ValueNotifier<bool> expandImage;
@@ -27,6 +29,8 @@ class CropImageView extends StatefulWidget {
     Key? key,
     required this.indexOfSelectedImages,
     required this.cropKey,
+    required this.scaleOfCropsKeys,
+    required this.areaOfCropsKeys,
     required this.multiSelectionMode,
     required this.expandImage,
     required this.expandHeight,
