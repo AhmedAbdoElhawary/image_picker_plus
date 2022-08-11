@@ -12,8 +12,6 @@ dependencies:
     sdk: flutter
   photo_manager: ^2.1.4
   shimmer: ^2.0.0
-# I disable this package because warning of uses or overrides a deprecated API.
-# But i mentioned the owner in his file (owner_of_this_package.dart).
   image_crop: ^0.4.1
   camera: ^0.10.0
   image: ^3.2.0
