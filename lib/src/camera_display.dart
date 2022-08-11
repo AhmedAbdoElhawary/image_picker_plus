@@ -15,7 +15,6 @@ import 'dart:math' as math;
 import 'package:image/image.dart' as img;
 import 'package:image_crop/image_crop.dart';
 
-
 // ignore: must_be_immutable
 class CustomCameraDisplay extends StatefulWidget {
   final bool selectedVideo;

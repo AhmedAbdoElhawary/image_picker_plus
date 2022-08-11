@@ -225,8 +225,7 @@ class DisplayImages extends StatelessWidget {
       body: ListView.builder(
         itemBuilder: (context, index) {
           return SizedBox(
-              width: double.infinity,
-              child: Image.file(selectedFiles[index]));
+              width: double.infinity, child: Image.file(selectedFiles[index]));
         },
         itemCount: selectedFiles.length,
       ),

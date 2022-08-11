@@ -23,12 +23,10 @@ class CustomCrop extends StatefulWidget {
   final Color? paintColor;
   final ImageErrorListener? onImageError;
   final ValueChanged<bool>? scrollCustomList;
-  final List<double>? filter;
 
   const CustomCrop({
     Key? key,
     required this.image,
-    this.filter,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.paintColor,
@@ -43,7 +41,6 @@ class CustomCrop extends StatefulWidget {
     double scale = 1.0,
     this.aspectRatio,
     this.paintColor,
-    this.filter,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -54,7 +51,6 @@ class CustomCrop extends StatefulWidget {
     Uint8List byte, {
     Key? key,
     double scale = 1.0,
-    this.filter,
     this.aspectRatio,
     this.paintColor = Colors.white,
     this.scrollCustomList,
@@ -69,7 +65,6 @@ class CustomCrop extends StatefulWidget {
     Key? key,
     AssetBundle? bundle,
     String? package,
-    this.filter,
     this.aspectRatio,
     this.scrollCustomList,
     this.paintColor = Colors.white,
@@ -215,12 +210,7 @@ class CustomCropState extends State<CustomCrop>
             onScaleEnd: _isEnabled ? _handleScaleEnd : null,
             child: AnimatedBuilder(
               builder: (context, child) {
-                return widget.filter != null
-                    ? ColorFiltered(
-                        colorFilter: ColorFilter.matrix(widget.filter!),
-                        child: buildCustomPaint(),
-                      )
-                    : buildCustomPaint();
+                return buildCustomPaint();
               },
               animation: _activeController,
             ),

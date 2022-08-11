@@ -66,11 +66,9 @@ class CustomGalleryState extends State<CustomGallery>
   final multiSelectionMode = ValueNotifier(false);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
-  final isThatImageFilter = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
-  late ValueNotifier<TabController> editViewTabController;
   late AppTheme appTheme;
   late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
@@ -83,8 +81,6 @@ class CustomGalleryState extends State<CustomGallery>
     tapsNames = widget.tabsTexts ?? TabsTexts();
     whiteColor = appTheme.primaryColor;
     blackColor = appTheme.focusColor;
-    editViewTabController =
-        ValueNotifier(TabController(length: 2, vsync: this));
     _initializeCamera(0, true);
     super.initState();
   }
@@ -119,7 +115,6 @@ class CustomGalleryState extends State<CustomGallery>
     cameras!.dispose();
     multiSelectedImage.dispose();
     controller.dispose();
-    editViewTabController.dispose();
     super.dispose();
   }
 
@@ -179,7 +174,7 @@ class CustomGalleryState extends State<CustomGallery>
             setState(() {
               multiSelectionMode.value = !multiSelectionMode.value;
               if (!multiSelectionMode.value) {
-                multiSelectedImage.value = [];
+                multiSelectedImage.value.clear();
               }
             });
           },
@@ -292,13 +287,12 @@ class CustomGalleryState extends State<CustomGallery>
   ImagesViewPage imagesViewPage() {
     return ImagesViewPage(
       appTheme: appTheme,
-      editViewTabController: editViewTabController,
-      isThatImageFilter: isThatImageFilter,
       selectedImage: selectedImage,
       gridDelegate: widget.gridDelegate,
       multiSelectionMode: multiSelectionMode,
       blackColor: blackColor,
       display: widget.display,
+      tabsTexts: tapsNames,
       multiSelectedImage: multiSelectedImage,
       sendRequestFunction: widget.sendRequestFunction,
       whiteColor: whiteColor,
@@ -311,9 +305,7 @@ class CustomGalleryState extends State<CustomGallery>
       builder: (context, bool showDeleteTextValue, child) => AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           switchInCurve: Curves.easeInOutQuart,
-          child: isThatImageFilter.value
-              ? editViewTabBar()
-              : (showDeleteTextValue ? tapBarMessage(true) : tabBar())),
+          child: showDeleteTextValue ? tapBarMessage(true) : tabBar()),
     );
   }
 
@@ -432,33 +424,6 @@ class CustomGalleryState extends State<CustomGallery>
           ),
         ),
       ),
-    );
-  }
-
-  Widget editViewTabBar() {
-    return Stack(
-      alignment: Alignment.bottomLeft,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ValueListenableBuilder(
-                valueListenable: editViewTabController,
-                builder: (context, TabController tabControllerValue, child) =>
-                    TabBar(
-                  indicatorWeight: 1,
-                  controller: tabControllerValue,
-                  unselectedLabelColor: Colors.grey,
-                  labelColor: blackColor,
-                  indicatorColor: blackColor,
-                  labelPadding: const EdgeInsets.all(13),
-                  tabs: const [Text("FILTER"), Text("EDIT")],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
