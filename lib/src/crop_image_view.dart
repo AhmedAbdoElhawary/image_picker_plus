@@ -9,6 +9,7 @@ class CropImageView extends StatefulWidget {
   final ValueNotifier<List<int>> indexOfSelectedImages;
   final ValueNotifier<List<double>> scaleOfCropsKeys;
   final ValueNotifier<List<Rect?>> areaOfCropsKeys;
+  final ValueNotifier<List<File>> multiSelectedImage;
 
   final ValueNotifier<bool> multiSelectionMode;
   final ValueNotifier<bool> expandImage;
@@ -29,6 +30,7 @@ class CropImageView extends StatefulWidget {
     Key? key,
     required this.indexOfSelectedImages,
     required this.cropKey,
+    required this.multiSelectedImage,
     required this.scaleOfCropsKeys,
     required this.areaOfCropsKeys,
     required this.multiSelectionMode,
