@@ -1,9 +1,8 @@
 import 'dart:io';
+import 'package:custom_gallery_display/src/custom_expand_icon.dart';
 import 'package:custom_gallery_display/src/entities/app_theme.dart';
 import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
-import 'package:custom_gallery_display/src/utilities/filters.dart';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 class CropImageView extends StatefulWidget {
   final ValueNotifier<GlobalKey<CustomCropState>> cropKey;
@@ -16,28 +15,26 @@ class CropImageView extends StatefulWidget {
   /// To avoid lag when you interacting with image when it expanded
   final ValueNotifier<bool> enableVerticalTapping;
   final ValueNotifier<File?> selectedImage;
-  final ValueNotifier<int> indexOfFilter;
   final AppTheme appTheme;
   final ValueNotifier<bool> noDuration;
   final Color whiteColor;
   final double? topPosition;
 
-  const CropImageView(
-      {Key? key,
-      required this.cropKey,
-      required this.multiSelectedImage,
-      required this.multiSelectionMode,
-      required this.expandImage,
-      required this.expandHeight,
-      required this.expandImageView,
-      required this.enableVerticalTapping,
-      required this.selectedImage,
-      required this.indexOfFilter,
-      required this.appTheme,
-      required this.noDuration,
-      required this.whiteColor,
-      this.topPosition})
-      : super(key: key);
+  const CropImageView({
+    Key? key,
+    required this.cropKey,
+    required this.multiSelectedImage,
+    required this.multiSelectionMode,
+    required this.expandImage,
+    required this.expandHeight,
+    required this.expandImageView,
+    required this.enableVerticalTapping,
+    required this.selectedImage,
+    required this.appTheme,
+    required this.noDuration,
+    required this.whiteColor,
+    this.topPosition,
+  }) : super(key: key);
 
   @override
   State<CropImageView> createState() => _CropImageViewState();
@@ -99,21 +96,22 @@ class _CropImageViewState extends State<CropImageView> {
               builder: (context, bool expandImageValue, child) =>
                   cropImageWidget(selectedImageValue, expandImageValue),
             ),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      widget.multiSelectionMode.value =
-                          !widget.multiSelectionMode.value;
-                      if (!multiSelectionModeValue) {
-                        widget.multiSelectedImage.value = [];
-                      }
-                    });
-                  },
-                  child: Container(
+            if (widget.topPosition != null) ...[
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        widget.multiSelectionMode.value =
+                            !widget.multiSelectionMode.value;
+                        if (!multiSelectionModeValue) {
+                          widget.multiSelectedImage.value.clear();
+                        }
+                      });
+                    },
+                    child: Container(
                       height: 35,
                       width: 35,
                       decoration: BoxDecoration(
@@ -126,14 +124,17 @@ class _CropImageViewState extends State<CropImageView> {
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
-                          child: Icon(
-                        Icons.copy,
-                        color: Colors.white,
-                        size: 17,
-                      ))),
+                        child: Icon(
+                          Icons.copy,
+                          color: Colors.white,
+                          size: 17,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
             Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
@@ -154,7 +155,7 @@ class _CropImageViewState extends State<CropImageView> {
                       ),
                       shape: BoxShape.circle,
                     ),
-                    child: customArrowsIcon(),
+                    child: const CustomExpandIcon(),
                   ),
                 ),
               ),
@@ -166,48 +167,12 @@ class _CropImageViewState extends State<CropImageView> {
   }
 
   Widget cropImageWidget(File selectedImageValue, bool expandImageValue) {
-    return ValueListenableBuilder(
-      valueListenable: widget.indexOfFilter,
-      builder: (context, int indexOfFilterValue, child) => CustomCrop.file(
-        selectedImageValue,
-        key: widget.cropKey.value,
-        filter: filters[indexOfFilterValue],
-        paintColor: widget.appTheme.primaryColor,
-        aspectRatio: expandImageValue ? 6 / 8 : 1.0,
-      ),
+    GlobalKey<CustomCropState> cropKey = widget.cropKey.value;
+    return CustomCrop.file(
+      selectedImageValue,
+      key: cropKey,
+      paintColor: widget.appTheme.primaryColor,
+      aspectRatio: expandImageValue ? 6 / 8 : 1.0,
     );
-  }
-
-  Stack customArrowsIcon() {
-    return Stack(children: [
-      Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: Align(
-          alignment: Alignment.topRight,
-          child: Transform.rotate(
-            angle: 180 * math.pi / 250,
-            child: const Icon(
-              Icons.arrow_back_ios_rounded,
-              color: Colors.white,
-              size: 12,
-            ),
-          ),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Transform.rotate(
-            angle: 180 * math.pi / 255,
-            child: const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white,
-              size: 12,
-            ),
-          ),
-        ),
-      ),
-    ]);
   }
 }
