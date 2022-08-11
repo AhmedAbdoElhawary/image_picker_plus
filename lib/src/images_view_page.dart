@@ -1,31 +1,24 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:custom_gallery_display/src/entities/app_theme.dart';
+import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:custom_gallery_display/src/crop_image_view.dart';
 import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
 import 'package:custom_gallery_display/src/image.dart';
-import 'package:custom_gallery_display/src/image_editor.dart';
 import 'package:custom_gallery_display/src/multi_selection_mode.dart';
-import 'package:custom_gallery_display/src/entities/selected_image_details.dart';
 import 'package:custom_gallery_display/src/utilities/enum.dart';
-import 'package:custom_gallery_display/src/utilities/filters.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:image_crop/image_crop.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'dart:ui' as ui;
 import 'package:shimmer/shimmer.dart';
 
 class ImagesViewPage extends StatefulWidget {
   final ValueNotifier<List<File>> multiSelectedImage;
   final ValueNotifier<bool> multiSelectionMode;
-  final ValueNotifier<bool> isThatImageFilter;
+  final TabsTexts tabsTexts;
 
   /// To avoid lag when you interacting with image when it expanded
   final ValueNotifier<File?> selectedImage;
-  final ValueNotifier<TabController> editViewTabController;
   final AppTheme appTheme;
   final Color whiteColor;
   final Color blackColor;
@@ -36,10 +29,9 @@ class ImagesViewPage extends StatefulWidget {
     Key? key,
     required this.multiSelectedImage,
     required this.multiSelectionMode,
-    required this.isThatImageFilter,
     required this.selectedImage,
-    required this.editViewTabController,
     required this.appTheme,
+    required this.tabsTexts,
     required this.whiteColor,
     required this.blackColor,
     required this.display,
@@ -54,9 +46,10 @@ class ImagesViewPage extends StatefulWidget {
 class _ImagesViewPageState extends State<ImagesViewPage> {
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
+
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
-  final ValueNotifier<int> indexOfFilter = ValueNotifier(0);
   ScrollController scrollController = ScrollController();
+
   final expandImage = ValueNotifier(false);
   final expandHeight = ValueNotifier(0.0);
   final moveAwayHeight = ValueNotifier(0.0);
@@ -73,13 +66,11 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   bool isScrolling = false;
   bool noImages = false;
   final noDuration = ValueNotifier(false);
-  final reelGlobalKey = GlobalKey();
 
   @override
   void dispose() {
     _mediaList.dispose();
     allImages.dispose();
-    indexOfFilter.dispose();
     scrollController.dispose();
     isImagesReady.dispose();
     currentPage.dispose();
@@ -94,11 +85,11 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     super.dispose();
   }
 
+  late Widget forBack;
   @override
   void initState() {
     _fetchNewMedia(currentPageValue: 0, lastPageValue: 0);
     isImagesReady.value = false;
-
     super.initState();
   }
 
@@ -200,10 +191,10 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   @override
   Widget build(BuildContext context) {
     return noImages
-        ? const Center(
+        ? Center(
             child: Text(
-              "There is no images",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              widget.tabsTexts.noImagesFounded,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           )
         : buildGridView();
@@ -235,10 +226,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                         ],
                       );
                     } else {
-                      return widget.isThatImageFilter.value
-                          ? buildImageEditorView()
-                          : instagramGridView(
-                              mediaListValue, currentPageValue, lastPageValue);
+                      return instagramGridView(
+                          mediaListValue, currentPageValue, lastPageValue);
                     }
                   },
                 ),
@@ -337,31 +326,26 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
         double aspect = expandImage.value ? 6 / 8 : 1.0;
         if (!widget.multiSelectionMode.value) {
           File? image = widget.selectedImage.value;
-          if (image != null) {
-            // SelectedImagesDetails details = SelectedImagesDetails(
-            //   selectedFile: image,
-            //   multiSelectionMode: false,
-            //   aspectRatio: aspect,
-            //   selectedFiles: [image],
-            // );
-            // Uint8List uint8Image = await image.readAsBytes();
-            widget.isThatImageFilter.value = true;
-            setState(() {});
-            // Navigator.of(context).push(
-            //   MaterialPageRoute(
-            //     builder: (context) => ImageEditor(
-            //       details: details,
-            //       appTheme: appTheme,
-            //       selectedImage: uint8Image,
-            //       // cropKey: filterCropKey,
-            //       sendRequestFunction: widget.sendRequestFunction,
-            //     ),
-            //   ),
-            // );
-          }
+          if (image == null) return;
+          File? croppedImage = await cropImage(image);
+          if (croppedImage == null) return;
+          SelectedImagesDetails details = SelectedImagesDetails(
+            selectedFile: croppedImage,
+            multiSelectionMode: false,
+            aspectRatio: aspect,
+            isThatImage: true,
+            selectedFiles: [croppedImage],
+          );
+          widget.sendRequestFunction(details);
         } else {
           List<File> selectedImages = [];
-          for (int i = 0; i < widget.multiSelectedImage.value.length; i++) {}
+          for (int i = 0; i < widget.multiSelectedImage.value.length; i++) {
+            File currentImage = widget.multiSelectedImage.value[i];
+            File? croppedImage = await cropImage(currentImage);
+            if (croppedImage != null) {
+              selectedImages.add(croppedImage);
+            }
+          }
           if (selectedImages.isNotEmpty) {
             SelectedImagesDetails details = SelectedImagesDetails(
               selectedFile: selectedImages[0],
@@ -442,8 +426,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
         onTap: () {
           setState(() {
             if (widget.multiSelectionMode.value) {
-              bool close =
-                  selectionImageCheck(image, widget.multiSelectedImage.value);
+              List<File> multiImages = widget.multiSelectedImage.value;
+              bool close = selectionImageCheck(image, multiImages, index);
               if (close) return;
             }
             widget.selectedImage.value = image;
@@ -459,8 +443,9 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
           }
         },
         onLongPressUp: () {
-          selectionImageCheck(image, widget.multiSelectedImage.value,
-              enableCopy: true);
+          List<File> multiImages = widget.multiSelectedImage.value;
+
+          selectionImageCheck(image, multiImages, index, enableCopy: true);
           expandImageView.value = false;
           moveAwayHeight.value = 0;
 
@@ -470,7 +455,9 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
         child: childWidget);
   }
 
-  bool selectionImageCheck(File image, List<File> multiSelectionValue,
+  int indexOfCurrentImage = 0;
+  bool selectionImageCheck(
+      File image, List<File> multiSelectionValue, int index,
       {bool enableCopy = false}) {
     if (multiSelectionValue.contains(image) &&
         widget.selectedImage.value == image) {
@@ -497,126 +484,12 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     }
   }
 
-  Widget buildImageEditorView() {
-    return ValueListenableBuilder(
-      valueListenable: widget.selectedImage,
-      builder: (context, File? selectedImageValue, child) {
-        return Stack(
-          children: [
-            ValueListenableBuilder(
-              valueListenable: indexOfFilter,
-              builder: (context, int indexOfFilterValue, child) =>
-                  ValueListenableBuilder(
-                valueListenable: widget.selectedImage,
-                builder: (context, File? selectedImageValue, child) =>
-                    RepaintBoundary(
-                  key: reelGlobalKey,
-                  child: ColorFiltered(
-                    colorFilter:
-                        ColorFilter.matrix(filters[indexOfFilterValue]),
-                    child: Image.file(selectedImageValue!),
-                  ),
-                ),
-              ),
-            ),
-            Column(
-              children: [
-                editViewAppBar(),
-                CropImageView(
-                  cropKey: cropKey,
-                  selectedImage: widget.selectedImage,
-                  appTheme: widget.appTheme,
-                  multiSelectionMode: widget.multiSelectionMode,
-                  enableVerticalTapping: enableVerticalTapping,
-                  expandHeight: expandHeight,
-                  expandImage: expandImage,
-                  expandImageView: expandImageView,
-                  indexOfFilter: indexOfFilter,
-                  multiSelectedImage: widget.multiSelectedImage,
-                  noDuration: noDuration,
-                  whiteColor: widget.whiteColor,
-                ),
-                Flexible(
-                    child: ImageEditor(
-                  indexOfFilter: indexOfFilter,
-                  appTheme: widget.appTheme,
-                  selectedImage: selectedImageValue,
-                  editViewTabController: widget.editViewTabController,
-                  whiteColor: widget.whiteColor,
-                )),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  AppBar editViewAppBar() {
-    return AppBar(
-      backgroundColor: widget.whiteColor,
-      elevation: 0,
-      centerTitle: true,
-      title: Icon(Icons.edit_off_rounded, color: widget.blackColor),
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back_rounded, color: widget.blackColor),
-        onPressed: () {
-          setState(() {
-            widget.isThatImageFilter.value = false;
-            indexOfFilter.value = 0;
-          });
-          // Navigator.pop(context);
-        },
-      ),
-      actions: [
-        ValueListenableBuilder(
-          valueListenable: cropKey,
-          builder: (context, GlobalKey<CustomCropState> cropKeyValue, child) =>
-              ValueListenableBuilder(
-            valueListenable: expandImage,
-            builder: (context, bool expandImageValue, child) => IconButton(
-              icon: const Icon(Icons.arrow_forward_rounded, color: Colors.blue),
-              onPressed: () async {
-                double aspect = expandImage.value ? 6 / 8 : 1.0;
-                RenderRepaintBoundary? repaintBoundary =
-                    reelGlobalKey.currentContext?.findRenderObject()
-                        as RenderRepaintBoundary?;
-                if (repaintBoundary == null) return;
-                ui.Image boxImage =
-                    await repaintBoundary.toImage(pixelRatio: 10);
-                ByteData? byteData =
-                    await boxImage.toByteData(format: ui.ImageByteFormat.png);
-                if (byteData == null) return;
-
-                Uint8List image = byteData.buffer.asUint8List();
-                final tempDir = await getTemporaryDirectory();
-                File img = await File('${tempDir.path}/image.png').create();
-                img.writeAsBytesSync(image);
-
-                File? croppedImage = await cropImage(img, cropKeyValue);
-                if (croppedImage == null) return;
-
-                SelectedImagesDetails details = SelectedImagesDetails(
-                    selectedFile: croppedImage,
-                    aspectRatio: aspect,
-                    multiSelectionMode: false,
-                    isThatImage: true,
-                    selectedFiles: [croppedImage]);
-
-                widget.sendRequestFunction(details);
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<File?> cropImage(
-      File imageFile, GlobalKey<CustomCropState> cropKeyValue) async {
+  Future<File?> cropImage(File imageFile) async {
     await ImageCrop.requestPermissions();
-    final scale = cropKeyValue.currentState!.scale;
-    final area = cropKeyValue.currentState!.area;
+
+    final double scale = cropKey.value.currentState!.scale;
+    final Rect? area = cropKey.value.currentState!.area;
+
     if (area == null) {
       return null;
     }
@@ -714,7 +587,6 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                           expandHeight: expandHeight,
                           expandImage: expandImage,
                           expandImageView: expandImageView,
-                          indexOfFilter: indexOfFilter,
                           multiSelectedImage: widget.multiSelectedImage,
                           noDuration: noDuration,
                           topPosition: topPosition,
