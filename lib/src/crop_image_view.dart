@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 
 class CropImageView extends StatefulWidget {
   final ValueNotifier<GlobalKey<CustomCropState>> cropKey;
-  final ValueNotifier<List<File>> multiSelectedImage;
+  final ValueNotifier<List<int>> indexOfSelectedImages;
+
   final ValueNotifier<bool> multiSelectionMode;
   final ValueNotifier<bool> expandImage;
   final ValueNotifier<double> expandHeight;
@@ -15,6 +16,8 @@ class CropImageView extends StatefulWidget {
   /// To avoid lag when you interacting with image when it expanded
   final ValueNotifier<bool> enableVerticalTapping;
   final ValueNotifier<File?> selectedImage;
+  final VoidCallback clearMultiImages;
+
   final AppTheme appTheme;
   final ValueNotifier<bool> noDuration;
   final Color whiteColor;
@@ -22,11 +25,12 @@ class CropImageView extends StatefulWidget {
 
   const CropImageView({
     Key? key,
+    required this.indexOfSelectedImages,
     required this.cropKey,
-    required this.multiSelectedImage,
     required this.multiSelectionMode,
     required this.expandImage,
     required this.expandHeight,
+    required this.clearMultiImages,
     required this.expandImageView,
     required this.enableVerticalTapping,
     required this.selectedImage,
@@ -104,11 +108,10 @@ class _CropImageViewState extends State<CropImageView> {
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
+                        if (multiSelectionModeValue) widget.clearMultiImages();
+
                         widget.multiSelectionMode.value =
-                            !widget.multiSelectionMode.value;
-                        if (!multiSelectionModeValue) {
-                          widget.multiSelectedImage.value.clear();
-                        }
+                            !multiSelectionModeValue;
                       });
                     },
                     child: Container(
@@ -124,11 +127,7 @@ class _CropImageViewState extends State<CropImageView> {
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
-                        child: Icon(
-                          Icons.copy,
-                          color: Colors.white,
-                          size: 17,
-                        ),
+                        child: Icon(Icons.copy, color: Colors.white, size: 17),
                       ),
                     ),
                   ),

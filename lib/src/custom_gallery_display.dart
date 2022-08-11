@@ -68,7 +68,6 @@ class CustomGalleryState extends State<CustomGallery>
   final selectedVideo = ValueNotifier(false);
   final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
-  ValueNotifier<File?> selectedImage = ValueNotifier(null);
   late AppTheme appTheme;
   late TabsTexts tapsNames;
   ValueNotifier<List<CameraDescription>>? cameras;
@@ -108,7 +107,6 @@ class CustomGalleryState extends State<CustomGallery>
     selectedPage.dispose();
     stopScrollTab.dispose();
     selectedCameraImage.dispose();
-    selectedImage.dispose();
     pageController.dispose();
     clearVideoRecord.dispose();
     redDeleteText.dispose();
@@ -284,10 +282,17 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
+ void clearMultiImages() {
+    setState(() {
+      multiSelectedImage.value.clear();
+      multiSelectionMode.value = false;
+    });
+  }
+
   ImagesViewPage imagesViewPage() {
     return ImagesViewPage(
       appTheme: appTheme,
-      selectedImage: selectedImage,
+      clearMultiImages:clearMultiImages,
       gridDelegate: widget.gridDelegate,
       multiSelectionMode: multiSelectionMode,
       blackColor: blackColor,
