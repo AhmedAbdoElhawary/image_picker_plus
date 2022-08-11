@@ -1,3 +1,6 @@
+## 0.3.8
+* handle crop keys
+
 ## 0.3.7
 * solve drop frames bug when page view is moving 
 
