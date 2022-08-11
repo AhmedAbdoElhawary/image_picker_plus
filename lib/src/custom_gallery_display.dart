@@ -282,7 +282,7 @@ class CustomGalleryState extends State<CustomGallery>
     );
   }
 
- void clearMultiImages() {
+  void clearMultiImages() {
     setState(() {
       multiSelectedImage.value.clear();
       multiSelectionMode.value = false;
@@ -292,7 +292,7 @@ class CustomGalleryState extends State<CustomGallery>
   ImagesViewPage imagesViewPage() {
     return ImagesViewPage(
       appTheme: appTheme,
-      clearMultiImages:clearMultiImages,
+      clearMultiImages: clearMultiImages,
       gridDelegate: widget.gridDelegate,
       multiSelectionMode: multiSelectionMode,
       blackColor: blackColor,
@@ -317,6 +317,8 @@ class CustomGalleryState extends State<CustomGallery>
   Widget tabBar() {
     double widthOfScreen = MediaQuery.of(context).size.width;
     bool cameraAndVideoEnabled = widget.enableCamera && widget.enableVideo;
+    int divideNumber = cameraAndVideoEnabled ? 3 : 2;
+    double widthOfTab = widthOfScreen / divideNumber;
     return Stack(
       alignment: Alignment.bottomLeft,
       children: [
@@ -335,7 +337,7 @@ class CustomGalleryState extends State<CustomGallery>
                     });
                   },
                   child: SizedBox(
-                    width: widthOfScreen / 3,
+                    width: widthOfTab,
                     height: 40,
                     child: Center(
                       child: Text(tapsNames.galleryText,
@@ -348,8 +350,8 @@ class CustomGalleryState extends State<CustomGallery>
                     ),
                   ),
                 ),
-                if (widget.enableCamera) photoTabBar(widthOfScreen, photoColor),
-                if (widget.enableVideo) videoTabBar(widthOfScreen),
+                if (widget.enableCamera) photoTabBar(widthOfTab, photoColor),
+                if (widget.enableVideo) videoTabBar(widthOfTab),
               ],
             );
           },
@@ -361,27 +363,22 @@ class CustomGalleryState extends State<CustomGallery>
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOutQuad,
             right: (selectedPageValue == SelectedPage.center
-                ? widthOfScreen / 3
+                ? widthOfTab
                 : (selectedPageValue == SelectedPage.right
                     ? 0
-                    : widthOfScreen / 1.5)),
-            child: Container(
-                height: 1,
-                width: cameraAndVideoEnabled
-                    ? widthOfScreen / 3
-                    : widthOfScreen / 2,
-                color: blackColor),
+                    : (divideNumber == 2 ? widthOfTab : widthOfScreen / 1.5))),
+            child: Container(height: 1, width: widthOfTab, color: blackColor),
           ),
         ),
       ],
     );
   }
 
-  GestureDetector photoTabBar(double widthOfScreen, Color textColor) {
+  GestureDetector photoTabBar(double widthOfTab, Color textColor) {
     return GestureDetector(
       onTap: () => centerPage(numPage: 1, selectedPage: SelectedPage.center),
       child: SizedBox(
-        width: widthOfScreen / 3,
+        width: widthOfTab,
         height: 40,
         child: Center(
           child: Text(tapsNames.photoText,
@@ -403,7 +400,7 @@ class CustomGalleryState extends State<CustomGallery>
     });
   }
 
-  GestureDetector videoTabBar(double widthOfScreen) {
+  GestureDetector videoTabBar(double widthOfTab) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -416,7 +413,7 @@ class CustomGalleryState extends State<CustomGallery>
         });
       },
       child: SizedBox(
-        width: widthOfScreen / 3,
+        width: widthOfTab,
         height: 40,
         child: ValueListenableBuilder(
           valueListenable: selectedVideo,
