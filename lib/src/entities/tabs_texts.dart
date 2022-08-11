@@ -7,6 +7,7 @@ class TabsTexts {
   final String holdButtonText;
   final String clearImagesText;
   final String notFoundingCameraText;
+  final String noImagesFounded;
 
   TabsTexts({
     this.videoText = "VIDEO",
@@ -17,5 +18,6 @@ class TabsTexts {
     this.limitingText = "The limit is 10 photos or videos.",
     this.notFoundingCameraText = "No secondary camera found",
     this.holdButtonText = "Press and hold to record",
+    this.noImagesFounded = "There is no images",
   });
 }
