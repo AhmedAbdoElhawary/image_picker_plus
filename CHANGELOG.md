@@ -1,5 +1,6 @@
 ## 0.3.7
 * solve drop frames bug when page view is moving 
+
 ## 0.3.6
 * fix permission bug
 * add INTERNET permission in manifest.xml
