@@ -48,7 +48,6 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       ValueNotifier([]);
 
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
-  // final cropKeys = ValueNotifier<List<GlobalKey<CustomCropState>>>([]);
   final ValueNotifier<List<double>> scaleOfCropsKeys = ValueNotifier([]);
   final ValueNotifier<List<Rect?>> areaOfCropsKeys = ValueNotifier([]);
 
