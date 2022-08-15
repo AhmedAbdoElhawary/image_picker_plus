@@ -1,3 +1,6 @@
+## 0.3.9
+* update the dependencies
+
 ## 0.3.8
 * handle crop keys
 
