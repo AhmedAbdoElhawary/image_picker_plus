@@ -10,10 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  photo_manager: ^2.1.4
+  photo_manager: ^2.2.0
   shimmer: ^2.0.0
   image_crop: ^0.4.1
-  camera: ^0.10.0
+  camera: ^0.10.0+1
   image: ^3.2.0
   path_provider: ^2.0.11
 
