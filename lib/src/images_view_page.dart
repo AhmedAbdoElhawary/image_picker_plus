@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:custom_gallery_display/custom_gallery_display.dart';
 import 'package:custom_gallery_display/src/crop_image_view.dart';
 import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
