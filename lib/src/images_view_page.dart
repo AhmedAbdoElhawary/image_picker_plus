@@ -117,7 +117,10 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     var result = await PhotoManager.requestPermissionExtend();
     if (result.isAuth) {
       List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
-          onlyAll: true, type: RequestType.image);
+          onlyAll: true,
+          type: widget.display == Display.normal
+              ? RequestType.all
+              : RequestType.image);
       if (albums.isEmpty) {
         WidgetsBinding.instance
             .addPostFrameCallback((_) => setState(() => noImages = true));
@@ -548,9 +551,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       area = areaOfCropsKeys.value[indexOfCropImage];
     }
 
-    if (area == null) {
-      return null;
-    }
+    if (area == null) return null;
+
     final sample = await ImageCrop.sampleImage(
       file: imageFile,
       preferredSize: (2000 / scale).round(),
