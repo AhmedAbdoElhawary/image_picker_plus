@@ -119,7 +119,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
           onlyAll: true,
           type: widget.display == Display.normal
-              ? RequestType.all
+              ? RequestType.common
               : RequestType.image);
       if (albums.isEmpty) {
         WidgetsBinding.instance
@@ -342,13 +342,14 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             File? image = selectedImage.value;
             if (image == null) return;
             File? croppedImage = await cropImage(image);
-            if (croppedImage == null) return;
+            File img = croppedImage ?? image;
+            bool isThatVideo = img.path.contains("mp4", img.path.length - 5);
             SelectedImagesDetails details = SelectedImagesDetails(
-              selectedFile: croppedImage,
+              selectedFile: img,
               multiSelectionMode: false,
               aspectRatio: aspect,
-              isThatImage: true,
-              selectedFiles: [croppedImage],
+              isThatImage: !isThatVideo,
+              selectedFiles: [img],
             );
             widget.sendRequestFunction(details);
           } else {
@@ -370,15 +371,18 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
               File currentImage = widget.multiSelectedImage.value[i];
               File? croppedImage =
                   await cropImage(currentImage, indexOfCropImage: i);
-              if (croppedImage != null) {
-                selectedImages.add(croppedImage);
-              }
+              selectedImages.add(croppedImage ?? currentImage);
             }
             if (selectedImages.isNotEmpty) {
+              bool isThatVideo = selectedImages[0]
+                  .path
+                  .contains("mp4", selectedImages[0].path.length - 5);
+
               SelectedImagesDetails details = SelectedImagesDetails(
                 selectedFile: selectedImages[0],
                 selectedFiles: selectedImages,
                 multiSelectionMode: true,
+                isThatImage: !isThatVideo,
                 aspectRatio: aspect,
               );
               widget.sendRequestFunction(details);
@@ -541,17 +545,17 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
 
   Future<File?> cropImage(File imageFile, {int? indexOfCropImage}) async {
     await ImageCrop.requestPermissions();
-    final double scale;
+    final double? scale;
     final Rect? area;
     if (indexOfCropImage == null) {
-      scale = cropKey.value.currentState!.scale;
-      area = cropKey.value.currentState!.area;
+      scale = cropKey.value.currentState?.scale;
+      area = cropKey.value.currentState?.area;
     } else {
       scale = scaleOfCropsKeys.value[indexOfCropImage];
       area = areaOfCropsKeys.value[indexOfCropImage];
     }
 
-    if (area == null) return null;
+    if (area == null || scale == null) return null;
 
     final sample = await ImageCrop.sampleImage(
       file: imageFile,

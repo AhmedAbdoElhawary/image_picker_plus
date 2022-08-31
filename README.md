@@ -4,10 +4,10 @@
 When you try to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UI of Gallery display.
 
 I have two main views of the gallery to solve this issue:
-- It looks like the Instagram gallery.
+- It looks like an Instagram gallery.
 - It's a grid view of gallery images.
 
-You can even customize a display of a camera to take a photo and video from two perspectives
+You can even customize a display of a camera to take a photo and videos.
 
 <p align="left">
   <a href="https://pub.dartlang.org/packages/custom_gallery_display">
@@ -22,7 +22,7 @@ You can even customize a display of a camera to take a photo and video from two 
 
 ## Necessary note
 
-#### `CustomGallery` is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+#### `CustomGallery` is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold.
 
 # Installing
 
@@ -52,7 +52,7 @@ If editing `Info.plist` as text, add:
 * Change the minimum Android sdk version to 21 (or higher), and compile sdk to 31 (or higher) in your `android/app/build.gradle` file.
 
 ```java
-compileSdkVersion 32
+compileSdkVersion 33
 minSdkVersion 21
 ```
 
@@ -60,6 +60,10 @@ minSdkVersion 21
 ````xml
 <manifest>
   ...
+     <application
+      ...
+       android:requestLegacyExternalStorage="true">
+       
     <uses-permission android:name="android.permission.INTERNET"/>
   ...
 </manifest>
@@ -109,11 +113,11 @@ import 'package:custom_gallery_display/custom_gallery_display.dart';
 
 It has many configurable properties, including:
 
-- `appTheme` – Customization of colors If you have diffrent themes
-- `tabsTexts` – Changing the names of tabs or even thier languages
-- `enableCamera` – If you want to take photo from camera (front,back)
-- `enableVideo` – If you want to record video from camera (front,back)
-- `cropImage` – If you want crop image with aspect ratio that you are selected
+- `appTheme` – Customization of colors if you have different themes
+- `tabsTexts` – Changing the names of tabs or even their languages
+- `enableCamera` – If you want to take a photo from the camera (front, back)
+- `enableVideo` – If you want to record video from the camera (front, back)
+- `cropImage` – If you want a cropped image with the aspect ratio that you are selected
 - `gridDelegate` – Customization of grid view
 
 There are also callback:
@@ -128,7 +132,7 @@ There are also callback:
 
 ```dart
 /// Remember:
-/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
 
 CustomGallery.instagramDisplay(
               cropImage: true, // It's true by default
@@ -159,7 +163,7 @@ CustomGallery.instagramDisplay(
 
 ```dart
 /// Remember:
-/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
 
 CustomGallery.normalDisplay(
               enableCamera: false, // It's false by default
@@ -186,7 +190,7 @@ CustomGallery.normalDisplay(
 
 ```dart
 /// Remember:
-/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
 
 CustomGallery.normalDisplay(
               enableVideo: true,
@@ -214,7 +218,8 @@ CustomGallery.normalDisplay(
 
 ```dart
 /// Remember:
-/// CustomGallery is a page that you need to push to it .It's has scafold, you cannot add it as a widget with another scafold
+/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
+
 
 CustomGallery.normalDisplay(
                 enableVideo: true,
