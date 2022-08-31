@@ -1,5 +1,6 @@
 ## 0.3.9
 * update the dependencies
+* update README.md
 
 ## 0.3.8
 * handle crop keys
@@ -17,8 +18,8 @@
 
 ## 0.3.4
 * solve dropped frames issue in grid view when scrolling
-* solve issue in grid view when tap bar is moved
-* remove unuseful package
+* solve the issue in grid view when the tap bar is moved
+* remove the unuseful package
 
 ## 0.3.3+1
 * reformat the code
@@ -33,12 +34,12 @@
 * handling video lag
 
 ## 0.2.8
-* change paint color to white
+* change the paint color to white
 
 ## 0.2.7
 
 * Solve permissions bugs
-* Solve camera initialize bugs
+* Solve camera initializes bugs
 * Edit README
 
 ## 0.2.6
@@ -52,7 +53,7 @@
 ## 0.2.4
 
 * Solve front camera bugs
-* Add some different cases in example
+* Add some different cases as in example
 
 ## 0.2.3
 
@@ -69,5 +70,5 @@
 
 ## 0.2.0
 
-* Add normal display
-* Solve multi selection mode bugs
+* Add a normal display
+* Solve multi-selection mode bugs
