@@ -1,5 +1,5 @@
 
-<h1 align="left">Custom Gallery Display</h1>
+<h1 align="left">Image picker plus</h1>
 
 When you try to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UI of Gallery display.
 
