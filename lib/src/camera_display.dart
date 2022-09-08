@@ -1,19 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:custom_gallery_display/src/entities/app_theme.dart';
-import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
-import 'package:custom_gallery_display/src/utilities/enum.dart';
-import 'package:custom_gallery_display/src/utilities/typedef.dart';
-import 'package:custom_gallery_display/src/video_layout/record_count.dart';
-import 'package:custom_gallery_display/src/video_layout/record_fade_animation.dart';
-import 'package:custom_gallery_display/src/entities/selected_image_details.dart';
-import 'package:custom_gallery_display/src/entities/tabs_texts.dart';
+import 'package:image_crop/image_crop.dart';
+import 'package:image_picker_plus/src/entities/app_theme.dart';
+import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
+import 'package:image_picker_plus/src/utilities/enum.dart';
+import 'package:image_picker_plus/src/utilities/typedef.dart';
+import 'package:image_picker_plus/src/video_layout/record_count.dart';
+import 'package:image_picker_plus/src/video_layout/record_fade_animation.dart';
+import 'package:image_picker_plus/src/entities/selected_image_details.dart';
+import 'package:image_picker_plus/src/entities/tabs_texts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
-import 'package:image/image.dart' as img;
-import 'package:image_crop/image_crop.dart';
 
 // ignore: must_be_immutable
 class CustomCameraDisplay extends StatefulWidget {
@@ -29,8 +27,8 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
   late ValueNotifier<void> initializeControllerFuture;
-  final AsyncValueSetter<SelectedImagesDetails> moveToPage;
-  final CustomAsyncValueSetter<Future<void>, int, bool> onNewCameraSelected;
+  final CustomThreeAsyncValueSetter<Future<void>, int, bool>
+      onNewCameraSelected;
 
   ValueNotifier<List<CameraDescription>>? cameras;
 
@@ -41,7 +39,6 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.selectedCameraImage,
     required this.enableCamera,
     required this.enableVideo,
-    required this.moveToPage,
     required this.controller,
     required this.onNewCameraSelected,
     required this.redDeleteText,
@@ -66,6 +63,18 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   File? videoRecordFile;
 
   @override
+  void dispose() {
+    startVideoCount.dispose();
+    widget.cameras?.dispose();
+    widget.clearVideoRecord.dispose();
+    widget.controller.dispose();
+    widget.initializeControllerFuture.dispose();
+    widget.redDeleteText.dispose();
+    widget.selectedCameraImage.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     videoStatusAnimation = Container();
     super.initState();
@@ -74,7 +83,6 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(context),
       body: buildBody(),
     );
   }
@@ -82,34 +90,33 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Widget buildBody() {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
-    return Stack(
+    return Column(
       children: [
-        if (selectedImage == null) ...[
-          Container(
-            width: double.infinity,
-            color: Colors.blue,
-            child: CameraPreview(widget.controller.value),
+        appBar(),
+        Flexible(
+          child: Stack(
+            children: [
+              if (selectedImage == null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: CameraPreview(widget.controller.value),
+                ),
+              ] else ...[
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    color: whiteColor,
+                    height: 360,
+                    width: double.infinity,
+                    child: buildCrop(selectedImage),
+                  ),
+                )
+              ],
+              buildFlashIcons(),
+              buildPickImageContainer(whiteColor, context),
+            ],
           ),
-        ] else ...[
-          Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              color: whiteColor,
-              height: 360,
-              width: double.infinity,
-              child: selectedCamera == 0
-                  ? buildCrop(selectedImage)
-                  : Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.rotationY(math.pi),
-                      child: buildCrop(selectedImage),
-                    ),
-            ),
-          )
-        ],
-        buildRotationIcon(context),
-        buildFlashIcons(),
-        buildPickImageContainer(whiteColor, context),
+        ),
       ],
     );
   }
@@ -185,39 +192,19 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  Align buildRotationIcon(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: IconButton(
-        onPressed: () async {
-          if (widget.cameras!.value.length > 1) {
-            setState(() {
-              selectedCamera = selectedCamera == 0 ? 1 : 0;
-              widget.onNewCameraSelected(selectedCamera, false);
-            });
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(widget.tapsNames.notFoundingCameraText),
-              duration: const Duration(seconds: 2),
-            ));
-          }
-        },
-        icon:
-            const Icon(Icons.flip_camera_android_rounded, color: Colors.white),
-      ),
-    );
-  }
-
   CustomCrop buildCrop(File selectedImage) {
-    return CustomCrop.file(
-      selectedImage,
+    String path = selectedImage.path;
+    bool isThatVideo = path.contains("mp4", path.length - 5);
+    return CustomCrop(
+      image: selectedImage,
+      isThatImage: !isThatVideo,
       key: cropKey,
       alwaysShowGrid: true,
       paintColor: widget.appTheme.primaryColor,
     );
   }
 
-  AppBar appBar(BuildContext context) {
+  AppBar appBar() {
     Color whiteColor = widget.appTheme.primaryColor;
     Color blackColor = widget.appTheme.focusColor;
     File? selectedImage = widget.selectedCameraImage.value;
@@ -227,7 +214,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       leading: IconButton(
         icon: Icon(Icons.clear_rounded, color: blackColor, size: 30),
         onPressed: () {
-          Navigator.of(context).maybePop();
+          Navigator.of(context).maybePop(null);
         },
       ),
       actions: <Widget>[
@@ -239,23 +226,29 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 color: Colors.blue, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
+                SelectedByte selectedByte = SelectedByte(
+                    isThatImage: false, selectedByte: videoRecordFile!);
                 SelectedImagesDetails details = SelectedImagesDetails(
-                  selectedFile: videoRecordFile!,
                   multiSelectionMode: false,
-                  isThatImage: false,
+                  selectedBytes: [selectedByte],
                   aspectRatio: 1.0,
                 );
-                widget.moveToPage(details);
+
+                Navigator.of(context).maybePop(details);
               } else {
                 if (selectedImage != null) {
-                  File? croppedFile = await cropImage(selectedImage);
-                  if (croppedFile != null) {
+                  File? croppedByte = await cropImage(selectedImage);
+                  if (croppedByte != null) {
+                    SelectedByte selectedByte = SelectedByte(
+                        isThatImage: false, selectedByte: croppedByte);
+
                     SelectedImagesDetails details = SelectedImagesDetails(
-                      selectedFile: File(croppedFile.path),
+                      selectedBytes: [selectedByte],
                       multiSelectionMode: false,
                       aspectRatio: 1.0,
                     );
-                    widget.moveToPage(details);
+                    if (!mounted) return;
+                    Navigator.of(context).maybePop(details);
                   }
                 }
               }
@@ -306,24 +299,14 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       if (!widget.selectedVideo) {
         final image = await widget.controller.value.takePicture();
         File selectedImage = File(image.path);
-
-        /// To fix the orientation of the front camera
-        if (selectedCamera == 1) {
-          List<int> imageBytes = await selectedImage.readAsBytes();
-          final originalImage = img.decodeImage(imageBytes);
-          if (originalImage != null) {
-            img.Image fixedImage;
-            fixedImage = img.copyRotate(originalImage, -360);
-            selectedImage =
-                await selectedImage.writeAsBytes(img.encodeJpg(fixedImage));
-          }
-        }
         setState(() {
           widget.selectedCameraImage.value = selectedImage;
           widget.replacingTabBar(true);
         });
       } else {
-        setState(() => videoStatusAnimation = buildFadeAnimation());
+        setState(() {
+          videoStatusAnimation = buildFadeAnimation();
+        });
       }
     } catch (e) {
       if (kDebugMode) print(e);
@@ -343,8 +326,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       startVideoCount.value = false;
       widget.replacingTabBar(true);
     });
-    XFile w = await widget.controller.value.stopVideoRecording();
-    videoRecordFile = File(w.path);
+    XFile video = await widget.controller.value.stopVideoRecording();
+    videoRecordFile = File(video.path);
   }
 
   RecordFadeAnimation buildFadeAnimation() {
