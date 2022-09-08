@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "d:/filter_version/custom_gallery_display/lib",
-      "program": "d:/filter_version/custom_gallery_display/lib/build/Debug/outDebug",
+      "cwd": "d:/filter_version/image_picker_plus/lib",
+      "program": "d:/filter_version/image_picker_plus/lib/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
