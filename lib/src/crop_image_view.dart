@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:custom_gallery_display/src/custom_expand_icon.dart';
-import 'package:custom_gallery_display/src/entities/app_theme.dart';
-import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
+import 'package:image_picker_plus/src/custom_expand_icon.dart';
+import 'package:image_picker_plus/src/entities/app_theme.dart';
+import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
 import 'package:flutter/material.dart';
 
 class CropImageView extends StatefulWidget {
@@ -167,8 +167,11 @@ class _CropImageViewState extends State<CropImageView> {
 
   Widget cropImageWidget(File selectedImageValue, bool expandImageValue) {
     GlobalKey<CustomCropState> cropKey = widget.cropKey.value;
-    return CustomCrop.file(
-      selectedImageValue,
+    String path = selectedImageValue.path;
+    bool isThatVideo = path.contains("mp4", path.length - 5);
+    return CustomCrop(
+     image: selectedImageValue,
+      isThatImage: !isThatVideo,
       key: cropKey,
       paintColor: widget.appTheme.primaryColor,
       aspectRatio: expandImageValue ? 6 / 8 : 1.0,
