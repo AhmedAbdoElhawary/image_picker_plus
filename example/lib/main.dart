@@ -1,13 +1,11 @@
-import 'dart:io';
-
-import 'package:custom_gallery_display/custom_gallery_display.dart';
+import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await CustomGalleryPermissions.requestPermissionExtend();
+  await ImagePickerPlusPermissions.requestPermissionExtend();
   runApp(const MyApp());
 }
 
@@ -42,261 +40,291 @@ class _MyHomePageState extends State<MyHomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              instagramButton1(context),
-              instagramButton2(context),
-              instagramButton3(context),
-              normalButton1(context),
-              normalButton2(context),
-              normalButton3(context),
+              button1(context),
+              button2(context),
+              button3(context),
+              button4(context),
+              button5(context),
+              button6(context),
+              button7(context),
             ]),
       ),
     );
   }
 
-  ElevatedButton normalButton3(BuildContext context) {
+  ElevatedButton button1(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => CustomGallery.normalDisplay(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-                childAspectRatio: .5,
-              ),
-              sendRequestFunction: moveToPage,
-            ),
-          ),
-        );
+        SelectedImagesDetails? details = await ImagePickerPlus(context)
+            .pickImage(source: ImageSource.gallery);
+        if (details != null) await displayDetails(details);
       },
-      child: const Text("Normal 3 display"),
+      child: const Text("Normal 1"),
     );
   }
 
-  ElevatedButton normalButton2(BuildContext context) {
+  ElevatedButton button2(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => CustomGallery.normalDisplay(
-              enableVideo: true,
-              appTheme: AppTheme(
-                  focusColor: Colors.white, primaryColor: Colors.black),
-              tabsTexts: TabsTexts(
-                videoText: "فيديو",
-                galleryText: "المعرض",
-                deletingText: "حذف",
-                clearImagesText: "الغاء الصور المحدده",
-                limitingText: "اقصي حد للصور هو 10",
-              ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-              ),
-              sendRequestFunction: moveToPage,
-            ),
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickVideo(
+          source: ImageSource.both,
+
+          /// On long tap, it will be available.
+          multiVideos: true,
+          galleryDisplaySettings: GalleryDisplaySettings(
+            gridDelegate: _sliverGridDelegate(),
           ),
         );
+        if (details != null) await displayDetails(details);
       },
-      child: const Text("Normal 2 display"),
+      child: const Text("Normal 2"),
     );
   }
 
-  ElevatedButton normalButton1(BuildContext context) {
+  ElevatedButton button3(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => CustomGallery.normalDisplay(
-              enableVideo: true,
-              enableCamera: true,
-              appTheme: AppTheme(
-                  focusColor: Colors.white, primaryColor: Colors.black),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-                childAspectRatio: .5,
-              ),
-              sendRequestFunction: moveToPage,
-            ),
-          ),
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickBoth(
+          source: ImageSource.camera,
+
+          /// On long tap, it will be available.
+          multiSelection: true,
+
+          /// When you make ImageSource from the camera these settings will be disabled because they belong to the gallery.
+          galleryDisplaySettings: GalleryDisplaySettings(),
         );
+        if (details != null) await displayDetails(details);
       },
-      child: const Text("Normal display"),
+      child: const Text("Normal 3"),
     );
   }
 
-  ElevatedButton instagramButton3(BuildContext context) {
+  ElevatedButton button4(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => CustomGallery.instagramDisplay(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-                childAspectRatio: .5,
-              ),
-              sendRequestFunction: moveToPage,
-            ),
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickBoth(
+          source: ImageSource.both,
+
+          /// On long tap, it will be available.
+          multiSelection: true,
+          galleryDisplaySettings: GalleryDisplaySettings(
+            gridDelegate: _sliverGridDelegate(),
           ),
         );
+        if (details != null) await displayDetails(details);
       },
-      child: const Text("Instagram 3 display"),
+      child: const Text("Normal 4"),
     );
   }
 
-  ElevatedButton instagramButton2(BuildContext context) {
+  ElevatedButton button5(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => CustomGallery.instagramDisplay(
-              enableVideo: true,
-              enableCamera: false,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-              ),
-              sendRequestFunction: moveToPage,
-            ),
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickBoth(
+          source: ImageSource.both,
+
+          /// On long tap, it will be available.
+          multiSelection: true,
+
+          galleryDisplaySettings: GalleryDisplaySettings(
+            appTheme:
+                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            cropImage: true,
+            showImagePreview: true,
           ),
         );
+        if (details != null) await displayDetails(details);
       },
-      child: const Text("Instagram 2 display"),
+      child: const Text("Preview 1"),
     );
   }
 
-  ElevatedButton instagramButton1(BuildContext context) {
+  ElevatedButton button6(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) =>
-                CustomGallery.instagramDisplay(sendRequestFunction: moveToPage),
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickVideo(
+          source: ImageSource.both,
+          /// On long tap, it will be available.
+          multiVideos: true,
+          galleryDisplaySettings: GalleryDisplaySettings(
+            tabsTexts: _tabsTexts(),
+            appTheme:
+                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            cropImage: true,
+            showImagePreview: true,
           ),
         );
+        if (details != null) await displayDetails(details);
       },
-      child: const Text("Instagram display"),
+      child: const Text("Preview 2"),
     );
   }
 
-  Future<void> moveToPage(SelectedImagesDetails details) async {
+  SliverGridDelegateWithFixedCrossAxisCount _sliverGridDelegate() {
+    return const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 3,
+      crossAxisSpacing: 1.7,
+      mainAxisSpacing: 1.5,
+      childAspectRatio: .5,
+    );
+  }
+
+  TabsTexts _tabsTexts() {
+    return TabsTexts(
+      videoText: "فيديو",
+      galleryText: "المعرض",
+      deletingText: "حذف",
+      clearImagesText: "الغاء الصور المحدده",
+      limitingText: "اقصي حد للصور هو 10",
+    );
+  }
+
+  ElevatedButton button7(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickBoth(
+          source: ImageSource.both,
+
+          /// On long tap, it will be available.
+          multiSelection: true,
+
+          galleryDisplaySettings: GalleryDisplaySettings(
+            appTheme:
+                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            cropImage: true,
+            showImagePreview: true,
+          ),
+        );
+        if (details != null) await displayDetails(details);
+      },
+      child: const Text("Preview 3"),
+    );
+  }
+
+  Future<void> displayDetails(SelectedImagesDetails details) async {
     await Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (context) {
-          if (details.isThatImage) {
-            return DisplayImages(
-                selectedFiles: details.selectedFiles != null
-                    ? details.selectedFiles!
-                    : [details.selectedFile],
-                details: details,
-                aspectRatio: details.aspectRatio);
-          } else {
-            return DisplayVideo(
-                video: details.selectedFile, aspectRatio: details.aspectRatio);
-          }
+          return DisplayImages(
+              selectedBytes: details.selectedBytes,
+              details: details,
+              aspectRatio: details.aspectRatio);
         },
       ),
     );
   }
 }
 
-class DisplayImages extends StatelessWidget {
-  final List<File> selectedFiles;
+class DisplayImages extends StatefulWidget {
+  final List<SelectedByte> selectedBytes;
   final double aspectRatio;
   final SelectedImagesDetails details;
   const DisplayImages({
     Key? key,
     required this.details,
-    required this.selectedFiles,
+    required this.selectedBytes,
     required this.aspectRatio,
   }) : super(key: key);
 
   @override
+  State<DisplayImages> createState() => _DisplayImagesState();
+}
+
+class _DisplayImagesState extends State<DisplayImages> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Image')),
+      appBar: AppBar(title: const Text('Selected images/videos')),
       body: ListView.builder(
         itemBuilder: (context, index) {
-          return SizedBox(
-              width: double.infinity, child: Image.file(selectedFiles[index]));
+          SelectedByte selectedByte = widget.selectedBytes[index];
+          if (!selectedByte.isThatImage) {
+            return _DisplayVideo(selectedByte: selectedByte);
+          } else {
+            return SizedBox(
+                width: double.infinity,
+                child: Image.file(selectedByte.selectedByte));
+          }
         },
-        itemCount: selectedFiles.length,
+        itemCount: widget.selectedBytes.length,
       ),
     );
   }
 }
 
-class DisplayVideo extends StatefulWidget {
-  final File video;
-  final double aspectRatio;
-  const DisplayVideo({
-    Key? key,
-    required this.video,
-    required this.aspectRatio,
-  }) : super(key: key);
+class _DisplayVideo extends StatefulWidget {
+  final SelectedByte selectedByte;
+  const _DisplayVideo({Key? key, required this.selectedByte}) : super(key: key);
 
   @override
-  State<DisplayVideo> createState() => _DisplayVideoState();
+  State<_DisplayVideo> createState() => _DisplayVideoState();
 }
 
-class _DisplayVideoState extends State<DisplayVideo> {
-  late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
+class _DisplayVideoState extends State<_DisplayVideo> {
+  late VideoPlayerController controller;
+  late Future<void> initializeVideoPlayerFuture;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(widget.video);
-    _initializeVideoPlayerFuture = _controller.initialize();
-    _controller.setLooping(true);
+
+    controller = VideoPlayerController.file(widget.selectedByte.selectedByte);
+    initializeVideoPlayerFuture = controller.initialize();
+    controller.setLooping(true);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Video')),
-      body: FutureBuilder(
-        future: _initializeVideoPlayerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
-            );
-          } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            if (_controller.value.isPlaying) {
-              _controller.pause();
-            } else {
-              _controller.play();
-            }
-          });
-        },
-        child: Icon(
-          _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-        ),
-      ),
+    return FutureBuilder(
+      future: initializeVideoPlayerFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              AspectRatio(
+                aspectRatio: controller.value.aspectRatio,
+                child: VideoPlayer(controller),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (controller.value.isPlaying) {
+                        controller.pause();
+                      } else {
+                        controller.play();
+                      }
+                    });
+                  },
+                  child: Icon(
+                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 45,
+                  ),
+                ),
+              )
+            ],
+          );
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(strokeWidth: 1),
+          );
+        }
+      },
     );
   }
 }

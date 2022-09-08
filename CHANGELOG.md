@@ -1,3 +1,9 @@
+## 0.4.0+1
+* try to change the name of package
+
+## 0.4.0
+* change the way of pick images
+
 ## 0.3.9
 * update the dependencies
 * update README.md

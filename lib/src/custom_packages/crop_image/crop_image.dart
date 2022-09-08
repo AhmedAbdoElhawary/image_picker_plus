@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 const _kCropGridColumnCount = 3;
 const _kCropGridRowCount = 3;
@@ -16,63 +16,27 @@ enum _CropAction { none, moving, cropping, scaling }
 enum _CropHandleSide { none, topLeft, topRight, bottomLeft, bottomRight }
 
 class CustomCrop extends StatefulWidget {
-  final ImageProvider image;
+  final File image;
   final double? aspectRatio;
   final double maximumScale;
+
   final bool alwaysShowGrid;
   final Color? paintColor;
   final ImageErrorListener? onImageError;
   final ValueChanged<bool>? scrollCustomList;
+  final bool isThatImage;
 
   const CustomCrop({
     Key? key,
+    this.aspectRatio,
+    this.paintColor,
+    this.scrollCustomList,
+    this.maximumScale = 2.0,
+    this.alwaysShowGrid = false,
+    this.isThatImage = true,
+    this.onImageError,
     required this.image,
-    this.aspectRatio,
-    this.maximumScale = 2.0,
-    this.paintColor,
-    this.scrollCustomList,
-    this.alwaysShowGrid = false,
-    this.onImageError,
   }) : super(key: key);
-
-  CustomCrop.file(
-    File file, {
-    Key? key,
-    double scale = 1.0,
-    this.aspectRatio,
-    this.paintColor,
-    this.scrollCustomList,
-    this.maximumScale = 2.0,
-    this.alwaysShowGrid = false,
-    this.onImageError,
-  })  : image = FileImage(file, scale: scale),
-        super(key: key);
-  CustomCrop.memory(
-    Uint8List byte, {
-    Key? key,
-    double scale = 1.0,
-    this.aspectRatio,
-    this.paintColor = Colors.white,
-    this.scrollCustomList,
-    this.maximumScale = 2.0,
-    this.alwaysShowGrid = false,
-    this.onImageError,
-  })  : image = MemoryImage(byte, scale: scale),
-        super(key: key);
-
-  CustomCrop.asset(
-    String assetName, {
-    Key? key,
-    AssetBundle? bundle,
-    String? package,
-    this.aspectRatio,
-    this.scrollCustomList,
-    this.paintColor = Colors.white,
-    this.maximumScale = 2.0,
-    this.alwaysShowGrid = false,
-    this.onImageError,
-  })  : image = AssetImage(assetName, bundle: bundle, package: package),
-        super(key: key);
 
   @override
   State<StatefulWidget> createState() => CustomCropState();
@@ -148,7 +112,6 @@ class CustomCropState extends State<CustomCrop>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     _getImage();
   }
 
@@ -176,19 +139,22 @@ class CustomCropState extends State<CustomCrop>
   }
 
   void _getImage({bool force = false}) {
-    final oldImageStream = _imageStream;
-    final newImageStream =
-        widget.image.resolve(createLocalImageConfiguration(context));
-    _imageStream = newImageStream;
-    if (newImageStream.key != oldImageStream?.key || force) {
-      final oldImageListener = _imageListener;
-      if (oldImageListener != null) {
-        oldImageStream?.removeListener(oldImageListener);
+    if (widget.isThatImage) {
+      final oldImageStream = _imageStream;
+      FileImage image = FileImage(widget.image, scale: 1.0);
+      final newImageStream =
+          image.resolve(createLocalImageConfiguration(context));
+      _imageStream = newImageStream;
+      if (newImageStream.key != oldImageStream?.key || force) {
+        final oldImageListener = _imageListener;
+        if (oldImageListener != null) {
+          oldImageStream?.removeListener(oldImageListener);
+        }
+        final newImageListener =
+            ImageStreamListener(_updateImage, onError: widget.onImageError);
+        _imageListener = newImageListener;
+        newImageStream.addListener(newImageListener);
       }
-      final newImageListener =
-          ImageStreamListener(_updateImage, onError: widget.onImageError);
-      _imageListener = newImageListener;
-      newImageStream.addListener(newImageListener);
     }
   }
 
@@ -210,7 +176,11 @@ class CustomCropState extends State<CustomCrop>
             onScaleEnd: _isEnabled ? _handleScaleEnd : null,
             child: AnimatedBuilder(
               builder: (context, child) {
-                return buildCustomPaint();
+                if (widget.isThatImage) {
+                  return buildCustomPaint();
+                } else {
+                  return _DisplayVideo(selectedFile: widget.image);
+                }
               },
               animation: _activeController,
             ),
@@ -220,7 +190,123 @@ class CustomCropState extends State<CustomCrop>
     );
   }
 
-  CustomPaint buildCustomPaint() {
+  void _handleScaleStart(ScaleStartDetails details) {
+    if (widget.scrollCustomList != null) widget.scrollCustomList!(true);
+
+    _activate();
+    _settleController.stop(canceled: false);
+    _lastFocalPoint = details.focalPoint;
+    _action = _CropAction.none;
+    _handle = _hitCropHandle(_getLocalPoint(details.focalPoint));
+    _startScale = _scale;
+    _startView = _view;
+  }
+
+  void _handleScaleUpdate(ScaleUpdateDetails details) {
+    if (_action == _CropAction.none) {
+      if (_handle == _CropHandleSide.none) {
+        _action = pointers == 2 ? _CropAction.scaling : _CropAction.moving;
+      } else {
+        _action = _CropAction.cropping;
+      }
+    }
+    if (_action == _CropAction.cropping) {
+      final boundaries = _boundaries;
+      if (boundaries == null) return;
+    } else if (_action == _CropAction.moving) {
+      final image = _image;
+      if (image == null) return;
+
+      final delta = details.focalPoint - _lastFocalPoint;
+      _lastFocalPoint = details.focalPoint;
+
+      setState(() {
+        _view = _view.translate(
+          delta.dx / (image.width * _scale * _ratio),
+          delta.dy / (image.height * _scale * _ratio),
+        );
+      });
+    } else if (_action == _CropAction.scaling) {
+      final image = _image;
+      final boundaries = _boundaries;
+      if (image == null || boundaries == null) return;
+
+      setState(() {
+        _scale = _startScale * details.scale;
+
+        final dx = boundaries.width *
+            (1.0 - details.scale) /
+            (image.width * _scale * _ratio);
+        final dy = boundaries.height *
+            (1.0 - details.scale) /
+            (image.height * _scale * _ratio);
+        _view = Rect.fromLTWH(
+          _startView.left + dx / 2,
+          _startView.top + dy / 2,
+          _startView.width,
+          _startView.height,
+        );
+      });
+    }
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    if (widget.scrollCustomList != null) widget.scrollCustomList!(false);
+
+    _deactivate();
+    final minimumScale = _minimumScale;
+    if (minimumScale == null) return;
+
+    final targetScale = _scale.clamp(minimumScale, _maximumScale);
+    _scaleTween = Tween<double>(
+      begin: _scale,
+      end: targetScale,
+    );
+
+    _startView = _view;
+    _viewTween = RectTween(
+      begin: _view,
+      end: _getViewInBoundaries(targetScale),
+    );
+
+    _settleController.value = 0.0;
+    _settleController.animateTo(
+      1.0,
+      curve: Curves.fastOutSlowIn,
+      duration: const Duration(milliseconds: 350),
+    );
+  }
+
+  Rect _getViewInBoundaries(double scale) =>
+      Offset(
+        max(
+          min(_view.left, _area.left * _view.width / scale),
+          _area.right * _view.width / scale - 1.0,
+        ),
+        max(
+            min(
+              _view.top,
+              _area.top * _view.height / scale,
+            ),
+            _area.bottom * _view.height / scale - 1.0),
+      ) &
+      _view.size;
+
+  double get _maximumScale => widget.maximumScale;
+
+  double? get _minimumScale {
+    final boundaries = _boundaries;
+    final image = _image;
+    if (boundaries == null || image == null) {
+      return null;
+    }
+
+    final scaleX = boundaries.width * _area.width / (image.width * _ratio);
+    final scaleY = boundaries.height * _area.height / (image.height * _ratio);
+    return min(_maximumScale, max(scaleX, scaleY));
+  }
+
+  Widget buildCustomPaint() {
     return CustomPaint(
       painter: _CropPainter(
         image: _image,
@@ -254,9 +340,7 @@ class CustomCropState extends State<CustomCrop>
 
   Size? get _boundaries {
     final context = _surfaceKey.currentContext;
-    if (context == null) {
-      return null;
-    }
+    if (context == null) return null;
 
     final box = context.findRenderObject() as RenderBox;
     final size = box.size;
@@ -266,9 +350,7 @@ class CustomCropState extends State<CustomCrop>
 
   Offset? _getLocalPoint(Offset point) {
     final context = _surfaceKey.currentContext;
-    if (context == null) {
-      return null;
-    }
+    if (context == null) return null;
 
     final box = context.findRenderObject() as RenderBox;
 
@@ -291,9 +373,7 @@ class CustomCropState extends State<CustomCrop>
     required double viewWidth,
     required double viewHeight,
   }) {
-    if (imageWidth == null || imageHeight == null) {
-      return Rect.zero;
-    }
+    if (imageWidth == null || imageHeight == null) return Rect.zero;
 
     double height;
     double width;
@@ -331,9 +411,7 @@ class CustomCropState extends State<CustomCrop>
 
   void _updateImage(ImageInfo imageInfo, bool synchronousCall) {
     final boundaries = _boundaries;
-    if (boundaries == null) {
-      return;
-    }
+    if (boundaries == null) return;
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final image = imageInfo.image;
@@ -416,138 +494,6 @@ class CustomCropState extends State<CustomCrop>
     }
 
     return _CropHandleSide.none;
-  }
-
-  void _handleScaleStart(ScaleStartDetails details) {
-    if (widget.scrollCustomList != null) {
-      widget.scrollCustomList!(true);
-    }
-
-    _activate();
-    _settleController.stop(canceled: false);
-    _lastFocalPoint = details.focalPoint;
-    _action = _CropAction.none;
-    _handle = _hitCropHandle(_getLocalPoint(details.focalPoint));
-    _startScale = _scale;
-    _startView = _view;
-  }
-
-  Rect _getViewInBoundaries(double scale) =>
-      Offset(
-        max(
-          min(
-            _view.left,
-            _area.left * _view.width / scale,
-          ),
-          _area.right * _view.width / scale - 1.0,
-        ),
-        max(
-          min(
-            _view.top,
-            _area.top * _view.height / scale,
-          ),
-          _area.bottom * _view.height / scale - 1.0,
-        ),
-      ) &
-      _view.size;
-
-  double get _maximumScale => widget.maximumScale;
-
-  double? get _minimumScale {
-    final boundaries = _boundaries;
-    final image = _image;
-    if (boundaries == null || image == null) {
-      return null;
-    }
-
-    final scaleX = boundaries.width * _area.width / (image.width * _ratio);
-    final scaleY = boundaries.height * _area.height / (image.height * _ratio);
-    return min(_maximumScale, max(scaleX, scaleY));
-  }
-
-  void _handleScaleEnd(ScaleEndDetails details) {
-    if (widget.scrollCustomList != null) {
-      widget.scrollCustomList!(false);
-    }
-
-    _deactivate();
-    final minimumScale = _minimumScale;
-    if (minimumScale == null) {
-      return;
-    }
-
-    final targetScale = _scale.clamp(minimumScale, _maximumScale);
-    _scaleTween = Tween<double>(
-      begin: _scale,
-      end: targetScale,
-    );
-
-    _startView = _view;
-    _viewTween = RectTween(
-      begin: _view,
-      end: _getViewInBoundaries(targetScale),
-    );
-
-    _settleController.value = 0.0;
-    _settleController.animateTo(
-      1.0,
-      curve: Curves.fastOutSlowIn,
-      duration: const Duration(milliseconds: 350),
-    );
-  }
-
-  void _handleScaleUpdate(ScaleUpdateDetails details) {
-    if (_action == _CropAction.none) {
-      if (_handle == _CropHandleSide.none) {
-        _action = pointers == 2 ? _CropAction.scaling : _CropAction.moving;
-      } else {
-        _action = _CropAction.cropping;
-      }
-    }
-    if (_action == _CropAction.cropping) {
-      final boundaries = _boundaries;
-      if (boundaries == null) {
-        return;
-      }
-    } else if (_action == _CropAction.moving) {
-      final image = _image;
-      if (image == null) {
-        return;
-      }
-
-      final delta = details.focalPoint - _lastFocalPoint;
-      _lastFocalPoint = details.focalPoint;
-
-      setState(() {
-        _view = _view.translate(
-          delta.dx / (image.width * _scale * _ratio),
-          delta.dy / (image.height * _scale * _ratio),
-        );
-      });
-    } else if (_action == _CropAction.scaling) {
-      final image = _image;
-      final boundaries = _boundaries;
-      if (image == null || boundaries == null) {
-        return;
-      }
-
-      setState(() {
-        _scale = _startScale * details.scale;
-
-        final dx = boundaries.width *
-            (1.0 - details.scale) /
-            (image.width * _scale * _ratio);
-        final dy = boundaries.height *
-            (1.0 - details.scale) /
-            (image.height * _scale * _ratio);
-        _view = Rect.fromLTWH(
-          _startView.left + dx / 2,
-          _startView.top + dy / 2,
-          _startView.width,
-          _startView.height,
-        );
-      });
-    }
   }
 }
 
@@ -673,5 +619,76 @@ class _CropPainter extends CustomPainter {
     }
 
     canvas.drawPath(path, paint);
+  }
+}
+
+class _DisplayVideo extends StatefulWidget {
+  final File selectedFile;
+  const _DisplayVideo({Key? key, required this.selectedFile}) : super(key: key);
+
+  @override
+  State<_DisplayVideo> createState() => _DisplayVideoState();
+}
+
+class _DisplayVideoState extends State<_DisplayVideo> {
+  late VideoPlayerController controller;
+  late Future<void> initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    controller = VideoPlayerController.file(widget.selectedFile);
+    initializeVideoPlayerFuture = controller.initialize();
+    controller.setLooping(true);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: initializeVideoPlayerFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                minScale: 1,
+                child: SizedBox(height: double.infinity,width: double.infinity,child: VideoPlayer(controller)),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (controller.value.isPlaying) {
+                        controller.pause();
+                      } else {
+                        controller.play();
+                      }
+                    });
+                  },
+                  child: Icon(
+                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 45,
+                  ),
+                ),
+              )
+            ],
+          );
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(strokeWidth: 1),
+          );
+        }
+      },
+    );
   }
 }

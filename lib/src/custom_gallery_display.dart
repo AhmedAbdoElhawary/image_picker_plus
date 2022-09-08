@@ -1,60 +1,31 @@
 import 'dart:io';
-import 'package:custom_gallery_display/custom_gallery_display.dart';
-import 'package:custom_gallery_display/src/images_view_page.dart';
-import 'package:custom_gallery_display/src/utilities/enum.dart';
-import 'package:flutter/foundation.dart';
+import 'package:image_picker_plus/image_picker_plus.dart';
+import 'package:image_picker_plus/src/camera_display.dart';
+import 'package:image_picker_plus/src/images_view_page.dart';
+import 'package:image_picker_plus/src/utilities/enum.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 
-class CustomGallery extends StatefulWidget {
-  final Display display;
-  final AppTheme? appTheme;
-  final TabsTexts? tabsTexts;
-  final bool enableCamera;
-  final bool enableVideo;
-  final bool cropImage;
-  final SliverGridDelegate gridDelegate;
-  final AsyncValueSetter<SelectedImagesDetails> sendRequestFunction;
+class CustomImagePicker extends StatefulWidget {
+  final ImageSource source;
+  final bool multiSelection;
+  final GalleryDisplaySettings? galleryDisplaySettings;
+  final PickerSource pickerSource;
 
-  const CustomGallery.instagramDisplay({
-    Key? key,
-    this.gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 4,
-      crossAxisSpacing: 1.7,
-      mainAxisSpacing: 1.5,
-    ),
-    this.tabsTexts,
-    this.cropImage = true,
-    this.enableCamera = true,
-    this.enableVideo = true,
-    required this.sendRequestFunction,
-    this.appTheme,
-  })  : display = Display.instagram,
-        super(key: key);
-
-  const CustomGallery.normalDisplay({
-    Key? key,
-    this.gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 3,
-      crossAxisSpacing: 1.7,
-      mainAxisSpacing: 1.5,
-      childAspectRatio: .5,
-    ),
-    this.tabsTexts,
-    this.enableCamera = false,
-    this.enableVideo = false,
-    required this.sendRequestFunction,
-    this.appTheme,
-  })  : display = Display.normal,
-        cropImage = false,
-        super(key: key);
+  const CustomImagePicker({
+    required this.source,
+    required this.multiSelection,
+    required this.galleryDisplaySettings,
+    required this.pickerSource,
+    super.key,
+  });
 
   @override
-  CustomGalleryState createState() => CustomGalleryState();
+  CustomImagePickerState createState() => CustomImagePickerState();
 }
 
-class CustomGalleryState extends State<CustomGallery>
+class CustomImagePickerState extends State<CustomImagePicker>
     with TickerProviderStateMixin {
   final pageController = ValueNotifier(PageController());
   final clearVideoRecord = ValueNotifier(false);
@@ -66,22 +37,49 @@ class CustomGalleryState extends State<CustomGallery>
   final multiSelectionMode = ValueNotifier(false);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
-  final ValueNotifier<bool?> stopScrollTab = ValueNotifier(null);
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
+  late bool cropImage;
   late AppTheme appTheme;
   late TabsTexts tapsNames;
+  late bool showImagePreview;
+
   ValueNotifier<List<CameraDescription>>? cameras;
   late Color whiteColor;
   late Color blackColor;
+  late GalleryDisplaySettings imagePickerDisplay;
+
+  late bool enableCamera;
+  late bool enableVideo;
+
+  late bool showInternalVideos;
+  late bool showInternalImages;
+  late SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
 
   @override
   void initState() {
-    appTheme = widget.appTheme ?? AppTheme();
-    tapsNames = widget.tabsTexts ?? TabsTexts();
-    whiteColor = appTheme.primaryColor;
-    blackColor = appTheme.focusColor;
+    _initializeVariables();
     _initializeCamera(0, true);
     super.initState();
+  }
+
+  _initializeVariables() {
+    imagePickerDisplay =
+        widget.galleryDisplaySettings ?? GalleryDisplaySettings();
+    appTheme = imagePickerDisplay.appTheme ?? AppTheme();
+    tapsNames = imagePickerDisplay.tabsTexts ?? TabsTexts();
+    cropImage = imagePickerDisplay.cropImage;
+    showImagePreview = cropImage || imagePickerDisplay.showImagePreview;
+    gridDelegate = imagePickerDisplay.gridDelegate;
+
+    showInternalImages = widget.pickerSource != PickerSource.video;
+    showInternalVideos = widget.pickerSource != PickerSource.image;
+
+    bool notGallery = widget.source != ImageSource.gallery;
+
+    enableCamera = showInternalImages && notGallery;
+    enableVideo = showInternalVideos && notGallery;
+    whiteColor = appTheme.primaryColor;
+    blackColor = appTheme.focusColor;
   }
 
   Future<void> _initializeCamera(int index, bool checkCamera) async {
@@ -100,19 +98,18 @@ class CustomGalleryState extends State<CustomGallery>
 
   @override
   void dispose() {
-    initializeControllerFuture.dispose();
+    // initializeControllerFuture.dispose();
     multiSelectionMode.dispose();
     showDeleteText.dispose();
     selectedVideo.dispose();
     selectedPage.dispose();
-    stopScrollTab.dispose();
-    selectedCameraImage.dispose();
+    // selectedCameraImage.dispose();
     pageController.dispose();
-    clearVideoRecord.dispose();
-    redDeleteText.dispose();
-    cameras!.dispose();
-    multiSelectedImage.dispose();
-    controller.dispose();
+    // clearVideoRecord.dispose();
+    // redDeleteText.dispose();
+    // cameras!.dispose();
+    // multiSelectedImage.dispose();
+    // controller.dispose();
     super.dispose();
   }
 
@@ -199,11 +196,7 @@ class CustomGalleryState extends State<CustomGallery>
   moveToVideo() {
     setState(() {
       selectedPage.value = SelectedPage.right;
-      pageController.value.animateTo(1,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutQuad);
       selectedVideo.value = true;
-      stopScrollTab.value = true;
     });
   }
 
@@ -227,17 +220,17 @@ class CustomGalleryState extends State<CustomGallery>
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   imagesViewPage(),
-                  if (widget.enableCamera || widget.enableVideo) cameraPage(),
+                  if (enableCamera || enableVideo) cameraPage(),
                 ],
               ),
             ),
           ),
           if (multiSelectedImage.value.length < 10) ...[
-            if (widget.enableVideo || widget.enableCamera)
+            if (enableVideo || enableCamera)
               ValueListenableBuilder(
                 valueListenable: multiSelectionMode,
                 builder: (context, bool multiSelectionModeValue, child) {
-                  if (widget.display == Display.normal) {
+                  if (!showImagePreview) {
                     if (multiSelectionModeValue) {
                       return clearSelectedImages();
                     } else {
@@ -268,14 +261,13 @@ class CustomGalleryState extends State<CustomGallery>
         selectedCameraImage: selectedCameraImage,
         tapsNames: tapsNames,
         cameras: cameras!,
-        enableCamera: widget.enableCamera,
+        enableCamera: enableCamera,
         onNewCameraSelected: _initializeCamera,
-        enableVideo: widget.enableVideo,
+        enableVideo: enableVideo,
         initializeControllerFuture: initializeControllerFuture,
         replacingTabBar: replacingDeleteWidget,
         clearVideoRecord: clearVideoRecord,
         redDeleteText: redDeleteText,
-        moveToPage: widget.sendRequestFunction,
         moveToVideoScreen: moveToVideo,
         selectedVideo: selectedVideoValue,
       ),
@@ -293,14 +285,17 @@ class CustomGalleryState extends State<CustomGallery>
     return ImagesViewPage(
       appTheme: appTheme,
       clearMultiImages: clearMultiImages,
-      gridDelegate: widget.gridDelegate,
+      gridDelegate: gridDelegate,
       multiSelectionMode: multiSelectionMode,
       blackColor: blackColor,
-      display: widget.display,
+      showImagePreview: showImagePreview,
       tabsTexts: tapsNames,
       multiSelectedImage: multiSelectedImage,
-      sendRequestFunction: widget.sendRequestFunction,
       whiteColor: whiteColor,
+      cropImage: cropImage,
+      multiSelection: widget.multiSelection,
+      showInternalVideos: showInternalVideos,
+      showInternalImages: showInternalImages,
     );
   }
 
@@ -316,7 +311,7 @@ class CustomGalleryState extends State<CustomGallery>
 
   Widget tabBar() {
     double widthOfScreen = MediaQuery.of(context).size.width;
-    bool cameraAndVideoEnabled = widget.enableCamera && widget.enableVideo;
+    bool cameraAndVideoEnabled = enableCamera && enableVideo;
     int divideNumber = cameraAndVideoEnabled ? 3 : 2;
     double widthOfTab = widthOfScreen / divideNumber;
     return Stack(
@@ -350,8 +345,8 @@ class CustomGalleryState extends State<CustomGallery>
                     ),
                   ),
                 ),
-                if (widget.enableCamera) photoTabBar(widthOfTab, photoColor),
-                if (widget.enableVideo) videoTabBar(widthOfTab),
+                if (enableCamera) photoTabBar(widthOfTab, photoColor),
+                if (enableVideo) videoTabBar(widthOfTab),
               ],
             );
           },
@@ -396,7 +391,6 @@ class CustomGalleryState extends State<CustomGallery>
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOutQuad);
       selectedVideo.value = false;
-      stopScrollTab.value = false;
     });
   }
 
@@ -409,7 +403,6 @@ class CustomGalleryState extends State<CustomGallery>
               curve: Curves.easeInOutQuad);
           selectedPage.value = SelectedPage.right;
           selectedVideo.value = true;
-          stopScrollTab.value = true;
         });
       },
       child: SizedBox(

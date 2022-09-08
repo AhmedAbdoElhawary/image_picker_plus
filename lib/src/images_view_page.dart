@@ -1,13 +1,13 @@
 import 'dart:io';
-import 'package:custom_gallery_display/custom_gallery_display.dart';
-import 'package:custom_gallery_display/src/crop_image_view.dart';
-import 'package:custom_gallery_display/src/custom_packages/crop_image/crop_image.dart';
-import 'package:custom_gallery_display/src/image.dart';
-import 'package:custom_gallery_display/src/multi_selection_mode.dart';
-import 'package:custom_gallery_display/src/utilities/enum.dart';
+
+import 'package:image_crop/image_crop.dart';
+import 'package:image_picker_plus/image_picker_plus.dart';
+import 'package:image_picker_plus/src/crop_image_view.dart';
+import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
+import 'package:image_picker_plus/src/image.dart';
+import 'package:image_picker_plus/src/multi_selection_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_crop/image_crop.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -15,15 +15,18 @@ class ImagesViewPage extends StatefulWidget {
   final ValueNotifier<List<File>> multiSelectedImage;
   final ValueNotifier<bool> multiSelectionMode;
   final TabsTexts tabsTexts;
+  final bool cropImage;
+  final bool multiSelection;
+  final bool showInternalVideos;
+  final bool showInternalImages;
 
   /// To avoid lag when you interacting with image when it expanded
   final AppTheme appTheme;
   final VoidCallback clearMultiImages;
   final Color whiteColor;
   final Color blackColor;
-  final Display display;
-  final SliverGridDelegate gridDelegate;
-  final AsyncValueSetter<SelectedImagesDetails> sendRequestFunction;
+  final bool showImagePreview;
+  final SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
   const ImagesViewPage({
     Key? key,
     required this.multiSelectedImage,
@@ -32,10 +35,13 @@ class ImagesViewPage extends StatefulWidget {
     required this.appTheme,
     required this.tabsTexts,
     required this.whiteColor,
+    required this.cropImage,
+    required this.multiSelection,
+    required this.showInternalVideos,
+    required this.showInternalImages,
     required this.blackColor,
-    required this.display,
+    required this.showImagePreview,
     required this.gridDelegate,
-    required this.sendRequestFunction,
   }) : super(key: key);
 
   @override
@@ -47,7 +53,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       ValueNotifier([]);
 
   ValueNotifier<List<File?>> allImages = ValueNotifier([]);
-  final ValueNotifier<List<double>> scaleOfCropsKeys = ValueNotifier([]);
+  final ValueNotifier<List<double?>> scaleOfCropsKeys = ValueNotifier([]);
   final ValueNotifier<List<Rect?>> areaOfCropsKeys = ValueNotifier([]);
 
   ValueNotifier<File?> selectedImage = ValueNotifier(null);
@@ -79,8 +85,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     allImages.dispose();
     scrollController.dispose();
     isImagesReady.dispose();
-    currentPage.dispose();
-    lastPage.dispose();
+    // currentPage.dispose();
+    // lastPage.dispose();
     expandImage.dispose();
     expandHeight.dispose();
     moveAwayHeight.dispose();
@@ -88,13 +94,15 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     enableVerticalTapping.dispose();
     cropKey.dispose();
     noDuration.dispose();
+    // widget.multiSelectedImage.dispose();
+    // widget.multiSelectedImage.dispose();
     super.dispose();
   }
 
   late Widget forBack;
   @override
   void initState() {
-    _fetchNewMedia(currentPageValue: 0, lastPageValue: 0);
+    _fetchNewMedia(currentPageValue: 0);
     isImagesReady.value = false;
     super.initState();
   }
@@ -103,24 +111,23 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       {required int currentPageValue, required int lastPageValue}) {
     if (scroll.metrics.pixels / scroll.metrics.maxScrollExtent > 0.33) {
       if (currentPageValue != lastPageValue) {
-        _fetchNewMedia(
-            currentPageValue: currentPageValue, lastPageValue: lastPageValue);
+        _fetchNewMedia(currentPageValue: currentPageValue);
         return true;
       }
     }
     return false;
   }
 
-  _fetchNewMedia(
-      {required int currentPageValue, required int lastPageValue}) async {
+  _fetchNewMedia({required int currentPageValue}) async {
     lastPage.value = currentPageValue;
     var result = await PhotoManager.requestPermissionExtend();
     if (result.isAuth) {
-      List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
-          onlyAll: true,
-          type: widget.display == Display.normal
-              ? RequestType.common
-              : RequestType.image);
+      RequestType type = widget.showInternalVideos && widget.showInternalImages
+          ? RequestType.common
+          : (widget.showInternalImages ? RequestType.image : RequestType.video);
+
+      List<AssetPathEntity> albums =
+          await PhotoManager.getAssetPathList(onlyAll: true, type: type);
       if (albums.isEmpty) {
         WidgetsBinding.instance
             .addPostFrameCallback((_) => setState(() => noImages = true));
@@ -157,9 +164,9 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
 
   Future<FutureBuilder<Uint8List?>> getImageGallery(
       List<AssetEntity> media, int i) async {
-    bool isThatNormalDisplay = widget.display == Display.normal;
+    bool highResolution = widget.gridDelegate.crossAxisCount <= 3;
     FutureBuilder<Uint8List?> futureBuilder = FutureBuilder(
-      future: media[i].thumbnailDataWithSize(isThatNormalDisplay
+      future: media[i].thumbnailDataWithSize(highResolution
           ? const ThumbnailSize(350, 350)
           : const ThumbnailSize(200, 200)),
       builder: (BuildContext context, AsyncSnapshot<Uint8List?> snapshot) {
@@ -226,7 +233,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                     ValueListenableBuilder(
                   valueListenable: currentPage,
                   builder: (context, int currentPageValue, child) {
-                    if (widget.display == Display.normal) {
+                    if (!widget.showImagePreview) {
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -253,7 +260,6 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   }
 
   Widget loadingWidget() {
-    bool isThatInstagramDisplay = widget.display == Display.instagram;
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -263,7 +269,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             highlightColor: widget.appTheme.shimmerHighlightColor,
             child: Column(
               children: [
-                if (isThatInstagramDisplay) ...[
+                if (widget.showImagePreview) ...[
                   Container(
                       color: const Color(0xff696969),
                       height: 360,
@@ -297,7 +303,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
         icon: Icon(Icons.clear_rounded,
             color: widget.appTheme.focusColor, size: 30),
         onPressed: () {
-          Navigator.of(context).maybePop();
+          Navigator.of(context).maybePop(null);
         },
       ),
     );
@@ -324,7 +330,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     return IconButton(
       icon: Icon(Icons.clear_rounded, color: widget.blackColor, size: 30),
       onPressed: () {
-        Navigator.of(context).maybePop();
+        Navigator.of(context).maybePop(null);
       },
     );
   }
@@ -338,55 +344,62 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             color: Colors.blue, size: 30),
         onPressed: () async {
           double aspect = expandImage.value ? 6 / 8 : 1.0;
-          if (!widget.multiSelectionMode.value) {
-            File? image = selectedImage.value;
-            if (image == null) return;
-            File? croppedImage = await cropImage(image);
-            File img = croppedImage ?? image;
-            bool isThatVideo = img.path.contains("mp4", img.path.length - 5);
-            SelectedImagesDetails details = SelectedImagesDetails(
-              selectedFile: img,
-              multiSelectionMode: false,
-              aspectRatio: aspect,
-              isThatImage: !isThatVideo,
-              selectedFiles: [img],
-            );
-            widget.sendRequestFunction(details);
-          } else {
+          if (widget.multiSelectionMode.value && widget.multiSelection) {
             if (areaOfCropsKeys.value.length !=
                 widget.multiSelectedImage.value.length) {
-              scaleOfCropsKeys.value.add(cropKey.value.currentState!.scale);
-              areaOfCropsKeys.value.add(cropKey.value.currentState!.area);
+              scaleOfCropsKeys.value.add(cropKey.value.currentState?.scale);
+              areaOfCropsKeys.value.add(cropKey.value.currentState?.area);
             } else {
               if (indexOfLatestImage != -1) {
                 scaleOfCropsKeys.value[indexOfLatestImage] =
-                    cropKey.value.currentState!.scale;
+                    cropKey.value.currentState?.scale;
                 areaOfCropsKeys.value[indexOfLatestImage] =
-                    cropKey.value.currentState!.area;
+                    cropKey.value.currentState?.area;
               }
             }
 
-            List<File> selectedImages = [];
+            List<SelectedByte> selectedBytes = [];
             for (int i = 0; i < widget.multiSelectedImage.value.length; i++) {
               File currentImage = widget.multiSelectedImage.value[i];
-              File? croppedImage =
-                  await cropImage(currentImage, indexOfCropImage: i);
-              selectedImages.add(croppedImage ?? currentImage);
+              String path = currentImage.path;
+              bool isThatVideo = path.contains("mp4", path.length - 5);
+              File? croppedImage = !isThatVideo && widget.cropImage
+                  ? await cropImage(currentImage, indexOfCropImage: i)
+                  : null;
+              File image = croppedImage ?? currentImage;
+              SelectedByte img =
+                  SelectedByte(isThatImage: !isThatVideo, selectedByte: image);
+              selectedBytes.add(img);
             }
-            if (selectedImages.isNotEmpty) {
-              bool isThatVideo = selectedImages[0]
-                  .path
-                  .contains("mp4", selectedImages[0].path.length - 5);
-
+            if (selectedBytes.isNotEmpty) {
               SelectedImagesDetails details = SelectedImagesDetails(
-                selectedFile: selectedImages[0],
-                selectedFiles: selectedImages,
+                selectedBytes: selectedBytes,
                 multiSelectionMode: true,
-                isThatImage: !isThatVideo,
                 aspectRatio: aspect,
               );
-              widget.sendRequestFunction(details);
+              if (!mounted) return;
+              Navigator.of(context).maybePop(details);
             }
+          } else {
+            File? image = selectedImage.value;
+            if (image == null) return;
+            String path = image.path;
+
+            bool isThatVideo = path.contains("mp4", path.length - 5);
+            File? croppedImage = !isThatVideo && widget.cropImage
+                ? await cropImage(image)
+                : null;
+            File img = croppedImage ?? image;
+
+            SelectedByte selectedByte =
+                SelectedByte(isThatImage: !isThatVideo, selectedByte: img);
+            SelectedImagesDetails details = SelectedImagesDetails(
+              multiSelectionMode: false,
+              aspectRatio: aspect,
+              selectedBytes: [selectedByte],
+            );
+            if (!mounted) return;
+            Navigator.of(context).maybePop(details);
           }
         },
       ),
@@ -403,7 +416,6 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       },
       child: GridView.builder(
         gridDelegate: widget.gridDelegate,
-        physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           return buildImage(mediaListValue, index);
         },
@@ -472,18 +484,20 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
           });
         },
         onLongPress: () {
-          if (!widget.multiSelectionMode.value) {
+          if (!widget.multiSelectionMode.value && widget.multiSelection) {
             widget.multiSelectionMode.value = true;
           }
         },
         onLongPressUp: () {
-          List<File> multiImages = widget.multiSelectedImage.value;
-          selectionImageCheck(image, multiImages, index, enableCopy: true);
-          expandImageView.value = false;
-          moveAwayHeight.value = 0;
+          if (widget.multiSelection) {
+            List<File> multiImages = widget.multiSelectedImage.value;
+            selectionImageCheck(image, multiImages, index, enableCopy: true);
+            expandImageView.value = false;
+            moveAwayHeight.value = 0;
 
-          enableVerticalTapping.value = false;
-          setState(() => noPaddingForGridView = true);
+            enableVerticalTapping.value = false;
+            setState(() => noPaddingForGridView = true);
+          }
         },
         child: childWidget);
   }
@@ -513,30 +527,28 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
           if (!multiSelectionValue.contains(image)) {
             widget.multiSelectedImage.value.add(image);
             if (multiSelectionValue.length > 1) {
-              scaleOfCropsKeys.value.add(cropKey.value.currentState!.scale);
-              areaOfCropsKeys.value.add(cropKey.value.currentState!.area);
+              scaleOfCropsKeys.value.add(cropKey.value.currentState?.scale);
+              areaOfCropsKeys.value.add(cropKey.value.currentState?.area);
               indexOfSelectedImages.value.add(index);
             }
           } else if (areaOfCropsKeys.value.length !=
               widget.multiSelectedImage.value.length) {
-            scaleOfCropsKeys.value.add(cropKey.value.currentState!.scale);
-            areaOfCropsKeys.value.add(cropKey.value.currentState!.area);
+            scaleOfCropsKeys.value.add(cropKey.value.currentState?.scale);
+            areaOfCropsKeys.value.add(cropKey.value.currentState?.area);
           }
           if (multiSelectionValue.contains(image)) {
             int index = widget.multiSelectedImage.value
                 .indexWhere((element) => element == image);
             if (indexOfLatestImage != -1) {
               scaleOfCropsKeys.value[indexOfLatestImage] =
-                  cropKey.value.currentState!.scale;
+                  cropKey.value.currentState?.scale;
               areaOfCropsKeys.value[indexOfLatestImage] =
-                  cropKey.value.currentState!.area;
+                  cropKey.value.currentState?.area;
             }
             indexOfLatestImage = index;
           }
 
-          if (enableCopy) {
-            selectedImage.value = image;
-          }
+          if (enableCopy) selectedImage.value = image;
         });
       }
       return false;

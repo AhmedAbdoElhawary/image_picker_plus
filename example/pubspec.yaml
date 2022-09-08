@@ -1,4 +1,4 @@
-name: example_cumstom_gallery_display
+name: example_image_picker_plus
 description: A new cumstom_gallery_display project.
 
 publish_to: 'none' 
@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  custom_gallery_display:  
+  image_picker_plus:  
     path: ../
   video_player: ^2.4.5
 
