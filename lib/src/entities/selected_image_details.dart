@@ -1,17 +1,19 @@
 import 'dart:io';
 
 class SelectedImagesDetails {
-  File selectedFile;
-  List<File>? selectedFiles;
-  bool isThatImage;
+  List<SelectedByte> selectedBytes;
   double aspectRatio;
   bool multiSelectionMode;
 
   SelectedImagesDetails({
-    this.selectedFiles,
-    this.isThatImage = true,
+    required this.selectedBytes,
     required this.aspectRatio,
-    required this.selectedFile,
     required this.multiSelectionMode,
   });
+}
+
+class SelectedByte {
+  File selectedByte;
+  bool isThatImage;
+  SelectedByte({required this.isThatImage, required this.selectedByte});
 }
