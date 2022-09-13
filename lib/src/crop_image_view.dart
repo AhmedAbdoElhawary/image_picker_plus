@@ -107,9 +107,8 @@ class _CropImageViewState extends State<CropImageView> {
                   padding: const EdgeInsets.all(10.0),
                   child: GestureDetector(
                     onTap: () {
+                      if (multiSelectionModeValue) widget.clearMultiImages();
                       setState(() {
-                        if (multiSelectionModeValue) widget.clearMultiImages();
-
                         widget.multiSelectionMode.value =
                             !multiSelectionModeValue;
                       });
@@ -170,7 +169,7 @@ class _CropImageViewState extends State<CropImageView> {
     String path = selectedImageValue.path;
     bool isThatVideo = path.contains("mp4", path.length - 5);
     return CustomCrop(
-     image: selectedImageValue,
+      image: selectedImageValue,
       isThatImage: !isThatVideo,
       key: cropKey,
       paintColor: widget.appTheme.primaryColor,

@@ -5,49 +5,38 @@ import 'package:image_crop/image_crop.dart';
 import 'package:image_picker_plus/src/entities/app_theme.dart';
 import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
 import 'package:image_picker_plus/src/utilities/enum.dart';
-import 'package:image_picker_plus/src/utilities/typedef.dart';
 import 'package:image_picker_plus/src/video_layout/record_count.dart';
 import 'package:image_picker_plus/src/video_layout/record_fade_animation.dart';
 import 'package:image_picker_plus/src/entities/selected_image_details.dart';
 import 'package:image_picker_plus/src/entities/tabs_texts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:photo_manager/photo_manager.dart';
 
-// ignore: must_be_immutable
 class CustomCameraDisplay extends StatefulWidget {
   final bool selectedVideo;
   final AppTheme appTheme;
   final TabsTexts tapsNames;
   final bool enableCamera;
   final bool enableVideo;
-  late ValueNotifier<CameraController> controller;
   final VoidCallback moveToVideoScreen;
   final ValueNotifier<File?> selectedCameraImage;
   final ValueNotifier<bool> redDeleteText;
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
-  late ValueNotifier<void> initializeControllerFuture;
-  final CustomThreeAsyncValueSetter<Future<void>, int, bool>
-      onNewCameraSelected;
 
-  ValueNotifier<List<CameraDescription>>? cameras;
-
-  CustomCameraDisplay({
+  const CustomCameraDisplay({
     Key? key,
     required this.appTheme,
     required this.tapsNames,
     required this.selectedCameraImage,
     required this.enableCamera,
     required this.enableVideo,
-    required this.controller,
-    required this.onNewCameraSelected,
     required this.redDeleteText,
     required this.selectedVideo,
     required this.replacingTabBar,
     required this.clearVideoRecord,
-    required this.cameras,
     required this.moveToVideoScreen,
-    required this.initializeControllerFuture,
   }) : super(key: key);
 
   @override
@@ -56,7 +45,15 @@ class CustomCameraDisplay extends StatefulWidget {
 
 class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   ValueNotifier<bool> startVideoCount = ValueNotifier(false);
+
+  bool initializeDone = false;
+  bool allPermissionsAccessed = true;
+
+  List<CameraDescription>? cameras;
+  late CameraController controller;
+
   final cropKey = GlobalKey<CustomCropState>();
+
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
   int selectedCamera = 0;
@@ -65,25 +62,66 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   @override
   void dispose() {
     startVideoCount.dispose();
-    widget.cameras?.dispose();
-    widget.clearVideoRecord.dispose();
-    widget.controller.dispose();
-    widget.initializeControllerFuture.dispose();
-    widget.redDeleteText.dispose();
-    widget.selectedCameraImage.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     videoStatusAnimation = Container();
+    _initializeCamera();
+
     super.initState();
+  }
+
+  Future<void> _initializeCamera() async {
+    try {
+      PermissionState state = await PhotoManager.requestPermissionExtend();
+      if (!state.hasAccess || !state.isAuth) {
+        allPermissionsAccessed = false;
+        return;
+      }
+      allPermissionsAccessed = true;
+      cameras = await availableCameras();
+      if (!mounted) return;
+      controller = CameraController(
+        cameras![0],
+        ResolutionPreset.high,
+        enableAudio: true,
+      );
+      await controller.initialize();
+      initializeDone = true;
+    } catch (e) {
+      allPermissionsAccessed = false;
+    }
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: buildBody(),
+    return Material(
+      color: widget.appTheme.primaryColor,
+      child: allPermissionsAccessed
+          ? (initializeDone ? buildBody() : loadingProgress())
+          : failedPermissions(),
+    );
+  }
+
+  Widget failedPermissions() {
+    return Center(
+      child: Text(
+        widget.tapsNames.acceptAllPermissions,
+        style: TextStyle(color: widget.appTheme.focusColor),
+      ),
+    );
+  }
+
+  Center loadingProgress() {
+    return Center(
+      child: CircularProgressIndicator(
+        color: widget.appTheme.focusColor,
+        strokeWidth: 1,
+      ),
     );
   }
 
@@ -99,7 +137,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
               if (selectedImage == null) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: CameraPreview(widget.controller.value),
+                  child: CameraPreview(controller),
                 ),
               ] else ...[
                 Align(
@@ -176,10 +214,10 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
           });
           currentFlashMode == Flash.on
-              ? widget.controller.value.setFlashMode(FlashMode.torch)
+              ? controller.setFlashMode(FlashMode.torch)
               : currentFlashMode == Flash.off
-                  ? widget.controller.value.setFlashMode(FlashMode.off)
-                  : widget.controller.value.setFlashMode(FlashMode.auto);
+                  ? controller.setFlashMode(FlashMode.off)
+                  : controller.setFlashMode(FlashMode.auto);
         },
         icon: Icon(
             currentFlashMode == Flash.on
@@ -235,21 +273,19 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 );
 
                 Navigator.of(context).maybePop(details);
-              } else {
-                if (selectedImage != null) {
-                  File? croppedByte = await cropImage(selectedImage);
-                  if (croppedByte != null) {
-                    SelectedByte selectedByte = SelectedByte(
-                        isThatImage: false, selectedByte: croppedByte);
+              } else if (selectedImage != null) {
+                File? croppedByte = await cropImage(selectedImage);
+                if (croppedByte != null) {
+                  SelectedByte selectedByte = SelectedByte(
+                      isThatImage: true, selectedByte: croppedByte);
 
-                    SelectedImagesDetails details = SelectedImagesDetails(
-                      selectedBytes: [selectedByte],
-                      multiSelectionMode: false,
-                      aspectRatio: 1.0,
-                    );
-                    if (!mounted) return;
-                    Navigator.of(context).maybePop(details);
-                  }
+                  SelectedImagesDetails details = SelectedImagesDetails(
+                    selectedBytes: [selectedByte],
+                    multiSelectionMode: false,
+                    aspectRatio: 1.0,
+                  );
+                  if (!mounted) return;
+                  Navigator.of(context).maybePop(details);
                 }
               }
             },
@@ -297,7 +333,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   onPress() async {
     try {
       if (!widget.selectedVideo) {
-        final image = await widget.controller.value.takePicture();
+        final image = await controller.takePicture();
         File selectedImage = File(image.path);
         setState(() {
           widget.selectedCameraImage.value = selectedImage;
@@ -314,7 +350,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   onLongTap() {
-    widget.controller.value.startVideoRecording();
+    controller.startVideoRecording();
     widget.moveToVideoScreen();
     setState(() {
       startVideoCount.value = true;
@@ -326,7 +362,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       startVideoCount.value = false;
       widget.replacingTabBar(true);
     });
-    XFile video = await widget.controller.value.stopVideoRecording();
+    XFile video = await controller.stopVideoRecording();
     videoRecordFile = File(video.path);
   }
 

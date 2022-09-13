@@ -12,7 +12,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ImagesViewPage extends StatefulWidget {
-  final ValueNotifier<List<File>> multiSelectedImage;
+  final ValueNotifier<List<File>> multiSelectedImages;
   final ValueNotifier<bool> multiSelectionMode;
   final TabsTexts tabsTexts;
   final bool cropImage;
@@ -29,7 +29,7 @@ class ImagesViewPage extends StatefulWidget {
   final SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
   const ImagesViewPage({
     Key? key,
-    required this.multiSelectedImage,
+    required this.multiSelectedImages,
     required this.multiSelectionMode,
     required this.clearMultiImages,
     required this.appTheme,
@@ -48,7 +48,10 @@ class ImagesViewPage extends StatefulWidget {
   State<ImagesViewPage> createState() => _ImagesViewPageState();
 }
 
-class _ImagesViewPageState extends State<ImagesViewPage> {
+class _ImagesViewPageState extends State<ImagesViewPage>
+    with
+        TickerProviderStateMixin,
+        AutomaticKeepAliveClientMixin<ImagesViewPage> {
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
 
@@ -66,13 +69,15 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   final moveAwayHeight = ValueNotifier(0.0);
   final expandImageView = ValueNotifier(false);
 
+  final isImagesReady = ValueNotifier(false);
+  final currentPage = ValueNotifier(0);
+  final lastPage = ValueNotifier(0);
+
   /// To avoid lag when you interacting with image when it expanded
   final enableVerticalTapping = ValueNotifier(false);
   final cropKey = ValueNotifier(GlobalKey<CustomCropState>());
   bool noPaddingForGridView = false;
-  final isImagesReady = ValueNotifier(true);
-  final currentPage = ValueNotifier(0);
-  final lastPage = ValueNotifier(0);
+
   double scrollPixels = 0.0;
   bool isScrolling = false;
   bool noImages = false;
@@ -85,8 +90,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     allImages.dispose();
     scrollController.dispose();
     isImagesReady.dispose();
-    // currentPage.dispose();
-    // lastPage.dispose();
+    currentPage.dispose();
+    lastPage.dispose();
     expandImage.dispose();
     expandHeight.dispose();
     moveAwayHeight.dispose();
@@ -94,33 +99,29 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
     enableVerticalTapping.dispose();
     cropKey.dispose();
     noDuration.dispose();
-    // widget.multiSelectedImage.dispose();
-    // widget.multiSelectedImage.dispose();
     super.dispose();
   }
 
   late Widget forBack;
   @override
   void initState() {
-    _fetchNewMedia(currentPageValue: 0);
-    isImagesReady.value = false;
+    _fetchNewMedia(currentPageValue: currentPage.value);
     super.initState();
   }
 
   bool _handleScrollEvent(ScrollNotification scroll,
       {required int currentPageValue, required int lastPageValue}) {
-    if (scroll.metrics.pixels / scroll.metrics.maxScrollExtent > 0.33) {
-      if (currentPageValue != lastPageValue) {
-        _fetchNewMedia(currentPageValue: currentPageValue);
-        return true;
-      }
+    if (scroll.metrics.pixels / scroll.metrics.maxScrollExtent > 0.33 &&
+        currentPageValue != lastPageValue) {
+      _fetchNewMedia(currentPageValue: currentPageValue);
+      return true;
     }
     return false;
   }
 
   _fetchNewMedia({required int currentPageValue}) async {
     lastPage.value = currentPageValue;
-    var result = await PhotoManager.requestPermissionExtend();
+    PermissionState result = await PhotoManager.requestPermissionExtend();
     if (result.isAuth) {
       RequestType type = widget.showInternalVideos && widget.showInternalImages
           ? RequestType.common
@@ -146,9 +147,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             await getImageGallery(media, i);
         File? image = await highQualityImage(media, i);
 
-        if (selectedImage.value == null && i == 0) {
-          selectedImage.value = image;
-        }
+        if (selectedImage.value == null && i == 0) selectedImage.value = image;
+
         temp.add(gridViewImage);
         imageTemp.add(image);
       }
@@ -208,6 +208,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return noImages
         ? Center(
             child: Text(
@@ -276,16 +277,19 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                       width: double.infinity),
                   const SizedBox(height: 1),
                 ],
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  primary: false,
-                  gridDelegate: widget.gridDelegate,
-                  itemBuilder: (context, index) {
-                    return Container(
-                        color: const Color(0xff696969), width: double.infinity);
-                  },
-                  itemCount: 40,
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: widget.gridDelegate.crossAxisSpacing),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    primary: false,
+                    gridDelegate: widget.gridDelegate,
+                    itemBuilder: (context, index) {
+                      return Container(
+                          color: const Color(0xff696969), width: double.infinity);
+                    },
+                    itemCount: 40,
+                  ),
                 ),
               ],
             ),
@@ -346,7 +350,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
           double aspect = expandImage.value ? 6 / 8 : 1.0;
           if (widget.multiSelectionMode.value && widget.multiSelection) {
             if (areaOfCropsKeys.value.length !=
-                widget.multiSelectedImage.value.length) {
+                widget.multiSelectedImages.value.length) {
               scaleOfCropsKeys.value.add(cropKey.value.currentState?.scale);
               areaOfCropsKeys.value.add(cropKey.value.currentState?.area);
             } else {
@@ -359,8 +363,8 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             }
 
             List<SelectedByte> selectedBytes = [];
-            for (int i = 0; i < widget.multiSelectedImage.value.length; i++) {
-              File currentImage = widget.multiSelectedImage.value[i];
+            for (int i = 0; i < widget.multiSelectedImages.value.length; i++) {
+              File currentImage = widget.multiSelectedImages.value[i];
               String path = currentImage.path;
               bool isThatVideo = path.contains("mp4", path.length - 5);
               File? croppedImage = !isThatVideo && widget.cropImage
@@ -414,12 +418,15 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
             currentPageValue: currentPageValue, lastPageValue: lastPageValue);
         return true;
       },
-      child: GridView.builder(
-        gridDelegate: widget.gridDelegate,
-        itemBuilder: (context, index) {
-          return buildImage(mediaListValue, index);
-        },
-        itemCount: mediaListValue.length,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: widget.gridDelegate.crossAxisSpacing),
+        child: GridView.builder(
+          gridDelegate: widget.gridDelegate,
+          itemBuilder: (context, index) {
+            return buildImage(mediaListValue, index);
+          },
+          itemCount: mediaListValue.length,
+        ),
       ),
     );
   }
@@ -430,31 +437,36 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       valueListenable: selectedImage,
       builder: (context, File? selectedImageValue, child) {
         return ValueListenableBuilder(
-            valueListenable: allImages,
-            builder: (context, List<File?> allImagesValue, child) {
-              FutureBuilder<Uint8List?> mediaList = mediaListValue[index];
-              File? image = allImagesValue[index];
-              if (image != null) {
-                bool imageSelected =
-                    widget.multiSelectedImage.value.contains(image);
-                List<File> multiImages = widget.multiSelectedImage.value;
-                return Stack(
-                  children: [
-                    gestureDetector(image, index, mediaList),
-                    if (selectedImageValue == image)
-                      gestureDetector(image, index, blurContainer()),
-                    MultiSelectionMode(
-                      image: image,
-                      multiSelectionMode: widget.multiSelectionMode,
-                      imageSelected: imageSelected,
-                      multiSelectedImage: multiImages,
-                    ),
-                  ],
-                );
-              } else {
-                return Container();
-              }
-            });
+          valueListenable: allImages,
+          builder: (context, List<File?> allImagesValue, child) {
+            return ValueListenableBuilder(
+              valueListenable: widget.multiSelectedImages,
+              builder: (context, List<File> selectedImagesValue, child) {
+                FutureBuilder<Uint8List?> mediaList = mediaListValue[index];
+                File? image = allImagesValue[index];
+                if (image != null) {
+                  bool imageSelected = selectedImagesValue.contains(image);
+                  List<File> multiImages = selectedImagesValue;
+                  return Stack(
+                    children: [
+                      gestureDetector(image, index, mediaList),
+                      if (selectedImageValue == image)
+                        gestureDetector(image, index, blurContainer()),
+                      MultiSelectionMode(
+                        image: image,
+                        multiSelectionMode: widget.multiSelectionMode,
+                        imageSelected: imageSelected,
+                        multiSelectedImage: multiImages,
+                      ),
+                    ],
+                  );
+                } else {
+                  return Container();
+                }
+              },
+            );
+          },
+        );
       },
     );
   }
@@ -468,38 +480,48 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
   }
 
   Widget gestureDetector(File image, int index, Widget childWidget) {
-    return GestureDetector(
-        onTap: () {
-          setState(() {
-            if (widget.multiSelectionMode.value) {
-              List<File> multiImages = widget.multiSelectedImage.value;
-              bool close = selectionImageCheck(image, multiImages, index);
-              if (close) return;
-            }
-            selectedImage.value = image;
-            expandImageView.value = false;
-            moveAwayHeight.value = 0;
-            enableVerticalTapping.value = false;
-            noPaddingForGridView = true;
-          });
-        },
-        onLongPress: () {
-          if (!widget.multiSelectionMode.value && widget.multiSelection) {
-            widget.multiSelectionMode.value = true;
-          }
-        },
-        onLongPressUp: () {
-          if (widget.multiSelection) {
-            List<File> multiImages = widget.multiSelectedImage.value;
-            selectionImageCheck(image, multiImages, index, enableCopy: true);
-            expandImageView.value = false;
-            moveAwayHeight.value = 0;
+    return ValueListenableBuilder(
+      valueListenable: widget.multiSelectionMode,
+      builder: (context, bool multipleValue, child) => ValueListenableBuilder(
+        valueListenable: widget.multiSelectedImages,
+        builder: (context, List<File> selectedImagesValue, child) =>
+            GestureDetector(
+                onTap: () => onTapImage(image, selectedImagesValue, index),
+                onLongPress: () {
+                  if (widget.multiSelection) {
+                    widget.multiSelectionMode.value = true;
+                  }
+                },
+                onLongPressUp: () {
+                  if (multipleValue) {
+                    selectionImageCheck(image, selectedImagesValue, index,
+                        enableCopy: true);
+                    expandImageView.value = false;
+                    moveAwayHeight.value = 0;
 
-            enableVerticalTapping.value = false;
-            setState(() => noPaddingForGridView = true);
-          }
-        },
-        child: childWidget);
+                    enableVerticalTapping.value = false;
+                    setState(() => noPaddingForGridView = true);
+                  } else {
+                    onTapImage(image, selectedImagesValue, index);
+                  }
+                },
+                child: childWidget),
+      ),
+    );
+  }
+
+  onTapImage(File image, List<File> selectedImagesValue, int index) {
+    setState(() {
+      if (widget.multiSelectionMode.value) {
+        bool close = selectionImageCheck(image, selectedImagesValue, index);
+        if (close) return;
+      }
+      selectedImage.value = image;
+      expandImageView.value = false;
+      moveAwayHeight.value = 0;
+      enableVerticalTapping.value = false;
+      noPaddingForGridView = true;
+    });
   }
 
   bool selectionImageCheck(
@@ -507,9 +529,9 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       {bool enableCopy = false}) {
     if (multiSelectionValue.contains(image) && selectedImage.value == image) {
       setState(() {
-        int indexOfImage = widget.multiSelectedImage.value
-            .indexWhere((element) => element == image);
-        widget.multiSelectedImage.value.removeAt(indexOfImage);
+        int indexOfImage =
+            multiSelectionValue.indexWhere((element) => element == image);
+        multiSelectionValue.removeAt(indexOfImage);
         if (multiSelectionValue.isNotEmpty &&
             indexOfImage < scaleOfCropsKeys.value.length) {
           indexOfSelectedImages.value.remove(index);
@@ -525,20 +547,20 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       if (multiSelectionValue.length < 10) {
         setState(() {
           if (!multiSelectionValue.contains(image)) {
-            widget.multiSelectedImage.value.add(image);
+            multiSelectionValue.add(image);
             if (multiSelectionValue.length > 1) {
               scaleOfCropsKeys.value.add(cropKey.value.currentState?.scale);
               areaOfCropsKeys.value.add(cropKey.value.currentState?.area);
               indexOfSelectedImages.value.add(index);
             }
           } else if (areaOfCropsKeys.value.length !=
-              widget.multiSelectedImage.value.length) {
+              multiSelectionValue.length) {
             scaleOfCropsKeys.value.add(cropKey.value.currentState?.scale);
             areaOfCropsKeys.value.add(cropKey.value.currentState?.area);
           }
-          if (multiSelectionValue.contains(image)) {
-            int index = widget.multiSelectedImage.value
-                .indexWhere((element) => element == image);
+          if (widget.showImagePreview && multiSelectionValue.contains(image)) {
+            int index =
+                multiSelectionValue.indexWhere((element) => element == image);
             if (indexOfLatestImage != -1) {
               scaleOfCropsKeys.value[indexOfLatestImage] =
                   cropKey.value.currentState?.scale;
@@ -584,7 +606,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
 
   void clearMultiImages() {
     setState(() {
-      widget.multiSelectedImage.value = [];
+      widget.multiSelectedImages.value = [];
       widget.clearMultiImages();
       indexOfSelectedImages.value.clear();
       scaleOfCropsKeys.value.clear();
@@ -648,13 +670,16 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
                             lastPageValue: lastPageValue);
                         return true;
                       },
-                      child: GridView.builder(
-                        gridDelegate: widget.gridDelegate,
-                        controller: scrollController,
-                        itemBuilder: (context, index) {
-                          return buildImage(mediaListValue, index);
-                        },
-                        itemCount: mediaListValue.length,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: widget.gridDelegate.crossAxisSpacing),
+                        child: GridView.builder(
+                          gridDelegate: widget.gridDelegate,
+                          controller: scrollController,
+                          itemBuilder: (context, index) {
+                            return buildImage(mediaListValue, index);
+                          },
+                          itemCount: mediaListValue.length,
+                        ),
                       ),
                     ),
                   ),
@@ -690,4 +715,7 @@ class _ImagesViewPageState extends State<ImagesViewPage> {
       },
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

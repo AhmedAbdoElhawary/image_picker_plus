@@ -1,5 +1,5 @@
 import 'package:image_picker_plus/image_picker_plus.dart';
-import 'package:image_picker_plus/src/custom_gallery_display.dart';
+import 'package:image_picker_plus/src/gallery_display.dart';
 import 'package:image_picker_plus/src/utilities/enum.dart';
 import 'package:flutter/material.dart';
 
