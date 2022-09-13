@@ -16,6 +16,7 @@ class CropImageView extends StatefulWidget {
   /// To avoid lag when you interacting with image when it expanded
   final ValueNotifier<bool> enableVerticalTapping;
   final ValueNotifier<File?> selectedImage;
+
   final VoidCallback clearMultiImages;
 
   final AppTheme appTheme;
