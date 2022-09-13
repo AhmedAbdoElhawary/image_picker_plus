@@ -8,6 +8,7 @@ class TabsTexts {
   final String clearImagesText;
   final String notFoundingCameraText;
   final String noImagesFounded;
+  final String acceptAllPermissions;
 
   TabsTexts({
     this.videoText = "VIDEO",
@@ -19,5 +20,7 @@ class TabsTexts {
     this.notFoundingCameraText = "No secondary camera found",
     this.holdButtonText = "Press and hold to record",
     this.noImagesFounded = "There is no images",
+    this.acceptAllPermissions = "Failed! accept all access permissions.",
+
   });
 }
