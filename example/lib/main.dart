@@ -5,7 +5,6 @@ import 'package:video_player/video_player.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ImagePickerPlusPermissions.requestPermissionExtend();
   runApp(const MyApp());
 }
 
@@ -40,30 +39,33 @@ class _MyHomePageState extends State<MyHomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              button1(context),
-              button2(context),
-              button3(context),
-              button4(context),
-              button5(context),
-              button6(context),
-              button7(context),
+              normal1(context),
+              normal2(context),
+              normal3(context),
+              preview1(context),
+              preview2(context),
+              preview3(context),
+              camera1(context),
+              camera2(context),
             ]),
       ),
     );
   }
 
-  ElevatedButton button1(BuildContext context) {
+  ElevatedButton normal1(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        SelectedImagesDetails? details = await ImagePickerPlus(context)
-            .pickImage(source: ImageSource.gallery);
+        ImagePickerPlus picker = ImagePickerPlus(context);
+
+        SelectedImagesDetails? details =
+            await picker.pickImage(source: ImageSource.gallery);
         if (details != null) await displayDetails(details);
       },
       child: const Text("Normal 1"),
     );
   }
 
-  ElevatedButton button2(BuildContext context) {
+  ElevatedButton normal2(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
@@ -73,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
           /// On long tap, it will be available.
           multiVideos: true,
           galleryDisplaySettings: GalleryDisplaySettings(
-            gridDelegate: _sliverGridDelegate(),
+            gridDelegate: _sliverGrid2Delegate(),
           ),
         );
         if (details != null) await displayDetails(details);
@@ -82,18 +84,22 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton button3(BuildContext context) {
+  ElevatedButton normal3(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
         SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.camera,
+          source: ImageSource.both,
 
           /// On long tap, it will be available.
           multiSelection: true,
 
           /// When you make ImageSource from the camera these settings will be disabled because they belong to the gallery.
-          galleryDisplaySettings: GalleryDisplaySettings(),
+          galleryDisplaySettings: GalleryDisplaySettings(
+            appTheme:
+                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            gridDelegate: _sliverGrid3Delegate(),
+          ),
         );
         if (details != null) await displayDetails(details);
       },
@@ -101,36 +107,17 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton button4(BuildContext context) {
+  ElevatedButton preview1(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
         SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.both,
+          source: ImageSource.gallery,
 
           /// On long tap, it will be available.
           multiSelection: true,
           galleryDisplaySettings: GalleryDisplaySettings(
-            gridDelegate: _sliverGridDelegate(),
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Normal 4"),
-    );
-  }
-
-  ElevatedButton button5(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.both,
-
-          /// On long tap, it will be available.
-          multiSelection: true,
-
-          galleryDisplaySettings: GalleryDisplaySettings(
+            tabsTexts: _tabsTexts(),
             appTheme:
                 AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
             cropImage: true,
@@ -143,18 +130,16 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton button6(BuildContext context) {
+  ElevatedButton preview2(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
         SelectedImagesDetails? details = await picker.pickVideo(
           source: ImageSource.both,
+
           /// On long tap, it will be available.
           multiVideos: true,
           galleryDisplaySettings: GalleryDisplaySettings(
-            tabsTexts: _tabsTexts(),
-            appTheme:
-                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
             cropImage: true,
             showImagePreview: true,
           ),
@@ -165,12 +150,21 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  SliverGridDelegateWithFixedCrossAxisCount _sliverGridDelegate() {
+  SliverGridDelegateWithFixedCrossAxisCount _sliverGrid3Delegate() {
     return const SliverGridDelegateWithFixedCrossAxisCount(
       crossAxisCount: 3,
       crossAxisSpacing: 1.7,
       mainAxisSpacing: 1.5,
       childAspectRatio: .5,
+    );
+  }
+
+  SliverGridDelegateWithFixedCrossAxisCount _sliverGrid2Delegate() {
+    return const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      crossAxisSpacing: 17,
+      mainAxisSpacing: 17,
+      childAspectRatio: 1,
     );
   }
 
@@ -184,7 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton button7(BuildContext context) {
+  ElevatedButton preview3(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
@@ -194,16 +188,53 @@ class _MyHomePageState extends State<MyHomePage> {
           /// On long tap, it will be available.
           multiSelection: true,
 
-          galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme:
-                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
-            cropImage: true,
-            showImagePreview: true,
-          ),
+          galleryDisplaySettings:
+              GalleryDisplaySettings(cropImage: true, showImagePreview: true),
         );
         if (details != null) await displayDetails(details);
       },
       child: const Text("Preview 3"),
+    );
+  }
+
+  ElevatedButton camera1(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickBoth(
+          source: ImageSource.camera,
+
+          /// On long tap, it will be available.
+          multiSelection: true,
+
+          galleryDisplaySettings: GalleryDisplaySettings(
+            cropImage: true,
+          ),
+        );
+        if (details != null) await displayDetails(details);
+      },
+      child: const Text("Camera 1"),
+    );
+  }
+
+  ElevatedButton camera2(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        ImagePickerPlus picker = ImagePickerPlus(context);
+        SelectedImagesDetails? details = await picker.pickVideo(
+          source: ImageSource.camera,
+
+          /// On long tap, it will be available.
+          multiVideos: true,
+
+          galleryDisplaySettings: GalleryDisplaySettings(
+            appTheme:
+                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+          ),
+        );
+        if (details != null) await displayDetails(details);
+      },
+      child: const Text("camera 2"),
     );
   }
 
@@ -248,8 +279,9 @@ class _DisplayImagesState extends State<DisplayImages> {
             return _DisplayVideo(selectedByte: selectedByte);
           } else {
             return SizedBox(
-                width: double.infinity,
-                child: Image.file(selectedByte.selectedByte));
+              width: double.infinity,
+              child: Image.file(selectedByte.selectedByte),
+            );
           }
         },
         itemCount: widget.selectedBytes.length,
