@@ -660,7 +660,10 @@ class _DisplayVideoState extends State<_DisplayVideo> {
             children: [
               InteractiveViewer(
                 minScale: 1,
-                child: SizedBox(height: double.infinity,width: double.infinity,child: VideoPlayer(controller)),
+                child: SizedBox(
+                    height: double.infinity,
+                    width: double.infinity,
+                    child: VideoPlayer(controller)),
               ),
               Align(
                 alignment: Alignment.center,
