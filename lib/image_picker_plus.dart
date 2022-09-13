@@ -6,4 +6,3 @@ export 'src/image_picker_plus.dart';
 export 'src/entities/selected_image_details.dart';
 export 'src/entities/tabs_texts.dart';
 export 'src/entities/app_theme.dart';
-export 'src/permissions.dart';
