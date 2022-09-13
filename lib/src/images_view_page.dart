@@ -99,13 +99,17 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     enableVerticalTapping.dispose();
     cropKey.dispose();
     noDuration.dispose();
+    selectedImage.dispose();
+    scaleOfCropsKeys.dispose();
+    areaOfCropsKeys.dispose();
+    indexOfSelectedImages.dispose();
     super.dispose();
   }
 
   late Widget forBack;
   @override
   void initState() {
-    _fetchNewMedia(currentPageValue: currentPage.value);
+    _fetchNewMedia(currentPageValue: 0);
     super.initState();
   }
 
@@ -134,8 +138,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
             .addPostFrameCallback((_) => setState(() => noImages = true));
         return;
       } else if (noImages) {
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => setState(() => noImages = false));
+        noImages = false;
       }
       List<AssetEntity> media =
           await albums[0].getAssetListPaged(page: currentPageValue, size: 60);
@@ -146,16 +149,15 @@ class _ImagesViewPageState extends State<ImagesViewPage>
         FutureBuilder<Uint8List?> gridViewImage =
             await getImageGallery(media, i);
         File? image = await highQualityImage(media, i);
-
-        if (selectedImage.value == null && i == 0) selectedImage.value = image;
-
         temp.add(gridViewImage);
         imageTemp.add(image);
       }
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
+      selectedImage.value = allImages.value[0];
       currentPage.value++;
       isImagesReady.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
     } else {
       await PhotoManager.requestPermissionExtend();
       PhotoManager.openSetting();
@@ -278,7 +280,8 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                   const SizedBox(height: 1),
                 ],
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: widget.gridDelegate.crossAxisSpacing),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: widget.gridDelegate.crossAxisSpacing),
                   child: GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -286,7 +289,8 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                     gridDelegate: widget.gridDelegate,
                     itemBuilder: (context, index) {
                       return Container(
-                          color: const Color(0xff696969), width: double.infinity);
+                          color: const Color(0xff696969),
+                          width: double.infinity);
                     },
                     itemCount: 40,
                   ),
@@ -419,7 +423,8 @@ class _ImagesViewPageState extends State<ImagesViewPage>
         return true;
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: widget.gridDelegate.crossAxisSpacing),
+        padding: EdgeInsets.symmetric(
+            horizontal: widget.gridDelegate.crossAxisSpacing),
         child: GridView.builder(
           gridDelegate: widget.gridDelegate,
           itemBuilder: (context, index) {
@@ -671,7 +676,8 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                         return true;
                       },
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: widget.gridDelegate.crossAxisSpacing),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: widget.gridDelegate.crossAxisSpacing),
                         child: GridView.builder(
                           gridDelegate: widget.gridDelegate,
                           controller: scrollController,
