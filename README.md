@@ -1,5 +1,5 @@
 
-<h1 align="left">Image Picker plus</h1>
+<h1 align="left">Image picker plus</h1>
 
 When you try to add a package (like image_picker) to pick an image from a gallery/camera, you will face a lot of issues like:-
 - If your app supports multi-themes image picker will not respond with that.
