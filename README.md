@@ -1,17 +1,32 @@
 
 <h1 align="left">Image picker plus</h1>
 
-When you try to add a package to select an image from a gallery, you will face a bad user experience because you have a traditional UI of Gallery display.
+When you try to add a package (like image_picker) to pick an image from a gallery/camera, you will face a lot of issues like:-
+- If your app supports multi-themes image picker will not respond with that.
+- If your app supports multi-languages image picker will not respond with that.
+- If your app has a beautiful design and a good user experience, image_picker will break all of this, Because image_picker has a traditional UI of Gallery display.
 
-I have two main views of the gallery to solve this issue:
-- It looks like an Instagram gallery.
-- It's a grid view of gallery images.
+In (image_picker_plus), we solve all those issues and many other features like:-
+- You can customize the UI of displaying the gallery.
+- You can crop the selected image(s) with different aspect ratios.
+- You can display photos and videos and choose from both of them.
+- You can display a gallery, camera, and video, and the user can choose between them.
 
-You can even customize a display of a camera to take a photo and videos.
+<p>
+<img src="https://user-images.githubusercontent.com/88978546/189904623-ba086e4e-7f0c-4a3b-ae63-0f2c5276bd08.jpg"    width="60%" height="30%">
 
+</p>
+<!-- <p>
+<img src="https://user-images.githubusercontent.com/88978546/189904645-2ff958ed-c23e-4040-ad9a-75136bc3e9c6.jpg"    width="100%" height="50%">
+
+</p> -->
+<p>
+<img src="https://user-images.githubusercontent.com/88978546/189904669-0b9ca16a-9c75-435d-b5a7-82e639153e93.jpg"    width="60%" height="30%">
+
+</p>
 <p align="left">
-  <a href="https://pub.dartlang.org/packages/custom_gallery_display">
-    <img src="https://img.shields.io/pub/v/custom_gallery_display.svg"
+  <a href="https://pub.dartlang.org/packages/image_picker_plus">
+    <img src="https://img.shields.io/pub/v/image_picker_plus.svg"
       alt="Pub Package" />
   </a>
     <a href="LICENSE">
@@ -20,9 +35,6 @@ You can even customize a display of a camera to take a photo and videos.
   </a> 
 </p>
 
-## Necessary note
-
-#### `CustomGallery` is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold.
 
 # Installing
 
@@ -53,7 +65,7 @@ If editing `Info.plist` as text, add:
 
 ```java
 compileSdkVersion 33
-minSdkVersion 21
+minSdkVersion 24
 ```
 
 * Add this permission into your AndroidManifest.xml
@@ -75,7 +87,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  custom_gallery_display: [last_version]
+  image_picker_plus: [last_version]
 ```
 
 ### 2. Install it
@@ -85,13 +97,13 @@ You can install packages from the command line:
 with `pub`:
 
 ```
-$ pub get custom_gallery_display
+$ pub get image_picker_plus
 ```
 
 with `Flutter`:
 
 ```
-$ flutter pub add custom_gallery_display
+$ flutter pub add image_picker_plus
 ```
 ### 3. Set it
 
@@ -99,7 +111,7 @@ Now in your `main.dart`, put those permissions:
 
 ```dart
   WidgetsFlutterBinding.ensureInitialized();
-  await CustomGalleryPermissions.requestPermissionExtend();
+  await ImagePickerPlusPermissions.requestPermissionExtend();
   ```
 
 ### 4. Import it
@@ -107,140 +119,5 @@ Now in your `main.dart`, put those permissions:
 In your `Dart` code, you can use:
 
 ```dart
-import 'package:custom_gallery_display/custom_gallery_display.dart';
+import 'package:image_picker_plus/image_picker_plus.dart';
 ```
-# Usage
-
-It has many configurable properties, including:
-
-- `appTheme` – Customization of colors if you have different themes
-- `tabsTexts` – Changing the names of tabs or even their languages
-- `enableCamera` – If you want to take a photo from the camera (front, back)
-- `enableVideo` – If you want to record video from the camera (front, back)
-- `cropImage` – If you want a cropped image with the aspect ratio that you are selected
-- `gridDelegate` – Customization of grid view
-
-There are also callback:
-
-- `sendRequestFunction` – It's function that return to you info about selected image/s
-
-# Examples
-<p>
-<img src="https://user-images.githubusercontent.com/88978546/173692850-21ab4cab-abd5-4f68-85e7-c010d13b391e.gif"   width="50%" height="50%">
-
-</p>
-
-```dart
-/// Remember:
-/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
-
-CustomGallery.instagramDisplay(
-              cropImage: true, // It's true by default
-              enableCamera: true, // It's true by default
-              enableVideo: true, // It's true by default
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-              ), // It's by default
-                sendRequestFunction: (SelectedImagesDetails details) async {
-                // You can take this variables and push to another page
-                bool multiSelectionMode = details.multiSelectionMode;
-                bool isThatImage = details.isThatImage;
-                List<File>? selectedFiles = details
-                    .selectedFiles; // If there one image selected it will be null
-                File selectedFile = details.selectedFile;
-                double aspectRatio = details.aspectRatio;
-              },
-            )
-```
-
-<p>
-<img src="https://user-images.githubusercontent.com/88978546/173691000-0b9db0fa-504e-428c-acdf-7b1ab414dcf9.jpg"    width="25%" height="50%">
-
-</p>
-
-
-```dart
-/// Remember:
-/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
-
-CustomGallery.normalDisplay(
-              enableCamera: false, // It's false by default
-              enableVideo: false, // It's false by default
-              appTheme: AppTheme(
-                  focusColor: Colors.black, primaryColor: Colors.white),
-                sendRequestFunction: (SelectedImagesDetails details) async {
-                // You can take this variables and push to another page
-                bool multiSelectionMode = details.multiSelectionMode;
-                bool isThatImage = details.isThatImage;
-                List<File>? selectedFiles = details
-                    .selectedFiles; // If there one image selected it will be null
-                File selectedFile = details.selectedFile;
-                double aspectRatio = details.aspectRatio;
-              },
-            )
-```
-
-<p>
-<img src="https://user-images.githubusercontent.com/88978546/173691016-f5b968ae-545e-4efc-81ff-405873678869.jpg"   width="25%" height="50%">
-<img src="https://user-images.githubusercontent.com/88978546/173691025-5be932e0-0e1d-42c8-b88f-cff0606dd0d1.jpg"    width="25%" height="50%">
-
-</p>
-
-```dart
-/// Remember:
-/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
-
-CustomGallery.normalDisplay(
-              enableVideo: true,
-              appTheme: AppTheme(
-                  focusColor: Colors.white, primaryColor: Colors.black),
-                tabsTexts: TabsTexts(
-                videoText: "فيديو",
-                galleryText: "المعرض",
-                deletingText: "حذف",
-                clearImagesText: "الغاء الصور المحدده",
-                limitingText: "اقصي حد للصور هو 10",
-              ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 1.7,
-                mainAxisSpacing: 1.5,
-              ),
-              sendRequestFunction: (_) async {},
-            )
-```
-<p>
-<img src="https://user-images.githubusercontent.com/88978546/173691042-d585a6da-cde6-4f7d-b228-f1384b36ea98.jpg"   width="25%" height="50%">
-
-</p>
-
-```dart
-/// Remember:
-/// CustomGallery is a page that you need to push to it. It has a scaffold. You cannot add it as a widget with another scaffold
-
-
-CustomGallery.normalDisplay(
-                enableVideo: true,
-                enableCamera: true,
-                appTheme: AppTheme(
-                    focusColor: Colors.white, primaryColor: Colors.black),
-                tabsTexts: TabsTexts(
-                    videoText: "視頻",
-                    photoText: "照片",
-                    galleryText: "畫廊",
-                    deletingText: "刪除",
-                    clearImagesText: "清除所選圖像",
-                    limitingText: "限制為 10 張照片或視頻",
-                ),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 1.7,
-                    mainAxisSpacing: 1.5,
-                    childAspectRatio: .5,
-                ),
-                sendRequestFunction: (_) async {},
-              )
-```
-
