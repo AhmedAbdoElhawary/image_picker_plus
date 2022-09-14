@@ -375,13 +375,17 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                   ? await cropImage(currentImage, indexOfCropImage: i)
                   : null;
               File image = croppedImage ?? currentImage;
-              SelectedByte img =
-                  SelectedByte(isThatImage: !isThatVideo, selectedByte: image);
+              Uint8List byte = await image.readAsBytes();
+              SelectedByte img = SelectedByte(
+                isThatImage: !isThatVideo,
+                selectedFile: image,
+                selectedByte: byte,
+              );
               selectedBytes.add(img);
             }
             if (selectedBytes.isNotEmpty) {
               SelectedImagesDetails details = SelectedImagesDetails(
-                selectedBytes: selectedBytes,
+                selectedFiles: selectedBytes,
                 multiSelectionMode: true,
                 aspectRatio: aspect,
               );
@@ -398,13 +402,17 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                 ? await cropImage(image)
                 : null;
             File img = croppedImage ?? image;
+            Uint8List byte = await img.readAsBytes();
 
-            SelectedByte selectedByte =
-                SelectedByte(isThatImage: !isThatVideo, selectedByte: img);
+            SelectedByte selectedByte = SelectedByte(
+              isThatImage: !isThatVideo,
+              selectedFile: img,
+              selectedByte: byte,
+            );
             SelectedImagesDetails details = SelectedImagesDetails(
               multiSelectionMode: false,
               aspectRatio: aspect,
-              selectedBytes: [selectedByte],
+              selectedFiles: [selectedByte],
             );
             if (!mounted) return;
             Navigator.of(context).maybePop(details);
