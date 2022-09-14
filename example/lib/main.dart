@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -243,7 +245,7 @@ class _MyHomePageState extends State<MyHomePage> {
       CupertinoPageRoute(
         builder: (context) {
           return DisplayImages(
-              selectedBytes: details.selectedBytes,
+              selectedBytes: details.selectedFiles,
               details: details,
               aspectRatio: details.aspectRatio);
         },
@@ -280,7 +282,7 @@ class _DisplayImagesState extends State<DisplayImages> {
           } else {
             return SizedBox(
               width: double.infinity,
-              child: Image.file(selectedByte.selectedByte),
+              child: Image.file(selectedByte.selectedFile),
             );
           }
         },
@@ -305,8 +307,8 @@ class _DisplayVideoState extends State<_DisplayVideo> {
   @override
   void initState() {
     super.initState();
-
-    controller = VideoPlayerController.file(widget.selectedByte.selectedByte);
+    File file = widget.selectedByte.selectedFile;
+    controller = VideoPlayerController.file(file);
     initializeVideoPlayerFuture = controller.initialize();
     controller.setLooping(true);
   }
