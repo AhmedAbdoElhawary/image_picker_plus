@@ -199,7 +199,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
             );
           }
         }
-        return Container();
+        return const SizedBox();
       },
     );
     return futureBuilder;
