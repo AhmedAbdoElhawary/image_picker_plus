@@ -106,7 +106,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
 
   @override
   Widget build(BuildContext context) {
-    return defaultTabController();
+    return tabController();
   }
 
   Widget tapBarMessage(bool isThatDeleteText) {
@@ -192,7 +192,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
     });
   }
 
-  DefaultTabController defaultTabController() {
+  DefaultTabController tabController() {
     return DefaultTabController(
         length: 2, child: Material(color: whiteColor, child: safeArea()));
   }

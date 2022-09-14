@@ -264,23 +264,32 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 color: Colors.blue, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
+                Uint8List byte=await videoRecordFile!.readAsBytes();
                 SelectedByte selectedByte = SelectedByte(
-                    isThatImage: false, selectedByte: videoRecordFile!);
+                  isThatImage: false,
+                  selectedFile: videoRecordFile!,
+                  selectedByte:byte,
+                );
                 SelectedImagesDetails details = SelectedImagesDetails(
                   multiSelectionMode: false,
-                  selectedBytes: [selectedByte],
+                  selectedFiles: [selectedByte],
                   aspectRatio: 1.0,
                 );
-
+                if (!mounted) return;
                 Navigator.of(context).maybePop(details);
               } else if (selectedImage != null) {
                 File? croppedByte = await cropImage(selectedImage);
                 if (croppedByte != null) {
+                  Uint8List byte = await croppedByte.readAsBytes();
+
                   SelectedByte selectedByte = SelectedByte(
-                      isThatImage: true, selectedByte: croppedByte);
+                    isThatImage: true,
+                    selectedFile: croppedByte,
+                    selectedByte: byte,
+                  );
 
                   SelectedImagesDetails details = SelectedImagesDetails(
-                    selectedBytes: [selectedByte],
+                    selectedFiles: [selectedByte],
                     multiSelectionMode: false,
                     aspectRatio: 1.0,
                   );
