@@ -19,6 +19,7 @@ class ImagesViewPage extends StatefulWidget {
   final bool multiSelection;
   final bool showInternalVideos;
   final bool showInternalImages;
+  final AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
 
   /// To avoid lag when you interacting with image when it expanded
   final AppTheme appTheme;
@@ -32,6 +33,7 @@ class ImagesViewPage extends StatefulWidget {
     required this.multiSelectedImages,
     required this.multiSelectionMode,
     required this.clearMultiImages,
+    required this.sendRequestFunction,
     required this.appTheme,
     required this.tabsTexts,
     required this.whiteColor,
@@ -154,7 +156,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       }
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
-      selectedImage.value = allImages.value[0];
+      selectedImage.value ??= allImages.value[0];
       currentPage.value++;
       isImagesReady.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
@@ -390,7 +392,11 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                 aspectRatio: aspect,
               );
               if (!mounted) return;
-              Navigator.of(context).maybePop(details);
+              if (widget.sendRequestFunction != null) {
+                await widget.sendRequestFunction!(details);
+              } else {
+                Navigator.of(context).maybePop(details);
+              }
             }
           } else {
             File? image = selectedImage.value;
@@ -415,7 +421,11 @@ class _ImagesViewPageState extends State<ImagesViewPage>
               selectedFiles: [selectedByte],
             );
             if (!mounted) return;
-            Navigator.of(context).maybePop(details);
+            if (widget.sendRequestFunction != null) {
+              await widget.sendRequestFunction!(details);
+            } else {
+              Navigator.of(context).maybePop(details);
+            }
           }
         },
       ),

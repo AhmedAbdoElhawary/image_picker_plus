@@ -13,15 +13,15 @@ In (image_picker_plus), we solve all those issues and many other features like:-
 - You can display a gallery, camera, and video, and the user can choose between them.
 
 <p>
-<img src="https://user-images.githubusercontent.com/88978546/189904623-ba086e4e-7f0c-4a3b-ae63-0f2c5276bd08.jpg"    width="60%" height="30%">
+<img src="https://user-images.githubusercontent.com/88978546/189904623-ba086e4e-7f0c-4a3b-ae63-0f2c5276bd08.jpg"    width="70%" height="40%">
 
 </p>
 <!-- <p>
-<img src="https://user-images.githubusercontent.com/88978546/189904645-2ff958ed-c23e-4040-ad9a-75136bc3e9c6.jpg"    width="100%" height="50%">
+<img src="https://user-images.githubusercontent.com/88978546/189904645-2ff958ed-c23e-4040-ad9a-75136bc3e9c6.jpg"    width="70%" height="40%">
 
 </p> -->
 <p>
-<img src="https://user-images.githubusercontent.com/88978546/189904669-0b9ca16a-9c75-435d-b5a7-82e639153e93.jpg"    width="60%" height="30%">
+<img src="https://user-images.githubusercontent.com/88978546/189904669-0b9ca16a-9c75-435d-b5a7-82e639153e93.jpg"    width="70%" height="40%">
 
 </p>
 <p align="left">

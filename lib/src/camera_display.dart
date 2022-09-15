@@ -24,11 +24,13 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueNotifier<bool> redDeleteText;
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
+  final AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
 
   const CustomCameraDisplay({
     Key? key,
     required this.appTheme,
     required this.tapsNames,
+    required this.sendRequestFunction,
     required this.selectedCameraImage,
     required this.enableCamera,
     required this.enableVideo,
@@ -264,11 +266,11 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 color: Colors.blue, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
-                Uint8List byte=await videoRecordFile!.readAsBytes();
+                Uint8List byte = await videoRecordFile!.readAsBytes();
                 SelectedByte selectedByte = SelectedByte(
                   isThatImage: false,
                   selectedFile: videoRecordFile!,
-                  selectedByte:byte,
+                  selectedByte: byte,
                 );
                 SelectedImagesDetails details = SelectedImagesDetails(
                   multiSelectionMode: false,
@@ -276,7 +278,11 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   aspectRatio: 1.0,
                 );
                 if (!mounted) return;
-                Navigator.of(context).maybePop(details);
+                if (widget.sendRequestFunction != null) {
+                  await widget.sendRequestFunction!(details);
+                } else {
+                  Navigator.of(context).maybePop(details);
+                }
               } else if (selectedImage != null) {
                 File? croppedByte = await cropImage(selectedImage);
                 if (croppedByte != null) {
@@ -294,7 +300,11 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                     aspectRatio: 1.0,
                   );
                   if (!mounted) return;
-                  Navigator.of(context).maybePop(details);
+                  if (widget.sendRequestFunction != null) {
+                    await widget.sendRequestFunction!(details);
+                  } else {
+                    Navigator.of(context).maybePop(details);
+                  }
                 }
               }
             },

@@ -1,5 +1,8 @@
-## 0.4.0+1
-* try to change the name of package
+## 0.5.1
+* update README
+* create sendRequestFunction
+## 0.5.0
+* handle multi selection images bugs
 
 ## 0.4.0
 * change the way of pick images

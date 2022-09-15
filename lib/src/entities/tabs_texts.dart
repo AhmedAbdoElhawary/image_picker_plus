@@ -21,6 +21,5 @@ class TabsTexts {
     this.holdButtonText = "Press and hold to record",
     this.noImagesFounded = "There is no images",
     this.acceptAllPermissions = "Failed! accept all access permissions.",
-
   });
 }

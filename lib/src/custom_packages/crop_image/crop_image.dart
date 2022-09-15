@@ -678,9 +678,11 @@ class _DisplayVideoState extends State<_DisplayVideo> {
                     });
                   },
                   child: Icon(
-                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                    controller.value.isPlaying
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
                     color: Colors.white,
-                    size: 45,
+                    size: 60,
                   ),
                 ),
               )
