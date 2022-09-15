@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:image_picker_plus/src/camera_display.dart';
 import 'package:image_picker_plus/src/images_view_page.dart';
@@ -54,6 +55,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
 
   late bool showInternalVideos;
   late bool showInternalImages;
+  AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
   late SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
   late bool cameraAndVideoEnabled;
   late bool cameraVideoOnlyEnabled;
@@ -76,7 +78,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
 
     showInternalImages = widget.pickerSource != PickerSource.video;
     showInternalVideos = widget.pickerSource != PickerSource.image;
-
+    sendRequestFunction = imagePickerDisplay.sendRequestFunction;
     noGallery = widget.source != ImageSource.camera;
     bool notGallery = widget.source != ImageSource.gallery;
 
@@ -259,6 +261,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
         enableCamera: enableCamera,
         enableVideo: enableVideo,
         replacingTabBar: replacingDeleteWidget,
+        sendRequestFunction: sendRequestFunction,
         clearVideoRecord: clearVideoRecord,
         redDeleteText: redDeleteText,
         moveToVideoScreen: moveToVideo,
@@ -286,6 +289,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
       multiSelectedImages: multiSelectedImage,
       whiteColor: whiteColor,
       cropImage: cropImage,
+      sendRequestFunction: sendRequestFunction,
       multiSelection: widget.multiSelection,
       showInternalVideos: showInternalVideos,
       showInternalImages: showInternalImages,
