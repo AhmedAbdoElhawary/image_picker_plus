@@ -1,4 +1,5 @@
 import 'package:image_picker_plus/image_picker_plus.dart';
+import 'package:image_picker_plus/src/custom_route.dart';
 import 'package:image_picker_plus/src/gallery_display.dart';
 import 'package:image_picker_plus/src/utilities/enum.dart';
 import 'package:flutter/material.dart';
@@ -53,17 +54,14 @@ class ImagePickerPlus {
     required PickerSource pickerSource,
   }) async {
     return await Navigator.of(_context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (
-          context,
-        ) =>
-            CustomImagePicker(
+      HeroDialogRoute(
+        builder: (context) => CustomImagePicker(
           galleryDisplaySettings: galleryDisplaySettings,
           multiSelection: multiSelection,
           pickerSource: pickerSource,
           source: source,
         ),
-        maintainState: false,
+        maintainStates: false,
       ),
     );
   }
