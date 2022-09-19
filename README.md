@@ -105,16 +105,8 @@ with `Flutter`:
 ```
 $ flutter pub add image_picker_plus
 ```
-### 3. Set it
 
-Now in your `main.dart`, put those permissions:
-
-```dart
-  WidgetsFlutterBinding.ensureInitialized();
-  await ImagePickerPlusPermissions.requestPermissionExtend();
-  ```
-
-### 4. Import it
+### 3. Import it
 
 In your `Dart` code, you can use:
 
