@@ -1,6 +1,11 @@
+## 0.5.2
+* update README
+* create custom route
+
 ## 0.5.1
 * update README
 * create sendRequestFunction
+
 ## 0.5.0
 * handle multi selection images bugs
 
