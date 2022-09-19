@@ -285,12 +285,12 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 }
               } else if (selectedImage != null) {
                 File? croppedByte = await cropImage(selectedImage);
-                if (croppedByte != null) {
-                  Uint8List byte = await croppedByte.readAsBytes();
+                File img=croppedByte??selectedImage;
+                  Uint8List byte = await img.readAsBytes();
 
                   SelectedByte selectedByte = SelectedByte(
                     isThatImage: true,
-                    selectedFile: croppedByte,
+                    selectedFile: img,
                     selectedByte: byte,
                   );
 
@@ -305,7 +305,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   } else {
                     Navigator.of(context).maybePop(details);
                   }
-                }
+
               }
             },
           ),
