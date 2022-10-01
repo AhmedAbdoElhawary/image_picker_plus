@@ -285,27 +285,26 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 }
               } else if (selectedImage != null) {
                 File? croppedByte = await cropImage(selectedImage);
-                File img=croppedByte??selectedImage;
-                  Uint8List byte = await img.readAsBytes();
+                File img = croppedByte ?? selectedImage;
+                Uint8List byte = await img.readAsBytes();
 
-                  SelectedByte selectedByte = SelectedByte(
-                    isThatImage: true,
-                    selectedFile: img,
-                    selectedByte: byte,
-                  );
+                SelectedByte selectedByte = SelectedByte(
+                  isThatImage: true,
+                  selectedFile: img,
+                  selectedByte: byte,
+                );
 
-                  SelectedImagesDetails details = SelectedImagesDetails(
-                    selectedFiles: [selectedByte],
-                    multiSelectionMode: false,
-                    aspectRatio: 1.0,
-                  );
-                  if (!mounted) return;
-                  if (widget.sendRequestFunction != null) {
-                    await widget.sendRequestFunction!(details);
-                  } else {
-                    Navigator.of(context).maybePop(details);
-                  }
-
+                SelectedImagesDetails details = SelectedImagesDetails(
+                  selectedFiles: [selectedByte],
+                  multiSelectionMode: false,
+                  aspectRatio: 1.0,
+                );
+                if (!mounted) return;
+                if (widget.sendRequestFunction != null) {
+                  await widget.sendRequestFunction!(details);
+                } else {
+                  Navigator.of(context).maybePop(details);
+                }
               }
             },
           ),

@@ -1,3 +1,6 @@
+## 0.5.3
+* edit video display
+
 ## 0.5.2
 * update README
 * create custom route
