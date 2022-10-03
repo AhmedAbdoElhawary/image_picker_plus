@@ -1,3 +1,7 @@
+## 0.5.4
+* edit video display
+* add CI/CD
+
 ## 0.5.3
 * edit video display
 
