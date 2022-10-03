@@ -670,8 +670,10 @@ class _DisplayVideoState extends State<_DisplayVideo> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                SizedBox(
-                    height: double.infinity, child: VideoPlayer(controller)),
+                AspectRatio(
+                  aspectRatio: controller.value.aspectRatio,
+                  child: VideoPlayer(controller),
+                ),
                 Align(
                   alignment: Alignment.center,
                   child: Visibility(
