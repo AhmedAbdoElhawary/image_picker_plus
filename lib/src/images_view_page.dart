@@ -214,11 +214,19 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Widget build(BuildContext context) {
     super.build(context);
     return noImages
-        ? Center(
-            child: Text(
-              widget.tabsTexts.noImagesFounded,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+        ? Column(
+            children: [
+              appBar(),
+              Flexible(
+                child: Center(
+                  child: Text(
+                    widget.tabsTexts.noImagesFounded,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           )
         : buildGridView();
   }
@@ -327,11 +335,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       width: width,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          existButton(),
-          const Spacer(),
-          doneButton(),
-        ],
+        children: [existButton(), const Spacer(), doneButton()],
       ),
     );
   }
@@ -484,7 +488,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                     ],
                   );
                 } else {
-                  return Container();
+                  return const SizedBox();
                 }
               },
             );
