@@ -130,7 +130,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Widget buildBody() {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
-    double previewHeight=MediaQuery.of(context).size.height/2;
+    double previewHeight = MediaQuery.of(context).size.height / 2;
     return Column(
       children: [
         appBar(),
@@ -147,7 +147,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   alignment: Alignment.topCenter,
                   child: Container(
                     color: whiteColor,
-                    height: previewHeight+10,
+                    height: previewHeight + 10,
                     width: double.infinity,
                     child: buildCrop(selectedImage),
                   ),
@@ -163,13 +163,12 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   Align buildPickImageContainer(Color whiteColor, BuildContext context) {
-
-    double previewHeight=MediaQuery.of(context).size.height/2;
+    double previewHeight = MediaQuery.of(context).size.height / 2;
 
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: previewHeight-100,
+        height: previewHeight - 100,
         color: whiteColor,
         width: double.infinity,
         child: Column(
