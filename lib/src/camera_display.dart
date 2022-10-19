@@ -25,6 +25,7 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
   final AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
+  final ValueNotifier<File?> videoRecordFile;
 
   const CustomCameraDisplay({
     Key? key,
@@ -33,6 +34,7 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.sendRequestFunction,
     required this.selectedCameraImage,
     required this.enableCamera,
+    required this.videoRecordFile,
     required this.enableVideo,
     required this.redDeleteText,
     required this.selectedVideo,
@@ -59,7 +61,6 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
   int selectedCamera = 0;
-  File? videoRecordFile;
 
   @override
   void dispose() {
@@ -70,7 +71,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
 
   @override
   void initState() {
-    videoStatusAnimation = Container();
+    videoStatusAnimation = const SizedBox();
     _initializeCamera();
 
     super.initState();
@@ -130,6 +131,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Widget buildBody() {
     Color whiteColor = widget.appTheme.primaryColor;
     File? selectedImage = widget.selectedCameraImage.value;
+    double previewHeight = MediaQuery.of(context).size.height / 2;
     return Column(
       children: [
         appBar(),
@@ -146,7 +148,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   alignment: Alignment.topCenter,
                   child: Container(
                     color: whiteColor,
-                    height: 360,
+                    height: previewHeight + 10,
                     width: double.infinity,
                     child: buildCrop(selectedImage),
                   ),
@@ -162,10 +164,12 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   Align buildPickImageContainer(Color whiteColor, BuildContext context) {
+    double previewHeight = MediaQuery.of(context).size.height / 2;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 270,
+        height: previewHeight - 100,
         color: whiteColor,
         width: double.infinity,
         child: Column(
@@ -265,11 +269,13 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
             icon: const Icon(Icons.arrow_forward_rounded,
                 color: Colors.blue, size: 30),
             onPressed: () async {
-              if (videoRecordFile != null) {
-                Uint8List byte = await videoRecordFile!.readAsBytes();
+              if (widget.videoRecordFile.value != null &&
+                  !widget.clearVideoRecord.value) {
+                Uint8List byte =
+                    await widget.videoRecordFile.value!.readAsBytes();
                 SelectedByte selectedByte = SelectedByte(
                   isThatImage: false,
-                  selectedFile: videoRecordFile!,
+                  selectedFile: widget.videoRecordFile.value!,
                   selectedByte: byte,
                 );
                 SelectedImagesDetails details = SelectedImagesDetails(
@@ -339,12 +345,13 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       onLongPress: widget.enableVideo ? onLongTap : null,
       onLongPressUp: widget.enableVideo ? onLongTapUp : onPress,
       child: CircleAvatar(
-          backgroundColor: Colors.grey[400],
-          radius: 40,
-          child: CircleAvatar(
-            radius: 24,
-            backgroundColor: whiteColor,
-          )),
+        backgroundColor: Colors.grey[400],
+        radius: 40,
+        child: CircleAvatar(
+          radius: 24,
+          backgroundColor: whiteColor,
+        ),
+      ),
     );
   }
 
@@ -381,7 +388,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       widget.replacingTabBar(true);
     });
     XFile video = await controller.stopVideoRecording();
-    videoRecordFile = File(video.path);
+    widget.videoRecordFile.value = File(video.path);
   }
 
   RecordFadeAnimation buildFadeAnimation() {

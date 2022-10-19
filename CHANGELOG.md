@@ -1,3 +1,9 @@
+## 0.5.5+1
+* solve tab bar bug
+
+## 0.5.5
+* refactoring the code
+
 ## 0.5.4
 * edit video display
 * add CI/CD

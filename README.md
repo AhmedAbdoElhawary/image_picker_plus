@@ -65,7 +65,7 @@ If editing `Info.plist` as text, add:
 
 ```java
 compileSdkVersion 33
-minSdkVersion 24
+minSdkVersion 21
 ```
 
 * Add this permission into your AndroidManifest.xml
@@ -75,13 +75,13 @@ minSdkVersion 24
      <application
       ...
       <activity
-       ...
-       android:requestLegacyExternalStorage="true">
-       </activity>
+           ...
+           android:requestLegacyExternalStorage="true"
+           ...
+     </activity>
         ...
-    <uses-permission android:name="android.permission.INTERNET"/>
      </application>
-  ...
+    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>
 ````
 

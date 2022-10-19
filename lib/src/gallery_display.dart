@@ -35,7 +35,9 @@ class CustomImagePickerState extends State<CustomImagePicker>
   final multiSelectionMode = ValueNotifier(false);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
-  bool noGallery = true;
+  final ValueNotifier<File?> videoRecordFile = ValueNotifier(null);
+
+  bool showGallery = true;
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   late bool cropImage;
   late AppTheme appTheme;
@@ -57,7 +59,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
   late bool showInternalImages;
   AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
   late SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
-  late bool cameraAndVideoEnabled;
+  late bool showTabBar;
   late bool cameraVideoOnlyEnabled;
   late bool showAllTabs;
 
@@ -79,15 +81,20 @@ class CustomImagePickerState extends State<CustomImagePicker>
     showInternalImages = widget.pickerSource != PickerSource.video;
     showInternalVideos = widget.pickerSource != PickerSource.image;
     sendRequestFunction = imagePickerDisplay.sendRequestFunction;
-    noGallery = widget.source != ImageSource.camera;
+    showGallery = widget.source != ImageSource.camera;
     bool notGallery = widget.source != ImageSource.gallery;
 
     enableCamera = showInternalImages && notGallery;
     enableVideo = showInternalVideos && notGallery;
-    cameraAndVideoEnabled = enableCamera && enableVideo;
+    bool cameraAndVideoEnabled = enableCamera && enableVideo;
+
+    showTabBar = (cameraAndVideoEnabled) ||
+        (showGallery && enableVideo) ||
+        (showGallery && enableCamera);
+
     cameraVideoOnlyEnabled =
         cameraAndVideoEnabled && widget.source == ImageSource.camera;
-    showAllTabs = cameraAndVideoEnabled && noGallery;
+    showAllTabs = cameraAndVideoEnabled && showGallery;
     whiteColor = appTheme.primaryColor;
     blackColor = appTheme.focusColor;
   }
@@ -127,6 +134,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
                   clearVideoRecord.value = true;
                   showDeleteText.value = false;
                   redDeleteText.value = false;
+                  videoRecordFile.value = null;
                 }
               });
             }
@@ -213,7 +221,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
                 dragStartBehavior: DragStartBehavior.start,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  if (noGallery) imagesViewPage(),
+                  if (showGallery) imagesViewPage(),
                   if (enableCamera || enableVideo) cameraPage(),
                 ],
               ),
@@ -260,6 +268,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
         tapsNames: tapsNames,
         enableCamera: enableCamera,
         enableVideo: enableVideo,
+        videoRecordFile: videoRecordFile,
         replacingTabBar: replacingDeleteWidget,
         sendRequestFunction: sendRequestFunction,
         clearVideoRecord: clearVideoRecord,
@@ -302,7 +311,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
       builder: (context, bool showDeleteTextValue, child) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeInOutQuart,
-        child: cameraAndVideoEnabled
+        child: showTabBar
             ? (showDeleteTextValue ? tapBarMessage(true) : tabBar())
             : const SizedBox(),
       ),
@@ -323,7 +332,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
           children: [
             Row(
               children: [
-                if (noGallery) galleryTabBar(widthOfTab, selectedPageValue),
+                if (showGallery) galleryTabBar(widthOfTab, selectedPageValue),
                 if (enableCamera) photoTabBar(widthOfTab, photoColor),
                 if (enableVideo) videoTabBar(widthOfTab),
               ],

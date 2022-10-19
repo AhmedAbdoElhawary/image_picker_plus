@@ -1,6 +1,6 @@
 name: image_picker_plus
 description: Customization of the gallery display or even camera and video.
-version: 0.5.4
+version: 0.5.5+1
 homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus.git
 
 environment:
@@ -10,13 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  photo_manager: ^2.2.1
+  photo_manager: ^2.4.0
   shimmer: ^2.0.0
   image_crop: ^0.4.1
-  camera: ^0.10.0+1
+  camera: ^0.10.0+3
   image: ^3.2.0
-  video_player: ^2.4.5
-  image_picker: ^0.8.5+3
+  video_player: ^2.4.7
+  image_picker: ^0.8.6
 
 dev_dependencies:
   flutter_test:
