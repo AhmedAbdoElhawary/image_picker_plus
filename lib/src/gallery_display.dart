@@ -35,6 +35,8 @@ class CustomImagePickerState extends State<CustomImagePicker>
   final multiSelectionMode = ValueNotifier(false);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
+  final ValueNotifier<File?> videoRecordFile = ValueNotifier(null);
+
   bool showGallery = true;
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   late bool cropImage;
@@ -57,7 +59,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
   late bool showInternalImages;
   AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
   late SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
-  late bool cameraOrVideoEnabled;
+  late bool showTabBar;
   late bool cameraVideoOnlyEnabled;
   late bool showAllTabs;
 
@@ -84,8 +86,11 @@ class CustomImagePickerState extends State<CustomImagePicker>
 
     enableCamera = showInternalImages && notGallery;
     enableVideo = showInternalVideos && notGallery;
-    cameraOrVideoEnabled = enableCamera || enableVideo;
     bool cameraAndVideoEnabled = enableCamera && enableVideo;
+
+    showTabBar = (cameraAndVideoEnabled) ||
+        (showGallery && enableVideo) ||
+        (showGallery && enableCamera);
 
     cameraVideoOnlyEnabled =
         cameraAndVideoEnabled && widget.source == ImageSource.camera;
@@ -129,6 +134,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
                   clearVideoRecord.value = true;
                   showDeleteText.value = false;
                   redDeleteText.value = false;
+                  videoRecordFile.value = null;
                 }
               });
             }
@@ -262,6 +268,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
         tapsNames: tapsNames,
         enableCamera: enableCamera,
         enableVideo: enableVideo,
+        videoRecordFile: videoRecordFile,
         replacingTabBar: replacingDeleteWidget,
         sendRequestFunction: sendRequestFunction,
         clearVideoRecord: clearVideoRecord,
@@ -304,7 +311,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
       builder: (context, bool showDeleteTextValue, child) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeInOutQuart,
-        child: cameraOrVideoEnabled
+        child: showTabBar
             ? (showDeleteTextValue ? tapBarMessage(true) : tabBar())
             : const SizedBox(),
       ),

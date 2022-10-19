@@ -25,6 +25,7 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
   final AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
+  final ValueNotifier<File?> videoRecordFile;
 
   const CustomCameraDisplay({
     Key? key,
@@ -33,6 +34,7 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.sendRequestFunction,
     required this.selectedCameraImage,
     required this.enableCamera,
+    required this.videoRecordFile,
     required this.enableVideo,
     required this.redDeleteText,
     required this.selectedVideo,
@@ -59,7 +61,6 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
   int selectedCamera = 0;
-  File? videoRecordFile;
 
   @override
   void dispose() {
@@ -268,11 +269,13 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
             icon: const Icon(Icons.arrow_forward_rounded,
                 color: Colors.blue, size: 30),
             onPressed: () async {
-              if (videoRecordFile != null) {
-                Uint8List byte = await videoRecordFile!.readAsBytes();
+              if (widget.videoRecordFile.value != null &&
+                  !widget.clearVideoRecord.value) {
+                Uint8List byte =
+                    await widget.videoRecordFile.value!.readAsBytes();
                 SelectedByte selectedByte = SelectedByte(
                   isThatImage: false,
-                  selectedFile: videoRecordFile!,
+                  selectedFile: widget.videoRecordFile.value!,
                   selectedByte: byte,
                 );
                 SelectedImagesDetails details = SelectedImagesDetails(
@@ -385,7 +388,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       widget.replacingTabBar(true);
     });
     XFile video = await controller.stopVideoRecording();
-    videoRecordFile = File(video.path);
+    widget.videoRecordFile.value = File(video.path);
   }
 
   RecordFadeAnimation buildFadeAnimation() {
