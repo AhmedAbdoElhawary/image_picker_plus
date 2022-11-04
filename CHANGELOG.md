@@ -1,3 +1,6 @@
+## 0.5.5+2
+* update dependencies
+
 ## 0.5.5+1
 * solve tab bar bug
 
