@@ -40,7 +40,7 @@ class MultiSelectionMode extends StatelessWidget {
                   ? Center(
                       child: Text(
                         "${multiSelectedImage.indexOf(image) + 1}",
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white,fontSize:13),
                       ),
                     )
                   : const SizedBox(),
