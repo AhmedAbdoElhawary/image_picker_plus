@@ -65,19 +65,19 @@ If editing `Info.plist` as text, add:
 
 ```java
 compileSdkVersion 33
-minSdkVersion 21
+        minSdkVersion 21
 ```
 
 * Add this permission into your AndroidManifest.xml
 ````xml
 <manifest>
-  ...
-     <application
+    ...
+    <application
         android:requestLegacyExternalStorage="true"
-        ...
-     </application>
-    <uses-permission android:name="android.permission.INTERNET"/>
-</manifest>
+    ...
+</application>
+<uses-permission android:name="android.permission.INTERNET"/>
+    </manifest>
 ````
 
 ### 1. Depend on it

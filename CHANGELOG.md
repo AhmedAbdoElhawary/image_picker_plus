@@ -1,3 +1,6 @@
+## 0.5.5+3
+* add maximumSelection as a parameter
+
 ## 0.5.5+2
 * update dependencies
 
