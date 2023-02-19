@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:image_picker_plus/src/camera_display.dart';
 import 'package:image_picker_plus/src/images_view_page.dart';
@@ -35,15 +34,13 @@ class CustomImagePickerState extends State<CustomImagePicker>
   final multiSelectionMode = ValueNotifier(false);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
-  final ValueNotifier<File?> videoRecordFile = ValueNotifier(null);
-
-  bool showGallery = true;
+  bool noGallery = true;
   ValueNotifier<File?> selectedCameraImage = ValueNotifier(null);
   late bool cropImage;
   late AppTheme appTheme;
   late TabsTexts tapsNames;
   late bool showImagePreview;
-
+  late int maximumSelection;
   final isImagesReady = ValueNotifier(false);
   final currentPage = ValueNotifier(0);
   final lastPage = ValueNotifier(0);
@@ -54,12 +51,12 @@ class CustomImagePickerState extends State<CustomImagePicker>
 
   late bool enableCamera;
   late bool enableVideo;
+  late String limitingText;
 
   late bool showInternalVideos;
   late bool showInternalImages;
-  AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
   late SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
-  late bool showTabBar;
+  late bool cameraAndVideoEnabled;
   late bool cameraVideoOnlyEnabled;
   late bool showAllTabs;
 
@@ -75,26 +72,25 @@ class CustomImagePickerState extends State<CustomImagePicker>
     appTheme = imagePickerDisplay.appTheme ?? AppTheme();
     tapsNames = imagePickerDisplay.tabsTexts ?? TabsTexts();
     cropImage = imagePickerDisplay.cropImage;
+    maximumSelection = imagePickerDisplay.maximumSelection;
+    limitingText = tapsNames.limitingText ??
+        "The limit is $maximumSelection photos or videos.";
+
     showImagePreview = cropImage || imagePickerDisplay.showImagePreview;
     gridDelegate = imagePickerDisplay.gridDelegate;
 
     showInternalImages = widget.pickerSource != PickerSource.video;
     showInternalVideos = widget.pickerSource != PickerSource.image;
-    sendRequestFunction = imagePickerDisplay.sendRequestFunction;
-    showGallery = widget.source != ImageSource.camera;
+
+    noGallery = widget.source != ImageSource.camera;
     bool notGallery = widget.source != ImageSource.gallery;
 
     enableCamera = showInternalImages && notGallery;
     enableVideo = showInternalVideos && notGallery;
-    bool cameraAndVideoEnabled = enableCamera && enableVideo;
-
-    showTabBar = (cameraAndVideoEnabled) ||
-        (showGallery && enableVideo) ||
-        (showGallery && enableCamera);
-
+    cameraAndVideoEnabled = enableCamera && enableVideo;
     cameraVideoOnlyEnabled =
         cameraAndVideoEnabled && widget.source == ImageSource.camera;
-    showAllTabs = cameraAndVideoEnabled && showGallery;
+    showAllTabs = cameraAndVideoEnabled && noGallery;
     whiteColor = appTheme.primaryColor;
     blackColor = appTheme.focusColor;
   }
@@ -134,7 +130,6 @@ class CustomImagePickerState extends State<CustomImagePicker>
                   clearVideoRecord.value = true;
                   showDeleteText.value = false;
                   redDeleteText.value = false;
-                  videoRecordFile.value = null;
                 }
               });
             }
@@ -147,9 +142,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
                 Icon(Icons.arrow_back_ios_rounded,
                     color: deleteColor, size: 15),
               Text(
-                isThatDeleteText
-                    ? tapsNames.deletingText
-                    : tapsNames.limitingText,
+                isThatDeleteText ? tapsNames.deletingText : limitingText,
                 style: TextStyle(
                     fontSize: 14,
                     color: deleteColor,
@@ -221,13 +214,13 @@ class CustomImagePickerState extends State<CustomImagePicker>
                 dragStartBehavior: DragStartBehavior.start,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  if (showGallery) imagesViewPage(),
+                  if (noGallery) imagesViewPage(),
                   if (enableCamera || enableVideo) cameraPage(),
                 ],
               ),
             ),
           ),
-          if (multiSelectedImage.value.length < 10) ...[
+          if (multiSelectedImage.value.length < maximumSelection) ...[
             ValueListenableBuilder(
               valueListenable: multiSelectionMode,
               builder: (context, bool multiSelectionModeValue, child) {
@@ -268,9 +261,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
         tapsNames: tapsNames,
         enableCamera: enableCamera,
         enableVideo: enableVideo,
-        videoRecordFile: videoRecordFile,
         replacingTabBar: replacingDeleteWidget,
-        sendRequestFunction: sendRequestFunction,
         clearVideoRecord: clearVideoRecord,
         redDeleteText: redDeleteText,
         moveToVideoScreen: moveToVideo,
@@ -298,10 +289,10 @@ class CustomImagePickerState extends State<CustomImagePicker>
       multiSelectedImages: multiSelectedImage,
       whiteColor: whiteColor,
       cropImage: cropImage,
-      sendRequestFunction: sendRequestFunction,
       multiSelection: widget.multiSelection,
       showInternalVideos: showInternalVideos,
       showInternalImages: showInternalImages,
+      maximumSelection: maximumSelection,
     );
   }
 
@@ -311,7 +302,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
       builder: (context, bool showDeleteTextValue, child) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeInOutQuart,
-        child: showTabBar
+        child: cameraAndVideoEnabled
             ? (showDeleteTextValue ? tapBarMessage(true) : tabBar())
             : const SizedBox(),
       ),
@@ -332,7 +323,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
           children: [
             Row(
               children: [
-                if (showGallery) galleryTabBar(widthOfTab, selectedPageValue),
+                if (noGallery) galleryTabBar(widthOfTab, selectedPageValue),
                 if (enableCamera) photoTabBar(widthOfTab, photoColor),
                 if (enableVideo) videoTabBar(widthOfTab),
               ],
