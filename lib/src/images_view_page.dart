@@ -19,8 +19,7 @@ class ImagesViewPage extends StatefulWidget {
   final bool multiSelection;
   final bool showInternalVideos;
   final bool showInternalImages;
-  final AsyncValueSetter<SelectedImagesDetails>? sendRequestFunction;
-
+  final int maximumSelection;
   /// To avoid lag when you interacting with image when it expanded
   final AppTheme appTheme;
   final VoidCallback clearMultiImages;
@@ -33,7 +32,6 @@ class ImagesViewPage extends StatefulWidget {
     required this.multiSelectedImages,
     required this.multiSelectionMode,
     required this.clearMultiImages,
-    required this.sendRequestFunction,
     required this.appTheme,
     required this.tabsTexts,
     required this.whiteColor,
@@ -44,6 +42,7 @@ class ImagesViewPage extends StatefulWidget {
     required this.blackColor,
     required this.showImagePreview,
     required this.gridDelegate,
+    required this.maximumSelection,
   }) : super(key: key);
 
   @override
@@ -156,7 +155,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       }
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
-      selectedImage.value ??= allImages.value[0];
+      selectedImage.value = allImages.value[0];
       currentPage.value++;
       isImagesReady.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
@@ -214,19 +213,11 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Widget build(BuildContext context) {
     super.build(context);
     return noImages
-        ? Column(
-            children: [
-              appBar(),
-              Flexible(
-                child: Center(
-                  child: Text(
-                    widget.tabsTexts.noImagesFounded,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
+        ? Center(
+            child: Text(
+              widget.tabsTexts.noImagesFounded,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
           )
         : buildGridView();
   }
@@ -335,7 +326,11 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       width: width,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [existButton(), const Spacer(), doneButton()],
+        children: [
+          existButton(),
+          const Spacer(),
+          doneButton(),
+        ],
       ),
     );
   }
@@ -396,11 +391,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                 aspectRatio: aspect,
               );
               if (!mounted) return;
-              if (widget.sendRequestFunction != null) {
-                await widget.sendRequestFunction!(details);
-              } else {
-                Navigator.of(context).maybePop(details);
-              }
+              Navigator.of(context).maybePop(details);
             }
           } else {
             File? image = selectedImage.value;
@@ -425,11 +416,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
               selectedFiles: [selectedByte],
             );
             if (!mounted) return;
-            if (widget.sendRequestFunction != null) {
-              await widget.sendRequestFunction!(details);
-            } else {
-              Navigator.of(context).maybePop(details);
-            }
+            Navigator.of(context).maybePop(details);
           }
         },
       ),
@@ -488,7 +475,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                     ],
                   );
                 } else {
-                  return const SizedBox();
+                  return Container();
                 }
               },
             );
@@ -571,7 +558,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
 
       return true;
     } else {
-      if (multiSelectionValue.length < 10) {
+      if (multiSelectionValue.length < widget.maximumSelection) {
         setState(() {
           if (!multiSelectionValue.contains(image)) {
             multiSelectionValue.add(image);
