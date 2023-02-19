@@ -633,7 +633,7 @@ class _DisplayVideo extends StatefulWidget {
 class _DisplayVideoState extends State<_DisplayVideo> {
   late VideoPlayerController controller;
   late Future<void> initializeVideoPlayerFuture;
-  bool showPlayIcon = false;
+
   @override
   void initState() {
     super.initState();
@@ -655,40 +655,36 @@ class _DisplayVideoState extends State<_DisplayVideo> {
       future: initializeVideoPlayerFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                if (controller.value.isPlaying) {
-                  controller.pause();
-                  showPlayIcon = true;
-                } else {
-                  controller.play();
-                  showPlayIcon = false;
-                }
-              });
-            },
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AspectRatio(
-                  aspectRatio: controller.value.aspectRatio,
-                  child: VideoPlayer(controller),
-                ),
-                Align(
-                  alignment: Alignment.center,
-                  child: Visibility(
-                    visible: showPlayIcon,
-                    child: Icon(
-                      controller.value.isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 60,
-                    ),
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                minScale: 1,
+                child: SizedBox(
+                    height: double.infinity,
+                    width: double.infinity,
+                    child: VideoPlayer(controller)),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (controller.value.isPlaying) {
+                        controller.pause();
+                      } else {
+                        controller.play();
+                      }
+                    });
+                  },
+                  child: Icon(
+                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 45,
                   ),
-                )
-              ],
-            ),
+                ),
+              )
+            ],
           );
         } else {
           return const Center(

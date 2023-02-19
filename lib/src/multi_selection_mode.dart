@@ -33,17 +33,19 @@ class MultiSelectionMode extends StatelessWidget {
                 color: imageSelected
                     ? Colors.blue
                     : const Color.fromARGB(115, 222, 222, 222),
-                border: Border.all(color: Colors.white),
+                border: Border.all(
+                  color: Colors.white,
+                ),
                 shape: BoxShape.circle,
               ),
               child: imageSelected
                   ? Center(
                       child: Text(
                         "${multiSelectedImage.indexOf(image) + 1}",
-                        style: const TextStyle(color: Colors.white,fontSize:13),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     )
-                  : const SizedBox(),
+                  : Container(),
             ),
           ),
         ),
