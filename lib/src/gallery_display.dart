@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:image_picker_plus/src/camera_display.dart';
 import 'package:image_picker_plus/src/images_view_page.dart';
@@ -11,7 +12,6 @@ class CustomImagePicker extends StatefulWidget {
   final bool multiSelection;
   final GalleryDisplaySettings? galleryDisplaySettings;
   final PickerSource pickerSource;
-
   const CustomImagePicker({
     required this.source,
     required this.multiSelection,
@@ -59,6 +59,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
   late bool cameraAndVideoEnabled;
   late bool cameraVideoOnlyEnabled;
   late bool showAllTabs;
+  late AsyncValueSetter<SelectedImagesDetails>? callbackFunction;
 
   @override
   void initState() {
@@ -71,6 +72,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
         widget.galleryDisplaySettings ?? GalleryDisplaySettings();
     appTheme = imagePickerDisplay.appTheme ?? AppTheme();
     tapsNames = imagePickerDisplay.tabsTexts ?? TabsTexts();
+    callbackFunction = imagePickerDisplay.callbackFunction;
     cropImage = imagePickerDisplay.cropImage;
     maximumSelection = imagePickerDisplay.maximumSelection;
     limitingText = tapsNames.limitingText ??
@@ -281,6 +283,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
     return ImagesViewPage(
       appTheme: appTheme,
       clearMultiImages: clearMultiImages,
+      callbackFunction: callbackFunction,
       gridDelegate: gridDelegate,
       multiSelectionMode: multiSelectionMode,
       blackColor: blackColor,

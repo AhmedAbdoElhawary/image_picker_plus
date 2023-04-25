@@ -264,11 +264,11 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 color: Colors.blue, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
-                Uint8List byte=await videoRecordFile!.readAsBytes();
+                Uint8List byte = await videoRecordFile!.readAsBytes();
                 SelectedByte selectedByte = SelectedByte(
                   isThatImage: false,
                   selectedFile: videoRecordFile!,
-                  selectedByte:byte,
+                  selectedByte: byte,
                 );
                 SelectedImagesDetails details = SelectedImagesDetails(
                   multiSelectionMode: false,
