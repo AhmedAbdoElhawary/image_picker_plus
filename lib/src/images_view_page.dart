@@ -92,7 +92,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     allImages.dispose();
     scrollController.dispose();
     isImagesReady.dispose();
-    currentPage.dispose();
     lastPage.dispose();
     expandImage.dispose();
     expandHeight.dispose();
@@ -101,7 +100,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     enableVerticalTapping.dispose();
     cropKey.dispose();
     noDuration.dispose();
-    selectedImage.dispose();
     scaleOfCropsKeys.dispose();
     areaOfCropsKeys.dispose();
     indexOfSelectedImages.dispose();
