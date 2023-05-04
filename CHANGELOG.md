@@ -1,3 +1,6 @@
+## 0.5.6+1
+* handle camera preview
+
 ## 0.5.6
 * reformat the code
 * return callbackFunction
