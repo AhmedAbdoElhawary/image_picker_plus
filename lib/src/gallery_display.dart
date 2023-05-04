@@ -305,7 +305,8 @@ class CustomImagePickerState extends State<CustomImagePicker>
       builder: (context, bool showDeleteTextValue, child) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeInOutQuart,
-        child: cameraAndVideoEnabled
+        child: widget.source == ImageSource.both ||
+                widget.pickerSource == PickerSource.both
             ? (showDeleteTextValue ? tapBarMessage(true) : tabBar())
             : const SizedBox(),
       ),
