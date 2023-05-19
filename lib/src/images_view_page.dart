@@ -20,6 +20,8 @@ class ImagesViewPage extends StatefulWidget {
   final bool showInternalVideos;
   final bool showInternalImages;
   final int maximumSelection;
+  final AsyncValueSetter<SelectedImagesDetails>? callbackFunction;
+
   /// To avoid lag when you interacting with image when it expanded
   final AppTheme appTheme;
   final VoidCallback clearMultiImages;
@@ -43,6 +45,7 @@ class ImagesViewPage extends StatefulWidget {
     required this.showImagePreview,
     required this.gridDelegate,
     required this.maximumSelection,
+    this.callbackFunction,
   }) : super(key: key);
 
   @override
@@ -50,9 +53,7 @@ class ImagesViewPage extends StatefulWidget {
 }
 
 class _ImagesViewPageState extends State<ImagesViewPage>
-    with
-        TickerProviderStateMixin,
-        AutomaticKeepAliveClientMixin<ImagesViewPage> {
+    with AutomaticKeepAliveClientMixin<ImagesViewPage> {
   final ValueNotifier<List<FutureBuilder<Uint8List?>>> _mediaList =
       ValueNotifier([]);
 
@@ -91,7 +92,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     allImages.dispose();
     scrollController.dispose();
     isImagesReady.dispose();
-    currentPage.dispose();
     lastPage.dispose();
     expandImage.dispose();
     expandHeight.dispose();
@@ -100,7 +100,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     enableVerticalTapping.dispose();
     cropKey.dispose();
     noDuration.dispose();
-    selectedImage.dispose();
     scaleOfCropsKeys.dispose();
     areaOfCropsKeys.dispose();
     indexOfSelectedImages.dispose();
@@ -391,7 +390,12 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                 aspectRatio: aspect,
               );
               if (!mounted) return;
-              Navigator.of(context).maybePop(details);
+
+              if (widget.callbackFunction != null) {
+                await widget.callbackFunction!(details);
+              } else {
+                Navigator.of(context).maybePop(details);
+              }
             }
           } else {
             File? image = selectedImage.value;
@@ -416,7 +420,12 @@ class _ImagesViewPageState extends State<ImagesViewPage>
               selectedFiles: [selectedByte],
             );
             if (!mounted) return;
-            Navigator.of(context).maybePop(details);
+
+            if (widget.callbackFunction != null) {
+              await widget.callbackFunction!(details);
+            } else {
+              Navigator.of(context).maybePop(details);
+            }
           }
         },
       ),

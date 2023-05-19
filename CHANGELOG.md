@@ -1,3 +1,13 @@
+## 0.5.6+2
+* update flutter version
+
+## 0.5.6+1
+* handle camera preview
+
+## 0.5.6
+* reformat the code
+* return callbackFunction
+
 ## 0.5.5+3
 * add maximumSelection as a parameter
 
