@@ -52,7 +52,7 @@ class ImagePickerPlus {
     bool multiSelection = false,
     required PickerSource pickerSource,
   }) async {
-    return await Navigator.of(_context).push(
+    return await Navigator.of(_context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => CustomImagePicker(
           galleryDisplaySettings: galleryDisplaySettings,
@@ -60,6 +60,7 @@ class ImagePickerPlus {
           pickerSource: pickerSource,
           source: source,
         ),
+        maintainState: false,
       ),
     );
   }
