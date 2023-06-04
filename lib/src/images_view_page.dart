@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:image_crop/image_crop.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:image_picker_plus/src/crop_image_view.dart';
 import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
@@ -601,7 +601,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   }
 
   Future<File?> cropImage(File imageFile, {int? indexOfCropImage}) async {
-    await ImageCrop.requestPermissions();
     final double? scale;
     final Rect? area;
     if (indexOfCropImage == null) {
@@ -614,16 +613,22 @@ class _ImagesViewPageState extends State<ImagesViewPage>
 
     if (area == null || scale == null) return null;
 
-    final sample = await ImageCrop.sampleImage(
-      file: imageFile,
-      preferredSize: (2000 / scale).round(),
+    final crop = await ImageCropper.platform.cropImage(
+      sourcePath: imageFile.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
     );
 
-    final File file = await ImageCrop.cropImage(
-      file: sample,
-      area: area,
-    );
-    sample.delete();
+    if (crop == null) {
+      return null;
+    }
+
+    final File file = File(crop.path);
     return file;
   }
 

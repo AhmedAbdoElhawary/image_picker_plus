@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:image_crop/image_crop.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker_plus/src/entities/app_theme.dart';
 import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
 import 'package:image_picker_plus/src/utilities/enum.dart';
@@ -305,22 +305,22 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   Future<File?> cropImage(File imageFile) async {
-    await ImageCrop.requestPermissions();
-    final scale = cropKey.currentState!.scale;
-    final area = cropKey.currentState!.area;
-    if (area == null) {
+    final crop = await ImageCropper.platform.cropImage(
+      sourcePath: imageFile.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
+    );
+
+    if (crop == null) {
       return null;
     }
-    final sample = await ImageCrop.sampleImage(
-      file: imageFile,
-      preferredSize: (2000 / scale).round(),
-    );
-    final File file = await ImageCrop.cropImage(
-      file: sample,
-      area: area,
-    );
-    sample.delete();
-    return file;
+
+    return File(crop.path);
   }
 
   GestureDetector cameraButton(BuildContext context) {
