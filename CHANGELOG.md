@@ -1,3 +1,5 @@
+## 0.5.7
+* solve #63 issue "dependencies bugs"
 ## 0.5.6+2
 * update flutter version
 
