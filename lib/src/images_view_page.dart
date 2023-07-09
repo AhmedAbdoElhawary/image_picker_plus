@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:image_crop/image_crop.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:image_picker_plus/src/crop_image_view.dart';
 import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
+import 'package:image_picker_plus/src/custom_packages/crop_image/main/image_crop.dart';
 import 'package:image_picker_plus/src/image.dart';
 import 'package:image_picker_plus/src/multi_selection_mode.dart';
 import 'package:flutter/foundation.dart';
