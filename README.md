@@ -47,12 +47,15 @@ The [device_info_plus](https://pub.dev/packages/device_info_plus) plugin, for ex
 
 Add two rows to the `ios/Runner/Info.plist`:
 
-* one with the key `Privacy - Camera Usage Description` and a usage description.
+* one with the key `Privacy - Photo Usage Description` and a usage description.
+* and one with the key `Privacy - Camera Usage Description` and a usage description.
 * and one with the key `Privacy - Microphone Usage Description` and a usage description.
 
 If editing `Info.plist` as text, add:
 
 ```xml
+<key>NSPhotoLibraryUsageDescription</key>
+<string>your usage description here</string>
 <key>NSCameraUsageDescription</key>
 <string>your usage description here</string>
 <key>NSMicrophoneUsageDescription</key>
@@ -77,6 +80,10 @@ compileSdkVersion 33
     ...
 </application>
 <uses-permission android:name="android.permission.INTERNET"/>
+
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE>" />
     </manifest>
 ````
 
