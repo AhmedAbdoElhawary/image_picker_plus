@@ -1,5 +1,6 @@
 ## 0.5.8
 * solve photo permission bug #56, #68
+* solve crop image bugs 
 
 ## 0.5.7
 * solve #63 issue "dependencies bugs"
