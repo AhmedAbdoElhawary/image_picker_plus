@@ -301,7 +301,6 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                     aspectRatio: 1.0,
                   );
                   if (!mounted) return;
-
                   if (widget.callbackFunction != null) {
                     await widget.callbackFunction!(details);
                   } else {
