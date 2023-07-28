@@ -1,3 +1,6 @@
+## 0.5.9
+* solve camera button bug
+
 ## 0.5.8
 * solve photo permission bug #56, #68
 * solve crop image bugs 
