@@ -1,6 +1,3 @@
-## 0.5.9+1
-* return initial camera button
-
 ## 0.5.9
 * solve camera button bug
 
