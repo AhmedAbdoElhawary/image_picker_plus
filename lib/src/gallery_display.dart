@@ -268,6 +268,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
         redDeleteText: redDeleteText,
         moveToVideoScreen: moveToVideo,
         selectedVideo: selectedVideoValue,
+        callbackFunction: callbackFunction,
       ),
     );
   }
