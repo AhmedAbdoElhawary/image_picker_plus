@@ -24,7 +24,6 @@ class CustomCameraDisplay extends StatefulWidget {
   final ValueNotifier<bool> redDeleteText;
   final ValueChanged<bool> replacingTabBar;
   final ValueNotifier<bool> clearVideoRecord;
-  final AsyncValueSetter<SelectedImagesDetails>? callbackFunction;
 
   const CustomCameraDisplay({
     Key? key,
@@ -38,7 +37,6 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.replacingTabBar,
     required this.clearVideoRecord,
     required this.moveToVideoScreen,
-    required this.callbackFunction,
   }) : super(key: key);
 
   @override
@@ -278,12 +276,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   aspectRatio: 1.0,
                 );
                 if (!mounted) return;
+                Navigator.of(context).maybePop(details);
 
-                if (widget.callbackFunction != null) {
-                  await widget.callbackFunction!(details);
-                } else {
-                  Navigator.of(context).maybePop(details);
-                }
               } else if (selectedImage != null) {
                 File? croppedByte = await cropImage(selectedImage);
                 if (croppedByte != null) {
@@ -301,11 +295,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                     aspectRatio: 1.0,
                   );
                   if (!mounted) return;
-                  if (widget.callbackFunction != null) {
-                    await widget.callbackFunction!(details);
-                  } else {
-                    Navigator.of(context).maybePop(details);
-                  }
+
+                  Navigator.of(context).maybePop(details);
                 }
               }
             },

@@ -1,6 +1,6 @@
 name: image_picker_plus
 description: Customization of the gallery display or even camera and video.
-version: 0.5.9
+version: 0.5.9+1
 homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus.git
 
 environment:
