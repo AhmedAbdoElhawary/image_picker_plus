@@ -1,3 +1,6 @@
+## 0.5.10
+* fix: No podspec found for image_picker_plus on iOS
+
 ## 0.5.9
 * solve camera button bug
 

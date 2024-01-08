@@ -250,7 +250,7 @@
 - (NSURL*)createTemporaryImageUrl {
     NSString* temproraryDirectory = NSTemporaryDirectory();
     NSString* guid = [[NSProcessInfo processInfo] globallyUniqueString];
-    NSString* sampleName = [[@"image_crop_" stringByAppendingString:guid] stringByAppendingString:@".jpg"];
+    NSString* sampleName = [[@"image_picker_plus_" stringByAppendingString:guid] stringByAppendingString:@".jpg"];
     NSString* samplePath = [temproraryDirectory stringByAppendingPathComponent:sampleName];
     return [NSURL fileURLWithPath:samplePath];
 }
