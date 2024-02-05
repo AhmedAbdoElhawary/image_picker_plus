@@ -155,6 +155,8 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
       selectedImage.value = allImages.value[0];
+      widget.multiSelectedImages.value = allImages.value.isEmpty
+        ? [] : [allImages.value[0]!];
       currentPage.value++;
       isImagesReady.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
@@ -510,11 +512,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
         builder: (context, List<File> selectedImagesValue, child) =>
             GestureDetector(
                 onTap: () => onTapImage(image, selectedImagesValue, index),
-                onLongPress: () {
-                  if (widget.multiSelection) {
-                    widget.multiSelectionMode.value = true;
-                  }
-                },
                 onLongPressUp: () {
                   if (multipleValue) {
                     selectionImageCheck(image, selectedImagesValue, index,

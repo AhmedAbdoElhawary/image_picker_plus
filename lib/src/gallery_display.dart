@@ -31,7 +31,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
   final redDeleteText = ValueNotifier(false);
   final selectedPage = ValueNotifier(SelectedPage.left);
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
-  final multiSelectionMode = ValueNotifier(false);
+  final multiSelectionMode = ValueNotifier(true);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
   bool noGallery = true;
@@ -164,7 +164,6 @@ class CustomImagePickerState extends State<CustomImagePicker>
         child: GestureDetector(
           onTap: () async {
             setState(() {
-              multiSelectionMode.value = !multiSelectionMode.value;
               multiSelectedImage.value.clear();
             });
           },
@@ -276,7 +275,6 @@ class CustomImagePickerState extends State<CustomImagePicker>
   void clearMultiImages() {
     setState(() {
       multiSelectedImage.value.clear();
-      multiSelectionMode.value = false;
     });
   }
 
