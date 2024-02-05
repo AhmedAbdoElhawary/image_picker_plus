@@ -10,18 +10,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  photo_manager: ^2.6.0
+  photo_manager: ^2.8.1
   shimmer: ^3.0.0
-  camera: ^0.10.5+2
-  image: ^4.0.17
-  video_player: ^2.7.0
-  image_picker: ^1.0.1
+  camera: ^0.10.5+9
+  image: ^4.1.6
+  video_player: ^2.8.2
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
 
 flutter:
   plugin:
