@@ -1,3 +1,6 @@
+## 0.5.10
+* solve `Type 'DecoderCallback' not found.` issue
+
 ## 0.5.9
 * solve camera button bug
 
