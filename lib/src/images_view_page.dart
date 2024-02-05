@@ -522,41 +522,67 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   }
 
   Widget dateSectionHeader(String date, List<(int, FutureBuilder<Uint8List?>)> mediaList) {
+    final allImagesInDate = mediaList.map((e) => (allImages.value[e.$1], e.$1)).toList();
+    onTapDateHeader({
+      required List<(File?, int)> allImagesInDate,
+      required List<File> selectedImagesValue,
+      required bool forceRemove,
+      required bool forceAdd,
+      required bool isReady}) {
+      if (!isReady) return;
+      for (var image in allImagesInDate) {
+        if (image.$1 != null) {
+          selectionImageCheck(image.$1!, selectedImagesValue, image.$2, forceRemove: forceRemove, forceAdd: forceAdd);
+        }
+      }
+    }
+
     return ValueListenableBuilder(
-        valueListenable: widget.multiSelectedImages,
-        builder: (context, List<File> selectedImagesValue, child) {
-          final allImagesSelectedInDate = mediaList.map((e) => allImages.value[e.$1]).toList();
-          bool imageSelected = allImagesSelectedInDate.every((element) => selectedImagesValue.contains(element));
-          return SizedBox(
-            height: 48,
-            width: double.infinity,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Text(DateTime.parse(date).toMMMdy),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: Container(
-                    height: 25,
-                    width: 25,
-                    decoration: BoxDecoration(
-                      color: imageSelected
-                          ? Colors.blue
-                          : const Color.fromARGB(115, 222, 222, 222),
-                      border: Border.all(
-                        color: Colors.white,
-                      ),
-                      shape: BoxShape.circle,
+      valueListenable: isImagesReady,
+      builder: (context, bool isImagesReadyValue, child) {
+        return ValueListenableBuilder(
+            valueListenable: widget.multiSelectedImages,
+            builder: (context, List<File> selectedImagesValue, child) {
+              bool imageSelected = allImagesInDate.every((element) => selectedImagesValue.contains(element.$1));
+              return SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Text(DateTime.parse(date).toMMMdy),
                     ),
-                    child: Container(),
-                  ),
+                    InkWell(
+                      onTap: () => onTapDateHeader(
+                        allImagesInDate: allImagesInDate,
+                        selectedImagesValue: selectedImagesValue,
+                        forceRemove: imageSelected,
+                        forceAdd: !imageSelected,
+                        isReady: isImagesReadyValue),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Container(
+                          height: 25,
+                          width: 25,
+                          decoration: BoxDecoration(
+                            color: imageSelected
+                                ? Colors.blue
+                                : const Color.fromARGB(115, 222, 222, 222),
+                            border: Border.all(
+                              color: Colors.white,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Container(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
+              );
+            });
         });
   }
 
@@ -651,9 +677,12 @@ class _ImagesViewPageState extends State<ImagesViewPage>
 
   bool selectionImageCheck(
       File image, List<File> multiSelectionValue, int index,
-      {bool enableCopy = false}) {
-    if (multiSelectionValue.contains(image) && selectedImage.value == image) {
+      {bool enableCopy = false, bool forceAdd = false, bool forceRemove = false}) {
+    if (multiSelectionValue.contains(image) && ((selectedImage.value == image && !forceAdd) || forceRemove) ) {
       setState(() {
+        if (forceRemove) {
+          selectedImage.value = null;
+        }
         int indexOfImage =
             multiSelectionValue.indexWhere((element) => element == image);
         multiSelectionValue.removeAt(indexOfImage);
@@ -669,6 +698,9 @@ class _ImagesViewPageState extends State<ImagesViewPage>
 
       return true;
     } else {
+      if (multiSelectionValue.contains(image) && forceAdd) {
+        return false;
+      }
       if (multiSelectionValue.length < widget.maximumSelection) {
         setState(() {
           if (!multiSelectionValue.contains(image)) {
