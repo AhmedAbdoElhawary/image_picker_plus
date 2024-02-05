@@ -504,7 +504,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Widget gridViewByDate(String dateLabel, List<(int, FutureBuilder<Uint8List?>)> mediaList) {
     return Column(
       children: [
-        dateSectionHeader(dateLabel),
+        dateSectionHeader(dateLabel, mediaList),
         Padding(
           padding: EdgeInsets.symmetric(
             horizontal: widget.gridDelegate.crossAxisSpacing),
@@ -521,18 +521,43 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     );
   }
 
-  Widget dateSectionHeader(String date) {
-    return SizedBox(
-      height: 48,
-      child: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Text(date),
-          )
-        ],
-      ),
-    );
+  Widget dateSectionHeader(String date, List<(int, FutureBuilder<Uint8List?>)> mediaList) {
+    return ValueListenableBuilder(
+        valueListenable: widget.multiSelectedImages,
+        builder: (context, List<File> selectedImagesValue, child) {
+          final allImagesSelectedInDate = mediaList.map((e) => allImages.value[e.$1]).toList();
+          bool imageSelected = allImagesSelectedInDate.every((element) => selectedImagesValue.contains(element));
+          return SizedBox(
+            height: 48,
+            width: double.infinity,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Text(date),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Container(
+                    height: 25,
+                    width: 25,
+                    decoration: BoxDecoration(
+                      color: imageSelected
+                          ? Colors.blue
+                          : const Color.fromARGB(115, 222, 222, 222),
+                      border: Border.all(
+                        color: Colors.white,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Container(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
 
