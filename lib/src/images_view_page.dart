@@ -535,7 +535,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
-                  child: Text(date),
+                  child: Text(DateTime.parse(date).toMMMdy),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
