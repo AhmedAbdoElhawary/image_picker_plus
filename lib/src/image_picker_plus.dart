@@ -37,10 +37,12 @@ class ImagePickerPlus {
     required ImageSource source,
     GalleryDisplaySettings? galleryDisplaySettings,
     bool multiSelection = false,
+    bool byDate = false,
   }) async {
     return _pushToCustomPicker(
       galleryDisplaySettings: galleryDisplaySettings,
       multiSelection: multiSelection,
+      byDate: byDate,
       pickerSource: PickerSource.both,
       source: source,
     );
@@ -50,6 +52,7 @@ class ImagePickerPlus {
     required ImageSource source,
     GalleryDisplaySettings? galleryDisplaySettings,
     bool multiSelection = false,
+    bool byDate = false,
     required PickerSource pickerSource,
   }) async {
     return await Navigator.of(_context, rootNavigator: true).push(
@@ -57,6 +60,7 @@ class ImagePickerPlus {
         builder: (context) => CustomImagePicker(
           galleryDisplaySettings: galleryDisplaySettings,
           multiSelection: multiSelection,
+          byDate: byDate,
           pickerSource: pickerSource,
           source: source,
         ),
