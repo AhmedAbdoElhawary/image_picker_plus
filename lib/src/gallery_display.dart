@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 class CustomImagePicker extends StatefulWidget {
   final ImageSource source;
   final bool multiSelection;
+  final bool byDate;
   final GalleryDisplaySettings? galleryDisplaySettings;
   final PickerSource pickerSource;
   const CustomImagePicker({
@@ -17,6 +18,7 @@ class CustomImagePicker extends StatefulWidget {
     required this.multiSelection,
     required this.galleryDisplaySettings,
     required this.pickerSource,
+    required this.byDate,
     super.key,
   });
 
@@ -31,7 +33,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
   final redDeleteText = ValueNotifier(false);
   final selectedPage = ValueNotifier(SelectedPage.left);
   ValueNotifier<List<File>> multiSelectedImage = ValueNotifier([]);
-  final multiSelectionMode = ValueNotifier(false);
+  final multiSelectionMode = ValueNotifier(true);
   final showDeleteText = ValueNotifier(false);
   final selectedVideo = ValueNotifier(false);
   bool noGallery = true;
@@ -164,7 +166,6 @@ class CustomImagePickerState extends State<CustomImagePicker>
         child: GestureDetector(
           onTap: () async {
             setState(() {
-              multiSelectionMode.value = !multiSelectionMode.value;
               multiSelectedImage.value.clear();
             });
           },
@@ -276,7 +277,6 @@ class CustomImagePickerState extends State<CustomImagePicker>
   void clearMultiImages() {
     setState(() {
       multiSelectedImage.value.clear();
-      multiSelectionMode.value = false;
     });
   }
 
@@ -294,6 +294,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
       whiteColor: whiteColor,
       cropImage: cropImage,
       multiSelection: widget.multiSelection,
+      byDate: widget.byDate,
       showInternalVideos: showInternalVideos,
       showInternalImages: showInternalImages,
       maximumSelection: maximumSelection,

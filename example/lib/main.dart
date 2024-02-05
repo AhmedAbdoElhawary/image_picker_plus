@@ -42,6 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               normal1(context),
+              normal1withDate(context),
               normal2(context),
               normal3(context),
               preview1(context),
@@ -64,6 +65,19 @@ class _MyHomePageState extends State<MyHomePage> {
         if (details != null) await displayDetails(details);
       },
       child: const Text("Normal 1"),
+    );
+  }
+
+  ElevatedButton normal1withDate(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        ImagePickerPlus picker = ImagePickerPlus(context);
+
+        SelectedImagesDetails? details =
+        await picker.pickBoth(source: ImageSource.both, byDate: true);
+        if (details != null) await displayDetails(details);
+      },
+      child: const Text("Normal 1 with date"),
     );
   }
 

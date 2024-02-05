@@ -8,6 +8,8 @@ import 'package:image_picker_plus/src/image.dart';
 import 'package:image_picker_plus/src/multi_selection_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker_plus/src/utilities/datetime_extention.dart';
+import 'package:native_exif/native_exif.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -17,6 +19,7 @@ class ImagesViewPage extends StatefulWidget {
   final TabsTexts tabsTexts;
   final bool cropImage;
   final bool multiSelection;
+  final bool byDate;
   final bool showInternalVideos;
   final bool showInternalImages;
   final int maximumSelection;
@@ -39,6 +42,7 @@ class ImagesViewPage extends StatefulWidget {
     required this.whiteColor,
     required this.cropImage,
     required this.multiSelection,
+    required this.byDate,
     required this.showInternalVideos,
     required this.showInternalImages,
     required this.blackColor,
@@ -155,6 +159,8 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
       selectedImage.value = allImages.value[0];
+      widget.multiSelectedImages.value = allImages.value.isEmpty
+        ? [] : [allImages.value[0]!];
       currentPage.value++;
       isImagesReady.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
@@ -242,8 +248,21 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                         children: [
                           normalAppBar(),
                           Flexible(
-                              child: normalGridView(mediaListValue,
-                                  currentPageValue, lastPageValue)),
+                              child: widget.byDate ?
+                              FutureBuilder<Widget?>(
+                                future: gridViewWithDate(mediaListValue,
+                                  currentPageValue, lastPageValue),
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData) {
+                                    return snapshot.data!;
+                                  } else {
+                                    return loadingWidget();
+                                  }
+                                },
+                              )
+                              : normalGridView(mediaListValue,
+                                  currentPageValue, lastPageValue),
+                          )
                         ],
                       );
                     } else {
@@ -454,6 +473,120 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     );
   }
 
+  Future<Widget> gridViewWithDate(List<FutureBuilder<Uint8List?>> mediaListValue,
+      int currentPageValue, int lastPageValue) async {
+
+    Map<String, List<(int, FutureBuilder<Uint8List?>)>> mediaListByDate = {};
+    for (var i = 0; i < allImages.value.length; i++) {
+      if (allImages.value[i] != null) {
+        final exif = await Exif.fromPath(allImages.value[i]!.path);
+        final exifDate = (await exif.getOriginalDate()) ?? DateTime.now();
+        mediaListByDate.update(
+          exifDate.toYyyyMMdd,
+          (value) => [...value, (i, mediaListValue[i])],
+          ifAbsent: () => [(i, mediaListValue[i])],
+        );
+      }
+    }
+
+    return NotificationListener(
+      onNotification: (ScrollNotification notification) {
+        _handleScrollEvent(notification,
+            currentPageValue: currentPageValue, lastPageValue: lastPageValue);
+        return true;
+      },
+      child: Column(
+        children: mediaListByDate.entries.map((e) => gridViewByDate(e.key, e.value)).toList(),
+      ),
+    );
+  }
+
+  Widget gridViewByDate(String dateLabel, List<(int, FutureBuilder<Uint8List?>)> mediaList) {
+    return Column(
+      children: [
+        dateSectionHeader(dateLabel, mediaList),
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: widget.gridDelegate.crossAxisSpacing),
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate: widget.gridDelegate,
+            itemBuilder: (context, index) {
+              return buildImage(mediaList.map((e) => e.$2).toList(), mediaList[index].$1);
+            },
+            itemCount: mediaList.length,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget dateSectionHeader(String date, List<(int, FutureBuilder<Uint8List?>)> mediaList) {
+    final allImagesInDate = mediaList.map((e) => (allImages.value[e.$1], e.$1)).toList();
+    onTapDateHeader({
+      required List<(File?, int)> allImagesInDate,
+      required List<File> selectedImagesValue,
+      required bool forceRemove,
+      required bool forceAdd,
+      required bool isReady}) {
+      if (!isReady) return;
+      for (var image in allImagesInDate) {
+        if (image.$1 != null) {
+          selectionImageCheck(image.$1!, selectedImagesValue, image.$2, forceRemove: forceRemove, forceAdd: forceAdd);
+        }
+      }
+    }
+
+    return ValueListenableBuilder(
+      valueListenable: isImagesReady,
+      builder: (context, bool isImagesReadyValue, child) {
+        return ValueListenableBuilder(
+            valueListenable: widget.multiSelectedImages,
+            builder: (context, List<File> selectedImagesValue, child) {
+              bool imageSelected = allImagesInDate.every((element) => selectedImagesValue.contains(element.$1));
+              return SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Text(DateTime.parse(date).toMMMdy),
+                    ),
+                    InkWell(
+                      onTap: () => onTapDateHeader(
+                        allImagesInDate: allImagesInDate,
+                        selectedImagesValue: selectedImagesValue,
+                        forceRemove: imageSelected,
+                        forceAdd: !imageSelected,
+                        isReady: isImagesReadyValue),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Container(
+                          height: 25,
+                          width: 25,
+                          decoration: BoxDecoration(
+                            color: imageSelected
+                                ? Colors.blue
+                                : const Color.fromARGB(115, 222, 222, 222),
+                            border: Border.all(
+                              color: Colors.white,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Container(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            });
+        });
+  }
+
+
   ValueListenableBuilder<File?> buildImage(
       List<FutureBuilder<Uint8List?>> mediaListValue, int index) {
     return ValueListenableBuilder(
@@ -465,7 +598,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
             return ValueListenableBuilder(
               valueListenable: widget.multiSelectedImages,
               builder: (context, List<File> selectedImagesValue, child) {
-                FutureBuilder<Uint8List?> mediaList = mediaListValue[index];
+                FutureBuilder<Uint8List?> mediaList = _mediaList.value[index];
                 File? image = allImagesValue[index];
                 if (image != null) {
                   bool imageSelected = selectedImagesValue.contains(image);
@@ -510,11 +643,6 @@ class _ImagesViewPageState extends State<ImagesViewPage>
         builder: (context, List<File> selectedImagesValue, child) =>
             GestureDetector(
                 onTap: () => onTapImage(image, selectedImagesValue, index),
-                onLongPress: () {
-                  if (widget.multiSelection) {
-                    widget.multiSelectionMode.value = true;
-                  }
-                },
                 onLongPressUp: () {
                   if (multipleValue) {
                     selectionImageCheck(image, selectedImagesValue, index,
@@ -549,9 +677,12 @@ class _ImagesViewPageState extends State<ImagesViewPage>
 
   bool selectionImageCheck(
       File image, List<File> multiSelectionValue, int index,
-      {bool enableCopy = false}) {
-    if (multiSelectionValue.contains(image) && selectedImage.value == image) {
+      {bool enableCopy = false, bool forceAdd = false, bool forceRemove = false}) {
+    if (multiSelectionValue.contains(image) && ((selectedImage.value == image && !forceAdd) || forceRemove) ) {
       setState(() {
+        if (forceRemove) {
+          selectedImage.value = null;
+        }
         int indexOfImage =
             multiSelectionValue.indexWhere((element) => element == image);
         multiSelectionValue.removeAt(indexOfImage);
@@ -567,6 +698,9 @@ class _ImagesViewPageState extends State<ImagesViewPage>
 
       return true;
     } else {
+      if (multiSelectionValue.contains(image) && forceAdd) {
+        return false;
+      }
       if (multiSelectionValue.length < widget.maximumSelection) {
         setState(() {
           if (!multiSelectionValue.contains(image)) {
