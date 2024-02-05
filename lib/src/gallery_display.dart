@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 class CustomImagePicker extends StatefulWidget {
   final ImageSource source;
   final bool multiSelection;
+  final bool byDate;
   final GalleryDisplaySettings? galleryDisplaySettings;
   final PickerSource pickerSource;
   const CustomImagePicker({
@@ -17,6 +18,7 @@ class CustomImagePicker extends StatefulWidget {
     required this.multiSelection,
     required this.galleryDisplaySettings,
     required this.pickerSource,
+    required this.byDate,
     super.key,
   });
 
@@ -292,6 +294,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
       whiteColor: whiteColor,
       cropImage: cropImage,
       multiSelection: widget.multiSelection,
+      byDate: widget.byDate,
       showInternalVideos: showInternalVideos,
       showInternalImages: showInternalImages,
       maximumSelection: maximumSelection,
