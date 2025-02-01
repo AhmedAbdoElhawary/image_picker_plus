@@ -1,4 +1,5 @@
 import 'package:image_picker_plus/image_picker_plus.dart';
+import 'package:image_picker_plus/redesign_src/view/media_preview_page.dart';
 import 'package:image_picker_plus/src/gallery_display.dart';
 import 'package:image_picker_plus/src/utilities/enum.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ class ImagePickerPlus {
     GalleryDisplaySettings? galleryDisplaySettings,
     bool multiImages = false,
   }) async {
-    return _pushToCustomPicker(
+    return _pushToCustomPicker2(
       galleryDisplaySettings: galleryDisplaySettings,
       multiSelection: multiImages,
       pickerSource: PickerSource.image,
@@ -46,6 +47,19 @@ class ImagePickerPlus {
     );
   }
 
+  Future<SelectedImagesDetails?> _pushToCustomPicker2({
+    required ImageSource source,
+    GalleryDisplaySettings? galleryDisplaySettings,
+    bool multiSelection = false,
+    required PickerSource pickerSource,
+  }) async {
+    return await Navigator.of(_context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (context) => MediaPreviewPage(),
+        maintainState: false,
+      ),
+    );
+  }
   Future<SelectedImagesDetails?> _pushToCustomPicker({
     required ImageSource source,
     GalleryDisplaySettings? galleryDisplaySettings,
