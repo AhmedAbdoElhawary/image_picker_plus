@@ -3,7 +3,7 @@
 
 ## 0.5.8
 * solve photo permission bug #56, #68
-* solve crop image bugs 
+* solve crop image bugs
 
 ## 0.5.7
 * solve #63 issue "dependencies bugs"
@@ -59,7 +59,7 @@
 * handle crop keys
 
 ## 0.3.7
-* solve drop frames bug when page view is moving 
+* solve drop frames bug when page view is moving
 
 ## 0.3.6
 * fix permission bug
