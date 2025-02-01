@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class CustomExpandIcon extends StatelessWidget {
-  const CustomExpandIcon({Key? key}) : super(key: key);
+  const CustomExpandIcon({super.key});
 
   @override
   Widget build(BuildContext context) {
