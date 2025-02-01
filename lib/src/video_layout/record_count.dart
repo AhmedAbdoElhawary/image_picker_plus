@@ -8,21 +8,22 @@ class RecordCount extends StatefulWidget {
   final AppTheme appTheme;
 
   const RecordCount({
-    Key? key,
+    super.key,
     required this.appTheme,
     required this.startVideoCount,
     required this.makeProgressRed,
     required this.clearVideoRecord,
-  }) : super(key: key);
+  });
 
   @override
   RecordCountState createState() => RecordCountState();
 }
 
-class RecordCountState extends State<RecordCount>
-    with TickerProviderStateMixin {
+class RecordCountState extends State<RecordCount> with TickerProviderStateMixin {
   late AnimationController controller;
-  double opacityLevel = 1.0;
+  final ValueNotifier<double> opacityLevel = ValueNotifier(1.0);
+  final ValueNotifier<double> progress = ValueNotifier(0);
+
   bool isPlaying = false;
 
   String get countText {
@@ -34,7 +35,15 @@ class RecordCountState extends State<RecordCount>
     }
   }
 
-  double progress = 0;
+  set setOpacityLevel(double value) {
+    if (value == opacityLevel.value) return;
+    opacityLevel.value = value;
+  }
+
+  set setProgress(double value) {
+    if (value == progress.value) return;
+    progress.value = value;
+  }
 
   @override
   void initState() {
@@ -46,14 +55,10 @@ class RecordCountState extends State<RecordCount>
 
     controller.addListener(() {
       if (controller.isAnimating) {
-        setState(() {
-          progress = controller.value;
-        });
+        setProgress = controller.value;
       } else {
-        setState(() {
-          progress = 0;
-          isPlaying = false;
-        });
+        setProgress = 0;
+        isPlaying = false;
       }
     });
   }
@@ -62,22 +67,16 @@ class RecordCountState extends State<RecordCount>
   void didUpdateWidget(RecordCount oldWidget) {
     if (widget.startVideoCount.value) {
       controller.forward(from: controller.value == 1.0 ? 0 : controller.value);
-      setState(() {
-        isPlaying = true;
-        opacityLevel = opacityLevel == 0 ? 1.0 : 0.0;
-      });
+      isPlaying = true;
+      setOpacityLevel = opacityLevel.value == 0 ? 1.0 : 0.0;
     } else {
       if (widget.clearVideoRecord.value) {
         widget.clearVideoRecord.value = false;
         controller.reset();
-        setState(() {
-          isPlaying = false;
-        });
+        isPlaying = false;
       } else {
         controller.stop();
-        setState(() {
-          isPlaying = false;
-        });
+        isPlaying = false;
       }
     }
     super.didUpdateWidget(oldWidget);
@@ -86,6 +85,8 @@ class RecordCountState extends State<RecordCount>
   @override
   void dispose() {
     controller.dispose();
+    opacityLevel.dispose();
+    progress.dispose();
     super.dispose();
   }
 
@@ -95,13 +96,14 @@ class RecordCountState extends State<RecordCount>
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        LinearProgressIndicator(
-          color: widget.makeProgressRed.value
-              ? Colors.red
-              : widget.appTheme.focusColor,
-          backgroundColor: Colors.transparent,
-          value: progress,
-          minHeight: 3,
+        ValueListenableBuilder(
+          valueListenable: progress,
+          builder: (context, value, child) => LinearProgressIndicator(
+            color: widget.makeProgressRed.value ? Colors.red : widget.appTheme.focusColor,
+            backgroundColor: Colors.transparent,
+            value: value,
+            minHeight: 3,
+          ),
         ),
         Visibility(
           visible: widget.startVideoCount.value,
@@ -113,17 +115,16 @@ class RecordCountState extends State<RecordCount>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AnimatedOpacity(
-                  opacity: opacityLevel,
-                  duration: const Duration(seconds: 1),
-                  child: const Icon(Icons.fiber_manual_record_rounded,
-                      color: Colors.red, size: 10),
-                  onEnd: () {
-                    if (isPlaying) {
-                      setState(
-                          () => opacityLevel = opacityLevel == 0 ? 1.0 : 0.0);
-                    }
-                  },
+                ValueListenableBuilder(
+                  valueListenable: opacityLevel,
+                  builder: (context, value, child) => AnimatedOpacity(
+                    opacity: value,
+                    duration: const Duration(seconds: 1),
+                    child: const Icon(Icons.fiber_manual_record_rounded, color: Colors.red, size: 10),
+                    onEnd: () {
+                      if (isPlaying) setOpacityLevel = value == 0 ? 1.0 : 0.0;
+                    },
+                  ),
                 ),
                 const SizedBox(width: 5),
                 AnimatedBuilder(
