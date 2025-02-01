@@ -4,30 +4,22 @@ version: 0.5.9
 homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus.git
 
 environment:
-  sdk: '>=2.17.1 <4.0.0'
+  sdk: ^3.5.4
   flutter: ">=1.17.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  photo_manager: ^2.6.0
+  photo_manager: ^3.6.3
   shimmer: ^3.0.0
-  camera: ^0.10.5+2
-  image: ^4.0.17
-  video_player: ^2.7.0
-  image_picker: ^1.0.1
+  camera: ^0.11.0+2
+  image: ^4.5.2
+  video_player: ^2.9.2
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^5.0.0
 
-  flutter_lints: ^2.0.0
-
-flutter:
-  plugin:
-    platforms:
-      android:
-        package: com.lykhonis.imagecrop
-        pluginClass: ImageCropPlugin
-      ios:
-        pluginClass: ImageCropPlugin
+#flutter:
