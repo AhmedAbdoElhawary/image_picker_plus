@@ -11,7 +11,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({super.key});
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -59,8 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
 
-        SelectedImagesDetails? details =
-            await picker.pickImage(source: ImageSource.gallery);
+        SelectedImagesDetails? details = await picker.pickImage(source: ImageSource.gallery);
         if (details != null) await displayDetails(details);
       },
       child: const Text("Normal 1"),
@@ -98,8 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
           /// When you make ImageSource from the camera these settings will be disabled because they belong to the gallery.
           galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme:
-                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            appTheme: AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
             gridDelegate: _sliverGrid3Delegate(),
           ),
         );
@@ -120,8 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
           multiSelection: true,
           galleryDisplaySettings: GalleryDisplaySettings(
             tabsTexts: _tabsTexts(),
-            appTheme:
-                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            appTheme: AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
             cropImage: true,
             showImagePreview: true,
           ),
@@ -190,8 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
           /// On long tap, it will be available.
           multiSelection: true,
 
-          galleryDisplaySettings:
-              GalleryDisplaySettings(cropImage: true, showImagePreview: true),
+          galleryDisplaySettings: GalleryDisplaySettings(cropImage: true, showImagePreview: true),
         );
         if (details != null) await displayDetails(details);
       },
@@ -230,8 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
           multiVideos: true,
 
           galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme:
-                AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            appTheme: AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
           ),
         );
         if (details != null) await displayDetails(details);
@@ -245,9 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
       CupertinoPageRoute(
         builder: (context) {
           return DisplayImages(
-              selectedBytes: details.selectedFiles,
-              details: details,
-              aspectRatio: details.aspectRatio);
+              selectedBytes: details.selectedFiles, details: details, aspectRatio: details.aspectRatio);
         },
       ),
     );
@@ -259,11 +252,11 @@ class DisplayImages extends StatefulWidget {
   final double aspectRatio;
   final SelectedImagesDetails details;
   const DisplayImages({
-    Key? key,
+    super.key,
     required this.details,
     required this.selectedBytes,
     required this.aspectRatio,
-  }) : super(key: key);
+  });
 
   @override
   State<DisplayImages> createState() => _DisplayImagesState();
@@ -294,7 +287,7 @@ class _DisplayImagesState extends State<DisplayImages> {
 
 class _DisplayVideo extends StatefulWidget {
   final SelectedByte selectedByte;
-  const _DisplayVideo({Key? key, required this.selectedByte}) : super(key: key);
+  const _DisplayVideo({required this.selectedByte});
 
   @override
   State<_DisplayVideo> createState() => _DisplayVideoState();
