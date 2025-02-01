@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:image_picker_plus/src/custom_packages/crop_image/main/image_crop.dart';
 import 'package:image_picker_plus/src/entities/app_theme.dart';
-import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
+import 'package:image_picker_plus/src/crop_image/crop_image.dart';
 import 'package:image_picker_plus/src/utilities/enum.dart';
 import 'package:image_picker_plus/src/video_layout/record_count.dart';
 import 'package:image_picker_plus/src/video_layout/record_fade_animation.dart';
@@ -13,9 +12,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+/// todo: refactoring this
+
 class CustomCameraDisplay extends StatefulWidget {
   final bool selectedVideo;
   final AppTheme appTheme;
+  final CropEditImageType cropEditImageType;
   final TabsTexts tapsNames;
   final bool enableCamera;
   final bool enableVideo;
@@ -27,7 +29,7 @@ class CustomCameraDisplay extends StatefulWidget {
   final AsyncValueSetter<SelectedImagesDetails>? callbackFunction;
 
   const CustomCameraDisplay({
-    Key? key,
+    super.key,
     required this.appTheme,
     required this.tapsNames,
     required this.selectedCameraImage,
@@ -39,7 +41,8 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.clearVideoRecord,
     required this.moveToVideoScreen,
     required this.callbackFunction,
-  }) : super(key: key);
+    required this.cropEditImageType,
+  });
 
   @override
   CustomCameraDisplayState createState() => CustomCameraDisplayState();
@@ -54,7 +57,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   List<CameraDescription>? cameras;
   late CameraController controller;
 
-  final cropKey = GlobalKey<CustomCropState>();
+  final cropKey = GlobalKey<CustomCropperState>();
 
   Flash currentFlashMode = Flash.auto;
   late Widget videoStatusAnimation;
@@ -103,9 +106,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Widget build(BuildContext context) {
     return Material(
       color: widget.appTheme.primaryColor,
-      child: allPermissionsAccessed
-          ? (initializeDone ? buildBody() : loadingProgress())
-          : failedPermissions(),
+      child:
+          allPermissionsAccessed ? (initializeDone ? buildBody() : loadingProgress()) : failedPermissions(),
     );
   }
 
@@ -148,7 +150,34 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                     color: whiteColor,
                     height: 360,
                     width: double.infinity,
-                    child: buildCrop(selectedImage),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // String path = selectedImage.path;
+                        // bool isThatVideo = path.contains("mp4", path.length - 5);
+
+                        return CustomCropper(
+                          image: selectedImage,
+                          // isThatImage: !isThatVideo,
+
+                          key: cropKey,
+                          alwaysShowGrid: true,
+                          paintColor: widget.appTheme.primaryColor,
+                          gridColor: Colors.red,
+                          overlayColor: Colors.green,
+                          aspectRatio: 1,
+                          rotateAngle: 0,
+                          type: widget.cropEditImageType,
+                          initialBoundaries: constraints.biggest,
+                          colorMatrix: const [
+                            1, 0, 0, 0, 0, //
+                            0, 1, 0, 0, 0, //
+                            0, 0, 1, 0, 0, //
+                            0, 0, 0, 1, 0, //
+                          ],
+                          isCroppingReady: (value) {},
+                        );
+                      },
+                    ),
                   ),
                 )
               ],
@@ -224,23 +253,9 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
         icon: Icon(
             currentFlashMode == Flash.on
                 ? Icons.flash_on_rounded
-                : (currentFlashMode == Flash.auto
-                    ? Icons.flash_auto_rounded
-                    : Icons.flash_off_rounded),
+                : (currentFlashMode == Flash.auto ? Icons.flash_auto_rounded : Icons.flash_off_rounded),
             color: Colors.white),
       ),
-    );
-  }
-
-  CustomCrop buildCrop(File selectedImage) {
-    String path = selectedImage.path;
-    bool isThatVideo = path.contains("mp4", path.length - 5);
-    return CustomCrop(
-      image: selectedImage,
-      isThatImage: !isThatVideo,
-      key: cropKey,
-      alwaysShowGrid: true,
-      paintColor: widget.appTheme.primaryColor,
     );
   }
 
@@ -258,82 +273,29 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
         },
       ),
       actions: <Widget>[
-        AnimatedSwitcher(
-          duration: const Duration(seconds: 1),
-          switchInCurve: Curves.easeIn,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_forward_rounded,
-                color: Colors.blue, size: 30),
-            onPressed: () async {
-              if (videoRecordFile != null) {
-                Uint8List byte = await videoRecordFile!.readAsBytes();
-                SelectedByte selectedByte = SelectedByte(
-                  isThatImage: false,
-                  selectedFile: videoRecordFile!,
-                  selectedByte: byte,
-                );
-                SelectedImagesDetails details = SelectedImagesDetails(
-                  multiSelectionMode: false,
-                  selectedFiles: [selectedByte],
-                  aspectRatio: 1.0,
-                );
-                if (!mounted) return;
-
-                if (widget.callbackFunction != null) {
-                  await widget.callbackFunction!(details);
-                } else {
-                  Navigator.of(context).maybePop(details);
-                }
-              } else if (selectedImage != null) {
-                File? croppedByte = await cropImage(selectedImage);
-                if (croppedByte != null) {
-                  Uint8List byte = await croppedByte.readAsBytes();
-
-                  SelectedByte selectedByte = SelectedByte(
-                    isThatImage: true,
-                    selectedFile: croppedByte,
-                    selectedByte: byte,
-                  );
-
-                  SelectedImagesDetails details = SelectedImagesDetails(
-                    selectedFiles: [selectedByte],
-                    multiSelectionMode: false,
-                    aspectRatio: 1.0,
-                  );
-                  if (!mounted) return;
-
-                  if (widget.callbackFunction != null) {
-                    await widget.callbackFunction!(details);
-                  } else {
-                    Navigator.of(context).maybePop(details);
-                  }
-                }
-              }
-            },
-          ),
-        ),
+        _NextButton(videoRecordFile: videoRecordFile, widget: widget, selectedImage: selectedImage),
       ],
     );
   }
 
-  Future<File?> cropImage(File imageFile) async {
-    await ImageCrop.requestPermissions();
-    final scale = cropKey.currentState!.scale;
-    final area = cropKey.currentState!.area;
-    if (area == null) {
-      return null;
-    }
-    final sample = await ImageCrop.sampleImage(
-      file: imageFile,
-      preferredSize: (2000 / scale).round(),
-    );
-    final File file = await ImageCrop.cropImage(
-      file: sample,
-      area: area,
-    );
-    sample.delete();
-    return file;
-  }
+  // Future<File?> cropImage(File imageFile) async {
+  // await ImageCrop.requestPermissions();
+  // final scale = cropKey.currentState!.scale;
+  // final area = cropKey.currentState!.area;
+  // if (area == null) {
+  //   return null;
+  // }
+  // final sample = await ImageCrop.sampleImage(
+  //   file: imageFile,
+  //   preferredSize: (2000 / scale).round(),
+  // );
+  // final File file = await ImageCrop.cropImage(
+  //   file: sample,
+  //   area: area,
+  // );
+  // sample.delete();
+  // return file;
+  // }
 
   GestureDetector cameraButton(BuildContext context) {
     Color whiteColor = widget.appTheme.primaryColor;
@@ -362,7 +324,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
         });
       } else {
         setState(() {
-          videoStatusAnimation = buildFadeAnimation();
+          videoStatusAnimation = RecordFadeAnimation(child: _MessagePreview(widget: widget));
         });
       }
     } catch (e) {
@@ -386,12 +348,86 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     XFile video = await controller.stopVideoRecording();
     videoRecordFile = File(video.path);
   }
+}
 
-  RecordFadeAnimation buildFadeAnimation() {
-    return RecordFadeAnimation(child: buildMessage());
+class _NextButton extends StatelessWidget {
+  const _NextButton({
+    required this.videoRecordFile,
+    required this.widget,
+    required this.selectedImage,
+  });
+
+  final File? videoRecordFile;
+  final CustomCameraDisplay widget;
+  final File? selectedImage;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(seconds: 1),
+      switchInCurve: Curves.easeIn,
+      child: IconButton(
+        icon: const Icon(Icons.arrow_forward_rounded, color: Colors.blue, size: 30),
+        onPressed: () async {
+          if (videoRecordFile != null) {
+            Uint8List byte = await videoRecordFile!.readAsBytes();
+            SelectedByte selectedByte = SelectedByte(
+              isThatImage: false,
+              selectedFile: videoRecordFile!,
+              selectedByte: byte,
+            );
+            SelectedImagesDetails details = SelectedImagesDetails(
+              multiSelectionMode: false,
+              selectedFiles: [selectedByte],
+              aspectRatio: 1.0,
+            );
+            if (!context.mounted) return;
+
+            if (widget.callbackFunction != null) {
+              await widget.callbackFunction!(details);
+            } else {
+              Navigator.of(context).maybePop(details);
+            }
+          } else if (selectedImage != null) {
+            /// todo: refactoring this
+
+            // File? croppedByte = await cropImage(selectedImage);
+            // if (croppedByte != null) {
+            //   Uint8List byte = await croppedByte.readAsBytes();
+            //
+            //   SelectedByte selectedByte = SelectedByte(
+            //     isThatImage: true,
+            //     selectedFile: croppedByte,
+            //     selectedByte: byte,
+            //   );
+            //
+            //   SelectedImagesDetails details = SelectedImagesDetails(
+            //     selectedFiles: [selectedByte],
+            //     multiSelectionMode: false,
+            //     aspectRatio: 1.0,
+            //   );
+            //   if (!mounted) return;
+            //
+            //   if (widget.callbackFunction != null) {
+            //     await widget.callbackFunction!(details);
+            //   } else {
+            //     Navigator.of(context).maybePop(details);
+            //   }
+            // }
+          }
+        },
+      ),
+    );
   }
+}
 
-  Widget buildMessage() {
+class _MessagePreview extends StatelessWidget {
+  const _MessagePreview({required this.widget});
+
+  final CustomCameraDisplay widget;
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
