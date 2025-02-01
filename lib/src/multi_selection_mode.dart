@@ -25,7 +25,7 @@ class MultiSelectionMode extends StatelessWidget {
         child: child ?? const SizedBox(),
       ),
       child: Align(
-        alignment: Alignment.topRight,
+        alignment: AlignmentDirectional.topEnd,
         child: Padding(
           padding: const EdgeInsets.all(3),
           child: Container(
