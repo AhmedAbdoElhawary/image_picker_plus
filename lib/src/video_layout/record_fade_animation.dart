@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RecordFadeAnimation extends StatefulWidget {
-  const RecordFadeAnimation({Key? key, required this.child}) : super(key: key);
+  const RecordFadeAnimation({super.key, required this.child});
 
   final Widget child;
 
@@ -9,8 +9,7 @@ class RecordFadeAnimation extends StatefulWidget {
   RecordFadeAnimationState createState() => RecordFadeAnimationState();
 }
 
-class RecordFadeAnimationState extends State<RecordFadeAnimation>
-    with TickerProviderStateMixin {
+class RecordFadeAnimationState extends State<RecordFadeAnimation> with TickerProviderStateMixin {
   late AnimationController _controller;
   late final Animation<double> _animation = CurvedAnimation(
     parent: _controller,
@@ -25,8 +24,7 @@ class RecordFadeAnimationState extends State<RecordFadeAnimation>
 
   @override
   void initState() {
-    _controller =
-        AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    _controller = AnimationController(duration: const Duration(seconds: 1), vsync: this);
     _controller.addListener(() async {
       if (_controller.isCompleted) {
         await Future.delayed(const Duration(seconds: 3)).then((value) {
@@ -40,9 +38,7 @@ class RecordFadeAnimationState extends State<RecordFadeAnimation>
   @override
   void didUpdateWidget(RecordFadeAnimation oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.child != widget.child) {
-      _controller.forward(from: 0.0);
-    }
+    if (oldWidget.child != widget.child) _controller.forward(from: 0.0);
   }
 
   @override
