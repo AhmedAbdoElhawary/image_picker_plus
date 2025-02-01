@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:image_picker_plus/src/custom_expand_icon.dart';
 import 'package:image_picker_plus/src/entities/app_theme.dart';
-import 'package:image_picker_plus/src/custom_packages/crop_image/crop_image.dart';
+import 'package:image_picker_plus/src/crop_image/crop_image.dart';
 import 'package:flutter/material.dart';
 
+/// todo: refactoring this
+
 class CropImageView extends StatefulWidget {
-  final ValueNotifier<GlobalKey<CustomCropState>> cropKey;
+  final ValueNotifier<GlobalKey<CustomCropperState>> cropKey;
   final ValueNotifier<List<int>> indexOfSelectedImages;
 
   final ValueNotifier<bool> multiSelectionMode;
@@ -23,9 +25,10 @@ class CropImageView extends StatefulWidget {
   final ValueNotifier<bool> noDuration;
   final Color whiteColor;
   final double? topPosition;
+  final CropEditImageType cropEditImageType;
 
   const CropImageView({
-    Key? key,
+    super.key,
     required this.indexOfSelectedImages,
     required this.cropKey,
     required this.multiSelectionMode,
@@ -38,8 +41,9 @@ class CropImageView extends StatefulWidget {
     required this.appTheme,
     required this.noDuration,
     required this.whiteColor,
+    required this.cropEditImageType,
     this.topPosition,
-  }) : super(key: key);
+  });
 
   @override
   State<CropImageView> createState() => _CropImageViewState();
@@ -60,8 +64,7 @@ class _CropImageViewState extends State<CropImageView> {
             : null,
         onVerticalDragEnd: enableTappingValue && widget.topPosition != null
             ? (details) {
-                widget.expandHeight.value =
-                    widget.expandHeight.value > 260 ? 360 : 0;
+                widget.expandHeight.value = widget.expandHeight.value > 260 ? 360 : 0;
                 if (widget.topPosition == -360) {
                   widget.enableVerticalTapping.value = true;
                 }
@@ -77,7 +80,7 @@ class _CropImageViewState extends State<CropImageView> {
             if (selectedImageValue != null) {
               return showSelectedImage(context, selectedImageValue);
             } else {
-              return Container(key: GlobalKey(debugLabel: "do not have"));
+              return const SizedBox();
             }
           },
         ),
@@ -98,8 +101,8 @@ class _CropImageViewState extends State<CropImageView> {
           children: [
             ValueListenableBuilder(
               valueListenable: widget.expandImage,
-              builder: (context, bool expandImageValue, child) =>
-                  cropImageWidget(selectedImageValue, expandImageValue),
+              builder: (context, bool expandImageValue, child) => _CropImage(
+                  widget: widget, expandImageValue: expandImageValue, selectedImageValue: selectedImageValue),
             ),
             if (widget.topPosition != null) ...[
               Align(
@@ -110,17 +113,14 @@ class _CropImageViewState extends State<CropImageView> {
                     onTap: () {
                       if (multiSelectionModeValue) widget.clearMultiImages();
                       setState(() {
-                        widget.multiSelectionMode.value =
-                            !multiSelectionModeValue;
+                        widget.multiSelectionMode.value = !multiSelectionModeValue;
                       });
                     },
                     child: Container(
                       height: 35,
                       width: 35,
                       decoration: BoxDecoration(
-                        color: multiSelectionModeValue
-                            ? Colors.blue
-                            : const Color.fromARGB(165, 58, 58, 58),
+                        color: multiSelectionModeValue ? Colors.blue : const Color.fromARGB(165, 58, 58, 58),
                         border: Border.all(
                           color: const Color.fromARGB(45, 250, 250, 250),
                         ),
@@ -164,17 +164,44 @@ class _CropImageViewState extends State<CropImageView> {
       ),
     );
   }
+}
 
-  Widget cropImageWidget(File selectedImageValue, bool expandImageValue) {
-    GlobalKey<CustomCropState> cropKey = widget.cropKey.value;
-    String path = selectedImageValue.path;
-    bool isThatVideo = path.contains("mp4", path.length - 5);
-    return CustomCrop(
-      image: selectedImageValue,
-      isThatImage: !isThatVideo,
-      key: cropKey,
-      paintColor: widget.appTheme.primaryColor,
-      aspectRatio: expandImageValue ? 6 / 8 : 1.0,
+class _CropImage extends StatelessWidget {
+  const _CropImage({required this.widget, required this.selectedImageValue, required this.expandImageValue});
+
+  final CropImageView widget;
+  final File selectedImageValue;
+  final bool expandImageValue;
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        GlobalKey<CustomCropperState> cropKey = widget.cropKey.value;
+        // String path = selectedImageValue.path;
+        // bool isThatVideo = path.contains("mp4", path.length - 5);
+
+        return CustomCropper(
+          image: selectedImageValue,
+          // isThatImage: !isThatVideo,
+
+          key: cropKey,
+          alwaysShowGrid: true,
+          paintColor: widget.appTheme.primaryColor,
+          gridColor: Colors.red,
+          overlayColor: Colors.green,
+          aspectRatio: expandImageValue ? 6 / 8 : 1.0,
+          rotateAngle: 0,
+          type: widget.cropEditImageType,
+          initialBoundaries: constraints.biggest,
+          colorMatrix: const [
+            1, 0, 0, 0, 0, //
+            0, 1, 0, 0, 0, //
+            0, 0, 1, 0, 0, //
+            0, 0, 0, 1, 0, //
+          ],
+          isCroppingReady: (value) {},
+        );
+      },
     );
   }
 }
