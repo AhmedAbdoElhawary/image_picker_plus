@@ -1,8 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker_plus/redesign_src/custom_screen_adapter/screen_size_extension.dart';
-import 'package:image_picker_plus/redesign_src/custom_state_management/state_selector.dart';
+import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart'
+    show ScreenSizeHelper;
+import 'package:image_picker_plus/redesign_src/core/custom_state_management/state_selector.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/color/theme_adaptation.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/context_extension.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/conversions.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/edit_media_parameters.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/random_text.dart';
+import 'package:image_picker_plus/redesign_src/view/edit_media_page.dart';
 import 'package:image_picker_plus/redesign_src/view_model/media_preview_view_model.dart';
 
 class MediaPreviewPage extends StatelessWidget {
@@ -11,11 +18,44 @@ class MediaPreviewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ScreenSizeHelper().initializeScreenSize(context);
+    ThemeAdaptation().initializeScreenSize = true;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
+        actions: [
+          TextButton(
+              onPressed: () async {
+                final file = MediaPreviewViewModel().selectedMedia;
+                if (file == null) return;
+                final files = [file];
+                final returnData = await Conversions.convertMultiFilesToImg(files);
+                if (returnData == null) return;
+                final listOfZeros = List.generate(files.length, (index) => 0);
+
+                context.push(
+                  EditImagePage(
+                    parameters: EditImagePageParameters(
+                      // type: type,
+                      tempCacheSessionUUid: RandomString.generate(),
+                      originSelectedImg: returnData,
+                      maxImageSelected: 10,
+                      croppedSelectedImage: files,
+                      originSelectedImage: files,
+                      selectedFilersIndexes: listOfZeros,
+                      selectedRotation: listOfZeros,
+                      onImageEditedFinish: (context, par) {},
+                      // resizeHeight: maxHeight,
+                      // resizeWidth: maxWidth,
+                      // nextText: saveEditText,
+                    ),
+                  ),
+                );
+              },
+              child: Text("Next"))
+        ],
       ),
       body: Container(
         color: Colors.white,
@@ -61,12 +101,13 @@ class _BuildGridView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTablet = ScreenSizeHelper().isTablet;
+    final controller = MediaPreviewViewModel();
 
     return CustomStateSelector<MediaPreviewViewModel>(
       keys: [MediaPreviewViewModel.loadedMediaId],
-      state: MediaPreviewViewModel(),
+      controller: MediaPreviewViewModel(),
       builder: (context) {
-        final loadedMedia = MediaPreviewViewModel().loadedMedia;
+        final loadedMedia = controller.loadedMedia;
         return SliverGrid.builder(
           itemCount: loadedMedia.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -92,6 +133,7 @@ class _BuildSingleGridItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final file = this.file;
     if (file == null) return SizedBox();
+    final controller = MediaPreviewViewModel();
 
     return InkWell(
       onTap: () {
@@ -116,9 +158,9 @@ class _BuildSingleGridItem extends StatelessWidget {
           // MultiSelectionMode()
           CustomStateSelector<MediaPreviewViewModel>(
             keys: [file.path],
-            state: MediaPreviewViewModel(),
+            controller: MediaPreviewViewModel(),
             builder: (context) {
-              return MediaPreviewViewModel().selectedMedia?.path == file.path
+              return controller.selectedMedia?.path == file.path
                   ? Container(color: Colors.white24)
                   : SizedBox();
             },
@@ -148,17 +190,18 @@ class _BuildPreviewState extends State<_BuildPreview> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = MediaPreviewViewModel();
     return CustomStateSelector<MediaPreviewViewModel>(
       keys: [MediaPreviewViewModel.currentTopHidePreviewPositionId],
-      state: MediaPreviewViewModel(),
+      controller: MediaPreviewViewModel(),
       builder: (context) {
         return AnimatedPositioned(
-          duration: Duration(milliseconds: MediaPreviewViewModel().makeAnimatedPosition ? 200 : 0),
-          top: MediaPreviewViewModel().currentTopHidePreviewPosition,
+          duration: Duration(milliseconds: controller.makeAnimatedPosition ? 200 : 0),
+          top: controller.currentTopHidePreviewPosition,
           child: Listener(
             key: _globalKey,
-            onPointerMove: MediaPreviewViewModel().handleMiddleBarTapMove,
-            onPointerUp: MediaPreviewViewModel().handleMiddleBarTapEnd,
+            onPointerMove: controller.handleMiddleBarTapMove,
+            onPointerUp: controller.handleMiddleBarTapEnd,
             child: _BuildMiddleBar(),
           ),
         );
@@ -225,6 +268,7 @@ class _BuildSelectedMedia extends StatelessWidget {
   Widget build(BuildContext context) {
     final previewHeight = MediaPreviewViewModel.getPreviewHeight();
     final width = MediaQuery.sizeOf(context).width;
+    final controller = MediaPreviewViewModel();
 
     return Container(
       height: previewHeight,
@@ -232,9 +276,9 @@ class _BuildSelectedMedia extends StatelessWidget {
       color: Colors.white,
       child: CustomStateSelector<MediaPreviewViewModel>(
         keys: [MediaPreviewViewModel.selectedMediaId],
-        state: MediaPreviewViewModel(),
+        controller: MediaPreviewViewModel(),
         builder: (context) {
-          final selectedMedia = MediaPreviewViewModel().selectedMedia;
+          final selectedMedia = controller.selectedMedia;
           return selectedMedia == null ? SizedBox() : Image.file(selectedMedia, fit: BoxFit.cover);
         },
       ),
