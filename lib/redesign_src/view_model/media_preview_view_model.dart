@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker_plus/redesign_src/custom_screen_adapter/screen_size_extension.dart';
-import 'package:image_picker_plus/redesign_src/custom_state_management/base_custom_state.dart';
+import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart' show ScreenSizeHelper;
+import 'package:image_picker_plus/redesign_src/core/custom_state_management/base_custom_state.dart' show BaseCustomState;
 import 'package:photo_manager/photo_manager.dart';
 
 class MediaPreviewViewModel extends BaseCustomState {
