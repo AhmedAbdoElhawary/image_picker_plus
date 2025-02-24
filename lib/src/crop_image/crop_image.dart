@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart';
 
 const _kCropGridColumnCount = 3;
 const _kCropGridRowCount = 3;
@@ -39,7 +41,7 @@ class CustomCropper extends StatefulWidget {
     required this.gridColor,
     required this.overlayColor,
     required this.aspectRatio,
-    this.type = CropEditImageType.normal,
+    required this.type,
     this.scrollCustomList,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
@@ -726,9 +728,9 @@ class _GridCropPainter extends CustomPainter {
 
     final paint = Paint()
       ..isAntiAlias = false
-      ..color = gridColor.withOpacity(gridColor.opacity * active)
+      ..color = gridColor.withValues(alpha: gridColor.a * active)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5.r;
 
     final path = Path();
     if (type == CropEditImageType.normal) {
