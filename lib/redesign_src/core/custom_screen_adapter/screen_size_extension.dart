@@ -5,6 +5,9 @@ class ScreenSizeHelper {
   factory ScreenSizeHelper() => _instance;
   ScreenSizeHelper._internal();
 
+  final double maxWidthAllowed = 480;
+  final defaultSize = Size(360, 690);
+
   Size? _screenSize;
 
   Size get getScreenSize => _screenSize!;
