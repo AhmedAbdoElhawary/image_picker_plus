@@ -2,14 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart'
-    show ScreenSizeHelper;
+    show ScreenSizeHelper, SizeHelper, SizeIntHelper;
 import 'package:image_picker_plus/redesign_src/core/custom_state_management/state_selector.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/color/color_manager.dart';
 import 'package:image_picker_plus/redesign_src/core/utils/color/theme_adaptation.dart';
-import 'package:image_picker_plus/redesign_src/core/utils/context_extension.dart';
-import 'package:image_picker_plus/redesign_src/core/utils/conversions.dart';
-import 'package:image_picker_plus/redesign_src/core/utils/edit_media_parameters.dart';
-import 'package:image_picker_plus/redesign_src/core/utils/random_text.dart';
-import 'package:image_picker_plus/redesign_src/view/edit_media_page.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/color/theme_manager.dart';
+import 'package:image_picker_plus/redesign_src/core/utils/string_manager.dart';
 import 'package:image_picker_plus/redesign_src/view_model/media_preview_view_model.dart';
 
 class MediaPreviewPage extends StatelessWidget {
@@ -28,33 +26,33 @@ class MediaPreviewPage extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () async {
-                final file = MediaPreviewViewModel().selectedMedia;
-                if (file == null) return;
-                final files = [file];
-                final returnData = await Conversions.convertMultiFilesToImg(files);
-                if (returnData == null) return;
-                final listOfZeros = List.generate(files.length, (index) => 0);
-
-                context.push(
-                  EditImagePage(
-                    parameters: EditImagePageParameters(
-                      // type: type,
-                      tempCacheSessionUUid: RandomString.generate(),
-                      originSelectedImg: returnData,
-                      maxImageSelected: 10,
-                      croppedSelectedImage: files,
-                      originSelectedImage: files,
-                      selectedFilersIndexes: listOfZeros,
-                      selectedRotation: listOfZeros,
-                      onImageEditedFinish: (context, par) {},
-                      // resizeHeight: maxHeight,
-                      // resizeWidth: maxWidth,
-                      // nextText: saveEditText,
-                    ),
-                  ),
-                );
+                // final file = MediaPreviewViewModel().selectedMedia;
+                // if (file == null) return;
+                // final files = [file];
+                // final returnData = await Conversions.convertMultiFilesToImg(files);
+                // if (returnData == null) return;
+                // final listOfZeros = List.generate(files.length, (index) => 0);
+                //
+                // context.push(
+                //   EditImagePage(
+                //     parameters: EditImagePageParameters(
+                //       // type: type,
+                //       tempCacheSessionUUid: RandomString.generate(),
+                //       originSelectedImg: returnData,
+                //       maxImageSelected: 10,
+                //       croppedSelectedImage: files,
+                //       originSelectedImage: files,
+                //       selectedFilersIndexes: listOfZeros,
+                //       selectedRotation: listOfZeros,
+                //       onImageEditedFinish: (context, par) {},
+                //       // resizeHeight: maxHeight,
+                //       // resizeWidth: maxWidth,
+                //       // nextText: saveEditText,
+                //     ),
+                //   ),
+                // );
               },
-              child: Text("Next"))
+              child: Text(StringsManager.next))
         ],
       ),
       body: Container(
@@ -137,7 +135,12 @@ class _BuildSingleGridItem extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        MediaPreviewViewModel().selectedMedia = file;
+        controller.addSingleSelectedMedia = file;
+      },
+      onLongPress: () {
+        controller
+          ..allowMultiSelection = true
+          ..addSingleSelectedMedia = file;
       },
       child: Stack(
         children: [
@@ -155,38 +158,79 @@ class _BuildSingleGridItem extends StatelessWidget {
               );
             },
           ),
-          // MultiSelectionMode()
           CustomStateSelector<MediaPreviewViewModel>(
-            keys: [file.path],
-            controller: MediaPreviewViewModel(),
+            keys: [MediaPreviewViewModel.selectedBlurSingleMediaId(file.path)],
+            controller: controller,
             builder: (context) {
-              return controller.selectedMedia?.path == file.path
+              return controller.currentSelectedMedia?.path == file.path
                   ? Container(color: Colors.white24)
                   : SizedBox();
             },
-          )
+          ),
+          CustomStateSelector<MediaPreviewViewModel>(
+            keys: [MediaPreviewViewModel.allowMultiSelectionId],
+            controller: controller,
+            builder: (context) {
+              return controller.allowMultiSelection ? _CircleSelection(file) : SizedBox();
+            },
+          ),
         ],
       ),
     );
   }
 }
 
-class _BuildPreview extends StatefulWidget {
-  const _BuildPreview();
+class _CircleSelection extends StatelessWidget {
+  const _CircleSelection(this.file);
+  final File file;
 
   @override
-  State<_BuildPreview> createState() => _BuildPreviewState();
+  Widget build(BuildContext context) {
+    final controller = MediaPreviewViewModel();
+
+    return Align(
+      alignment: AlignmentDirectional.topEnd,
+      child: Padding(
+        padding: EdgeInsets.all(5.r),
+        child: CustomStateSelector<MediaPreviewViewModel>(
+          keys: [MediaPreviewViewModel.selectedIndexSingleMediaId(file.path)],
+          controller: MediaPreviewViewModel(),
+          builder: (context) {
+            final number = controller.getNumberOfSelectedMedia(file);
+
+            final isSelected = number != 0;
+
+            return Container(
+              width: 30.r,
+              height: 30.r,
+              decoration: BoxDecoration(
+                  color: isSelected
+                      ? context.getColor(ThemeEnum.blueColor)
+                      : context.getColor(ThemeEnum.primaryColor).withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.getColor(ThemeEnum.primaryColor), width: 1.5.r)),
+              child: isSelected
+                  ? Center(
+                      child: Text(
+                        number.toString(),
+                        style: TextStyle(
+                          color: context.getColor(ThemeEnum.primaryColor),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16.r,
+                        ),
+                      ),
+                    )
+                  : null,
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
 
-class _BuildPreviewState extends State<_BuildPreview> {
-  final GlobalKey _globalKey = GlobalKey();
-  @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      MediaPreviewViewModel().detectMiddleBarPosition(_globalKey);
-    });
-    super.initState();
-  }
+class _BuildPreview extends StatelessWidget {
+  const _BuildPreview();
 
   @override
   Widget build(BuildContext context) {
@@ -198,20 +242,15 @@ class _BuildPreviewState extends State<_BuildPreview> {
         return AnimatedPositioned(
           duration: Duration(milliseconds: controller.makeAnimatedPosition ? 200 : 0),
           top: controller.currentTopHidePreviewPosition,
-          child: Listener(
-            key: _globalKey,
-            onPointerMove: controller.handleMiddleBarTapMove,
-            onPointerUp: controller.handleMiddleBarTapEnd,
-            child: _BuildMiddleBar(),
-          ),
+          child: _BuildPreviewMiddleBar(),
         );
       },
     );
   }
 }
 
-class _BuildMiddleBar extends StatelessWidget {
-  const _BuildMiddleBar();
+class _BuildPreviewMiddleBar extends StatelessWidget {
+  const _BuildPreviewMiddleBar();
 
   @override
   Widget build(BuildContext context) {
@@ -223,39 +262,75 @@ class _BuildMiddleBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _BuildSelectedMedia(),
-          Container(
-            height: kToolbarHeight,
-            color: Colors.white,
-            width: width,
-            padding: EdgeInsetsDirectional.symmetric(horizontal: 15),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Recent"),
-                const Spacer(),
-                InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(50),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.black38,
-                    child: Icon(Icons.copy_rounded, color: Colors.white),
-                  ),
-                ),
-                SizedBox(width: 15),
-                InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(50),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.black38,
-                    child: Icon(Icons.camera, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _BuildMiddleBar(width: width),
         ],
+      ),
+    );
+  }
+}
+
+class _BuildMiddleBar extends StatelessWidget {
+  const _BuildMiddleBar({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = MediaPreviewViewModel();
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: controller.appearPreview,
+      child: Container(
+        height: kToolbarHeight,
+        color: Colors.white,
+        width: width,
+        padding: EdgeInsetsDirectional.symmetric(horizontal: 15),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(StringsManager.recent),
+            const Spacer(),
+            _MultiSelectionIcon(),
+            SizedBox(width: 15),
+            InkWell(
+              onTap: () {},
+              borderRadius: BorderRadius.circular(50),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: ColorManager.blackOp40,
+                child: Icon(Icons.camera, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiSelectionIcon extends StatelessWidget {
+  const _MultiSelectionIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = MediaPreviewViewModel();
+
+    return InkWell(
+      onTap: () {
+        controller.allowMultiSelection = !controller.allowMultiSelection;
+      },
+      borderRadius: BorderRadius.circular(50),
+      child: CustomStateSelector<MediaPreviewViewModel>(
+        keys: [MediaPreviewViewModel.allowMultiSelectionId],
+        controller: controller,
+        builder: (context) {
+          return CircleAvatar(
+            radius: 18,
+            backgroundColor: controller.allowMultiSelection ? ColorManager.blue : ColorManager.blackOp40,
+            child: Icon(Icons.copy_rounded, color: Colors.white),
+          );
+        },
       ),
     );
   }
@@ -278,7 +353,7 @@ class _BuildSelectedMedia extends StatelessWidget {
         keys: [MediaPreviewViewModel.selectedMediaId],
         controller: MediaPreviewViewModel(),
         builder: (context) {
-          final selectedMedia = controller.selectedMedia;
+          final selectedMedia = controller.currentSelectedMedia;
           return selectedMedia == null ? SizedBox() : Image.file(selectedMedia, fit: BoxFit.cover);
         },
       ),
