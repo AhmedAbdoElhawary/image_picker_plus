@@ -41,7 +41,6 @@ class EditMediaViewModel extends BaseCustomState {
     _instance = null;
   }
 
-  // State update keys
   static String selectedFilterId(int index) => "selected_filter_id_$index";
   static const String aspectRatioKey = "aspect_ratio";
   static const String initialDraggableSizeKey = "initial_draggable_size";
@@ -75,13 +74,9 @@ class EditMediaViewModel extends BaseCustomState {
   }
 
   static List<GlobalKey<CustomCropperState>> setKeys(List<File> selectedImage) {
-    return List.generate(
-      selectedImage.length,
-      (_) => GlobalKey<CustomCropperState>(),
-    );
+    return List.generate(selectedImage.length, (_) => GlobalKey<CustomCropperState>());
   }
 
-  // Private fields
   late EditImagePageParameters _parameters;
   late double _aspectRatio;
   late List<File> _selectedImage;
@@ -100,7 +95,6 @@ class EditMediaViewModel extends BaseCustomState {
   int? _suspectIndexToDrag;
   Size? _initialDraggableImageSize;
 
-  // Getters
   GlobalKey<CustomCropperState> getImageKey(int index) => _globalImagesKeys[index];
   List<int> get selectedFiltersIndex => _selectedFiltersIndex;
   List<int> get selectedRotation => _selectedRotation;
@@ -120,7 +114,6 @@ class EditMediaViewModel extends BaseCustomState {
     return limit - croppedSelectedImage.length;
   }
 
-  // Setters
   set suspectIndexToDrag(int? value) {
     if (value == _suspectIndexToDrag) return;
     _suspectIndexToDrag = value;
@@ -144,7 +137,6 @@ class EditMediaViewModel extends BaseCustomState {
     updateState([initialDraggableSizeKey]);
   }
 
-  // Methods for image management
   void updateReorderListView({required int oldIndex, required int newIndex}) {
     if (oldIndex < newIndex) newIndex -= 1;
 
@@ -195,7 +187,6 @@ class EditMediaViewModel extends BaseCustomState {
     updateState([imagesKey]);
   }
 
-  // Filter-related methods
   List<double> getSelectedFilterMatrix({required int imageIndex}) =>
       ImageProcessing.getSelectedFilterMatrix(filterIndex: selectedFiltersIndex[imageIndex]);
 
@@ -212,7 +203,6 @@ class EditMediaViewModel extends BaseCustomState {
     updateState([selectedFilterId(index)]);
   }
 
-  // Image processing methods
   void setCroppingReady(bool value) {
     if (value == _isCroppingReady) return;
     _isCroppingReady = value;
@@ -269,7 +259,6 @@ class EditMediaViewModel extends BaseCustomState {
     return imageO;
   }
 
-  // Action methods
   Future<void> onTapDoneForSingleImage(
     BuildContext context, {
     required img.Image srcImage,
@@ -286,7 +275,6 @@ class EditMediaViewModel extends BaseCustomState {
     try {
       instance.showAlertDialog(
         context,
-        // backgroundColor: ThemeEnum.greyColor,
         text: StringsManager.processing,
         withLoadingIndicator: false,
       );
@@ -349,7 +337,6 @@ class EditMediaViewModel extends BaseCustomState {
     try {
       instance.showAlertDialog(
         context,
-        // backgroundColor: ThemeEnum.greyColor,
         text: StringsManager.processing,
         withLoadingIndicator: false,
       );
@@ -441,7 +428,6 @@ class EditMediaViewModel extends BaseCustomState {
     _parameters.onImageEditedFinish(context, result);
   }
 
-  // Image addition methods
   Future<void> addMoreImages(BuildContext context) async {
     /// TODO: add this
     // try {
@@ -504,7 +490,6 @@ class EditMediaViewModel extends BaseCustomState {
   // }
 }
 
-// Parameters for the isolate computation
 class _ProcessImageParamsList {
   final List<img.Image> croppedImg;
   final List<File> croppedImage;
@@ -578,7 +563,6 @@ class ImageProcessing {
   }
 
   static img.Image _cropAndResize(_CropImagePar par) {
-    // Calculate crop area
     final int cropLeft = (par.left * par.srcImage.width).toInt();
     final int cropTop = (par.top * par.srcImage.height).toInt();
     final int cropRight = (par.right * par.srcImage.width).toInt();
@@ -586,7 +570,6 @@ class ImageProcessing {
     final int cropWidth = (cropRight - cropLeft);
     final int cropHeight = (cropBottom - cropTop);
 
-    // Crop the image
     final croppedImage = img.copyCrop(
       par.srcImage,
       x: cropLeft,
@@ -594,8 +577,7 @@ class ImageProcessing {
       width: (cropRight - cropLeft),
       height: (cropBottom - cropTop),
     );
-    //
-    // Resize the cropped image
+
     final img.Image resizedImage = img.copyResize(
       croppedImage,
       width: par.parameters.resizeWidth?.toInt() ?? cropWidth,
