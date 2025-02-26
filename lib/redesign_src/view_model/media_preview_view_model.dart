@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart' show ScreenSizeHelper;
-import 'package:image_picker_plus/redesign_src/core/custom_state_management/base_custom_state.dart' show BaseCustomState;
+import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart'
+    show ScreenSizeHelper;
+import 'package:image_picker_plus/redesign_src/core/custom_state_management/base_custom_state.dart'
+    show BaseCustomState;
 import 'package:photo_manager/photo_manager.dart';
 
 class MediaPreviewViewModel extends BaseCustomState {
@@ -20,32 +22,87 @@ class MediaPreviewViewModel extends BaseCustomState {
   static final String currentTopHidePreviewPositionId = 'currentTopHidePreviewPosition';
   static final String loadedMediaId = 'loadedMedia';
   static final String selectedMediaId = 'selectedMedia';
+  static final String allowMultiSelectionId = 'allowMultiSelection';
+  static String selectedBlurSingleMediaId(String path) => 'selectedBlurSingleMedia:$path';
+  static String selectedIndexSingleMediaId(String path) => 'selectedIndexSingleMedia:$path';
 
   /// -----------------------------------------------------------------------------------------
   final ScrollController scrollController = ScrollController();
   double _currentTopHidePreviewPosition = 0;
   bool _makeAnimatedPosition = false;
-  double? _draggableStartPoint;
   int _nextLoadedPage = 0;
   bool _hasPermissionAccess = false;
   final List<File?> _loadedMedia = <File?>[];
-  File? _selectedMedia;
+  final List<File> _selectedMultiMedia = [];
+  File? _currentSelectedMedia;
+  bool _allowMultiSelection = false;
 
   List<File?> get loadedMedia => _loadedMedia;
-  File? get selectedMedia => _selectedMedia;
+  List<File>? get selectedMultiMedia => _selectedMultiMedia;
+  File? get currentSelectedMedia => _currentSelectedMedia;
+  bool get allowMultiSelection => _allowMultiSelection;
 
-  set selectedMedia(File? value) {
-    if (value == _selectedMedia || value == null) return;
-    final previousSelectedPath = _selectedMedia?.path ?? "";
-    _selectedMedia = value;
+  set allowMultiSelection(bool value) {
+    if (value == allowMultiSelection) return;
+    _allowMultiSelection = value;
+    if (!value) _selectedMultiMedia.clear();
+
+    updateState([allowMultiSelectionId]);
+  }
+
+  set addSingleSelectedMedia(File? value) {
+    final isAdded = _selectedMultiMedia.contains(value) == true;
+    if (isAdded && value?.path == currentSelectedMedia?.path) {
+      _removeSingleMedia = value;
+      return;
+    }
+
+    _updateCurrentSelectedMedia = value;
+
+    if (isAdded || value == null) return;
+
+    _selectedMultiMedia.add(value);
+
+    updateState([selectedIndexSingleMediaId(value.path)]);
+  }
+
+  set _removeSingleMedia(File? value) {
+    if (value == null) return;
+    final removeIndex = _selectedMultiMedia.indexOf(value);
+    _selectedMultiMedia.remove(value);
+    if (removeIndex - 1 >= 0) _updateCurrentSelectedMedia = _selectedMultiMedia[removeIndex - 1];
+
+    /// to update new count for all selection media
+    _updateAllSelectedMedia();
+
+    /// to remove count from removed selection
+    updateState([selectedIndexSingleMediaId(value.path)]);
+  }
+
+  void _updateAllSelectedMedia() {
+    for (final element in _selectedMultiMedia) {
+      updateState([selectedIndexSingleMediaId(element.path)]);
+    }
+  }
+
+  int getNumberOfSelectedMedia(File? file) {
+    if (file == null) return 0;
+    return (_selectedMultiMedia.indexOf(file)) + 1;
+  }
+
+  set _updateCurrentSelectedMedia(File? value) {
+    if (_currentSelectedMedia == value || value == null) return;
+    final previousSelectedPath = _currentSelectedMedia?.path ?? "";
+    _currentSelectedMedia = value;
+
     updateState([
       selectedMediaId,
 
       /// to update only selected small grid media
-      value.path,
+      selectedBlurSingleMediaId(value.path),
 
       /// to update and cancel only none selected small grid media
-      previousSelectedPath
+      selectedBlurSingleMediaId(previousSelectedPath)
     ]);
     appearPreview();
   }
@@ -67,13 +124,6 @@ class MediaPreviewViewModel extends BaseCustomState {
   set _setNextLoadedPage(int value) {
     if (value == _nextLoadedPage) return;
     _nextLoadedPage = value;
-  }
-
-  bool get _allowToDragMiddleBar {
-    final previewHeight = getPreviewHeight();
-
-    final currentPixel = scrollController.position.pixels;
-    return currentPixel > previewHeight;
   }
 
   double get currentTopHidePreviewPosition => _currentTopHidePreviewPosition;
@@ -113,40 +163,6 @@ class MediaPreviewViewModel extends BaseCustomState {
     _setCurrentTopHidePreviewPosition = 0;
   }
 
-  void handleMiddleBarTapMove(PointerMoveEvent event) {
-    if (!_allowToDragMiddleBar) return;
-    final previewHeight = getPreviewHeight() * -1;
-
-    final currentPixel = event.position.dy;
-
-    double? startPoint = _draggableStartPoint;
-    if (startPoint == null) return;
-
-    double diff = currentPixel - startPoint;
-    diff = diff < 0 ? 0 : diff;
-    double pixel = diff + previewHeight;
-
-    pixel = pixel < previewHeight ? previewHeight : (pixel > 0 ? 0 : pixel);
-
-    _setMakeAnimatedPosition = false;
-    _setCurrentTopHidePreviewPosition = pixel;
-  }
-
-  void handleMiddleBarTapEnd(PointerUpEvent event) {
-    final previewHeight = getPreviewHeight();
-    final currentPixel = currentTopHidePreviewPosition.abs();
-
-    currentPixel > previewHeight / 1.2 ? disappearPreview() : appearPreview();
-  }
-
-  void detectMiddleBarPosition(GlobalKey key) {
-    final RenderBox? renderBox = key.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      final Offset position = renderBox.localToGlobal(Offset.zero);
-      _draggableStartPoint = position.dy;
-    }
-  }
-
   int _currentPage = 0;
   Future<void> _scrollMediaListener() async {
     final max = scrollController.position.maxScrollExtent;
@@ -178,7 +194,7 @@ class MediaPreviewViewModel extends BaseCustomState {
     value.removeWhere((element) => element == null);
     _addAllMedia = value;
 
-    if (nextLoadedPage == 1) selectedMedia = value.firstOrNull;
+    if (nextLoadedPage == 1) addSingleSelectedMedia = value.firstOrNull;
   }
 
   Future<bool> _requestPermission() async {
