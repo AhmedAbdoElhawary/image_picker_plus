@@ -42,5 +42,7 @@ class StringsManager {
   static const String processing = 'Processing...';
   static const String done = 'Done';
   static const String apply = 'Apply';
+  static const String recent = 'Recent';
+  static const String next = 'Next';
 
 }
