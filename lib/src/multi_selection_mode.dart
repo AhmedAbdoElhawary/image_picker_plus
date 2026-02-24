@@ -9,12 +9,12 @@ class MultiSelectionMode extends StatelessWidget {
 
   final File image;
   const MultiSelectionMode({
-    Key? key,
+    super.key,
     required this.image,
     required this.imageSelected,
     required this.multiSelectedImage,
     required this.multiSelectionMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +30,7 @@ class MultiSelectionMode extends StatelessWidget {
               height: 25,
               width: 25,
               decoration: BoxDecoration(
-                color: imageSelected
-                    ? Colors.blue
-                    : const Color.fromARGB(115, 222, 222, 222),
+                color: imageSelected ? Colors.blue : const Color.fromARGB(115, 222, 222, 222),
                 border: Border.all(
                   color: Colors.white,
                 ),

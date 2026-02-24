@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RecordFadeAnimation extends StatefulWidget {
-  const RecordFadeAnimation({Key? key, required this.child}) : super(key: key);
+  const RecordFadeAnimation({super.key, required this.child});
 
   final Widget child;
 

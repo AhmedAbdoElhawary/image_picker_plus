@@ -30,7 +30,7 @@ class ImagesViewPage extends StatefulWidget {
   final bool showImagePreview;
   final SliverGridDelegateWithFixedCrossAxisCount gridDelegate;
   const ImagesViewPage({
-    Key? key,
+    super.key,
     required this.multiSelectedImages,
     required this.multiSelectionMode,
     required this.clearMultiImages,
@@ -46,7 +46,7 @@ class ImagesViewPage extends StatefulWidget {
     required this.gridDelegate,
     required this.maximumSelection,
     this.callbackFunction,
-  }) : super(key: key);
+  });
 
   @override
   State<ImagesViewPage> createState() => _ImagesViewPageState();
@@ -123,7 +123,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     return false;
   }
 
-  _fetchNewMedia({required int currentPageValue}) async {
+  Future<void> _fetchNewMedia({required int currentPageValue}) async {
     lastPage.value = currentPageValue;
     PermissionState result = await PhotoManager.requestPermissionExtend();
     if (result.isAuth) {
@@ -140,8 +140,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
         ],
       );
 
-      List<AssetPathEntity> albums =
-          await PhotoManager.getAssetPathList(
+      List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
         onlyAll: true,
         type: type,
         filterOption: filterOptionGroup,
@@ -402,12 +401,13 @@ class _ImagesViewPageState extends State<ImagesViewPage>
                 multiSelectionMode: true,
                 aspectRatio: aspect,
               );
-              if (!mounted) return;
+              final ctx = context;
+              if (!ctx.mounted) return;
 
               if (widget.callbackFunction != null) {
                 await widget.callbackFunction!(details);
               } else {
-                Navigator.of(context).maybePop(details);
+                Navigator.of(ctx).maybePop(details);
               }
             }
           } else {
@@ -432,12 +432,13 @@ class _ImagesViewPageState extends State<ImagesViewPage>
               aspectRatio: aspect,
               selectedFiles: [selectedByte],
             );
-            if (!mounted) return;
+            final ctx = context;
+            if (!ctx.mounted) return;
 
             if (widget.callbackFunction != null) {
               await widget.callbackFunction!(details);
             } else {
-              Navigator.of(context).maybePop(details);
+              Navigator.of(ctx).maybePop(details);
             }
           }
         },
@@ -546,7 +547,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
     );
   }
 
-  onTapImage(File image, List<File> selectedImagesValue, int index) {
+  void onTapImage(File image, List<File> selectedImagesValue, int index) {
     setState(() {
       if (widget.multiSelectionMode.value) {
         bool close = selectionImageCheck(image, selectedImagesValue, index);

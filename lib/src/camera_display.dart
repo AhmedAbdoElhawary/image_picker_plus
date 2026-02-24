@@ -27,7 +27,7 @@ class CustomCameraDisplay extends StatefulWidget {
   final AsyncValueSetter<SelectedImagesDetails>? callbackFunction;
 
   const CustomCameraDisplay({
-    Key? key,
+    super.key,
     required this.appTheme,
     required this.tapsNames,
     required this.selectedCameraImage,
@@ -39,7 +39,7 @@ class CustomCameraDisplay extends StatefulWidget {
     required this.clearVideoRecord,
     required this.moveToVideoScreen,
     required this.callbackFunction,
-  }) : super(key: key);
+  });
 
   @override
   CustomCameraDisplayState createState() => CustomCameraDisplayState();
@@ -351,7 +351,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  onPress() async {
+  Future<void> onPress() async {
     try {
       if (!widget.selectedVideo) {
         final image = await controller.takePicture();
@@ -370,7 +370,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     }
   }
 
-  onLongTap() {
+  void onLongTap() {
     controller.startVideoRecording();
     widget.moveToVideoScreen();
     setState(() {
@@ -378,7 +378,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     });
   }
 
-  onLongTapUp() async {
+  Future<void> onLongTapUp() async {
     setState(() {
       startVideoCount.value = false;
       widget.replacingTabBar(true);

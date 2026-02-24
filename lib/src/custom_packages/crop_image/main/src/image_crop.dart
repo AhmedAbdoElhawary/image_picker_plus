@@ -1,4 +1,4 @@
-part of image_crop;
+part of '../image_crop.dart';
 
 class ImageOptions {
   final int width;

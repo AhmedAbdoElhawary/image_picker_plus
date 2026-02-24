@@ -25,7 +25,7 @@ class CropImageView extends StatefulWidget {
   final double? topPosition;
 
   const CropImageView({
-    Key? key,
+    super.key,
     required this.indexOfSelectedImages,
     required this.cropKey,
     required this.multiSelectionMode,
@@ -39,7 +39,7 @@ class CropImageView extends StatefulWidget {
     required this.noDuration,
     required this.whiteColor,
     this.topPosition,
-  }) : super(key: key);
+  });
 
   @override
   State<CropImageView> createState() => _CropImageViewState();
