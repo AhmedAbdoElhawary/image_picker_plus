@@ -97,8 +97,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     } catch (e) {
       allPermissionsAccessed = false;
       // it will already show failed message
-      await PhotoManager.cancelAllRequest().catchError((e){});
-
+      await PhotoManager.cancelAllRequest().catchError((e) {});
     }
     setState(() {});
   }
@@ -155,7 +154,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   ),
                 )
               ],
-              buildFlashIcons(),
+              buildHelperIcons(),
               buildPickImageContainer(whiteColor, context),
             ],
           ),
@@ -208,29 +207,98 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  Align buildFlashIcons() {
+  Widget buildHelperIcons() {
+    return PositionedDirectional(
+      end: 0,
+      bottom: 270,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          buildFlashIcon(),
+          buildRearIcons(),
+        ],
+      ),
+    );
+  }
+
+  IconButton buildFlashIcon() {
+    return IconButton(
+      onPressed: () {
+        setState(() {
+          currentFlashMode = currentFlashMode == Flash.off
+              ? Flash.auto
+              : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
+        });
+        currentFlashMode == Flash.on
+            ? controller?.setFlashMode(FlashMode.torch)
+            : currentFlashMode == Flash.off
+                ? controller?.setFlashMode(FlashMode.off)
+                : controller?.setFlashMode(FlashMode.auto);
+      },
+      icon: Icon(
+          currentFlashMode == Flash.on
+              ? Icons.flash_on_rounded
+              : (currentFlashMode == Flash.auto ? Icons.flash_auto_rounded : Icons.flash_off_rounded),
+          color: Colors.white),
+    );
+  }
+
+  Align buildRearIcons() {
     return Align(
       alignment: Alignment.centerRight,
       child: IconButton(
-        onPressed: () {
-          setState(() {
-            currentFlashMode = currentFlashMode == Flash.off
-                ? Flash.auto
-                : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
-          });
-          currentFlashMode == Flash.on
-              ? controller?.setFlashMode(FlashMode.torch)
-              : currentFlashMode == Flash.off
-                  ? controller?.setFlashMode(FlashMode.off)
-                  : controller?.setFlashMode(FlashMode.auto);
-        },
-        icon: Icon(
-            currentFlashMode == Flash.on
-                ? Icons.flash_on_rounded
-                : (currentFlashMode == Flash.auto ? Icons.flash_auto_rounded : Icons.flash_off_rounded),
-            color: Colors.white),
+        onPressed: _toggleCamera,
+        icon: Icon(Icons.rotate_right_rounded, color: Colors.white),
       ),
     );
+  }
+
+  Future<void> _toggleCamera() async {
+    final cams = cameras;
+    final c = controller;
+    if (cams == null || c == null) return;
+
+    if (c.value.isRecordingVideo) {
+      if (kDebugMode) {
+        print('Camera toggle ignored: recording in progress');
+      }
+      return;
+    }
+
+    CameraDescription current = c.description;
+    CameraDescription? next;
+
+    CameraLensDirection opposite =
+        current.lensDirection == CameraLensDirection.front
+            ? CameraLensDirection.back
+            : CameraLensDirection.front;
+
+    next = cams.firstWhere(
+      (cam) => cam.lensDirection == opposite,
+      orElse: () {
+        return cams.firstWhere(
+          (cam) => cam.name != current.name,
+          orElse: () => current,
+        );
+      },
+    );
+
+    if (identical(next, current)) {
+      if (kDebugMode) {
+        print('Camera toggle: no alternative camera found');
+      }
+      return;
+    }
+
+    try {
+      await c.setDescription(next);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Camera toggle error: $e');
+      }
+    }
   }
 
   CustomCrop buildCrop(File selectedImage) {
@@ -372,12 +440,22 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     }
   }
 
-  void onLongTap() {
-    controller?.startVideoRecording();
-    widget.moveToVideoScreen();
-    setState(() {
-      startVideoCount.value = true;
-    });
+  Future<void> onLongTap() async {
+    final c = controller;
+    if (c == null) return;
+
+    if (c.value.isRecordingVideo) return;
+
+    try {
+      await c.prepareForVideoRecording();
+      await c.startVideoRecording();
+      widget.moveToVideoScreen();
+      setState(() {
+        startVideoCount.value = true;
+      });
+    } catch (e) {
+      if (kDebugMode) print('startVideoRecording error: $e');
+    }
   }
 
   Future<void> onLongTapUp() async {
@@ -385,9 +463,30 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       startVideoCount.value = false;
       widget.replacingTabBar(true);
     });
-    XFile? video = await controller?.stopVideoRecording();
+    final XFile? video = await safeStopRecording();
     if (video == null) return;
     videoRecordFile = File(video.path);
+  }
+
+  Future<XFile?> safeStopRecording() async {
+    final c = controller;
+    if (c == null) return null;
+
+    try {
+      if (kDebugMode) {
+        print('safeStopRecording: starting stopVideoRecording, isRecording=${c.value.isRecordingVideo}');
+      }
+
+      final XFile video = await c.stopVideoRecording();
+
+      if (kDebugMode) {
+        print('safeStopRecording: stopVideoRecording completed, path=${video.path}');
+      }
+      return video;
+    } catch (e) {
+      if (kDebugMode) print('stopVideoRecording error: $e');
+      return null;
+    }
   }
 
   RecordFadeAnimation buildFadeAnimation() {
