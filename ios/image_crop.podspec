@@ -2,11 +2,11 @@
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html
 #
 Pod::Spec.new do |s|
-  s.name             = 'image_crop'
+  s.name             = 'image_picker_plus'
   s.version          = '0.0.1'
-  s.summary          = 'A flutter plugin to crop image on iOS and Android.'
+  s.summary          = 'A flutter plugin to pick image on iOS and Android.'
   s.description      = <<-DESC
-A flutter plugin to crop image on iOS and Android.
+A flutter plugin to pick image on iOS and Android.
                        DESC
   s.homepage         = 'http://example.com'
   s.license          = { :file => '../LICENSE' }
