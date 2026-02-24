@@ -52,7 +52,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   bool allPermissionsAccessed = true;
 
   List<CameraDescription>? cameras;
-  late CameraController controller;
+  CameraController? controller;
 
   final cropKey = GlobalKey<CustomCropState>();
 
@@ -64,7 +64,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   @override
   void dispose() {
     startVideoCount.dispose();
-    controller.dispose();
+    controller?.dispose();
     super.dispose();
   }
 
@@ -81,6 +81,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       PermissionState state = await PhotoManager.requestPermissionExtend();
       if (!state.hasAccess || !state.isAuth) {
         allPermissionsAccessed = false;
+        await PhotoManager.cancelAllRequest();
         return;
       }
       allPermissionsAccessed = true;
@@ -91,10 +92,13 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
         ResolutionPreset.high,
         enableAudio: true,
       );
-      await controller.initialize();
+      await controller?.initialize();
       initializeDone = true;
     } catch (e) {
       allPermissionsAccessed = false;
+      // it will already show failed message
+      await PhotoManager.cancelAllRequest().catchError((e){});
+
     }
     setState(() {});
   }
@@ -103,9 +107,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Widget build(BuildContext context) {
     return Material(
       color: widget.appTheme.primaryColor,
-      child: allPermissionsAccessed
-          ? (initializeDone ? buildBody() : loadingProgress())
-          : failedPermissions(),
+      child:
+          allPermissionsAccessed ? (initializeDone ? buildBody() : loadingProgress()) : failedPermissions(),
     );
   }
 
@@ -139,7 +142,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
               if (selectedImage == null) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: CameraPreview(controller),
+                  child: controller != null ? CameraPreview(controller!) : const SizedBox.shrink(),
                 ),
               ] else ...[
                 Align(
@@ -216,17 +219,15 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                 : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
           });
           currentFlashMode == Flash.on
-              ? controller.setFlashMode(FlashMode.torch)
+              ? controller?.setFlashMode(FlashMode.torch)
               : currentFlashMode == Flash.off
-                  ? controller.setFlashMode(FlashMode.off)
-                  : controller.setFlashMode(FlashMode.auto);
+                  ? controller?.setFlashMode(FlashMode.off)
+                  : controller?.setFlashMode(FlashMode.auto);
         },
         icon: Icon(
             currentFlashMode == Flash.on
                 ? Icons.flash_on_rounded
-                : (currentFlashMode == Flash.auto
-                    ? Icons.flash_auto_rounded
-                    : Icons.flash_off_rounded),
+                : (currentFlashMode == Flash.auto ? Icons.flash_auto_rounded : Icons.flash_off_rounded),
             color: Colors.white),
       ),
     );
@@ -262,8 +263,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
           duration: const Duration(seconds: 1),
           switchInCurve: Curves.easeIn,
           child: IconButton(
-            icon: const Icon(Icons.arrow_forward_rounded,
-                color: Colors.blue, size: 30),
+            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.blue, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
                 Uint8List byte = await videoRecordFile!.readAsBytes();
@@ -354,7 +354,9 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Future<void> onPress() async {
     try {
       if (!widget.selectedVideo) {
-        final image = await controller.takePicture();
+        final image = await controller?.takePicture();
+        if (image == null) return;
+
         File selectedImage = File(image.path);
         setState(() {
           widget.selectedCameraImage.value = selectedImage;
@@ -371,7 +373,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   }
 
   void onLongTap() {
-    controller.startVideoRecording();
+    controller?.startVideoRecording();
     widget.moveToVideoScreen();
     setState(() {
       startVideoCount.value = true;
@@ -383,7 +385,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       startVideoCount.value = false;
       widget.replacingTabBar(true);
     });
-    XFile video = await controller.stopVideoRecording();
+    XFile? video = await controller?.stopVideoRecording();
+    if (video == null) return;
     videoRecordFile = File(video.path);
   }
 

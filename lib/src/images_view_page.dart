@@ -157,6 +157,15 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       List<FutureBuilder<Uint8List?>> temp = [];
       List<File?> imageTemp = [];
 
+      if (media.isEmpty) {
+        if (currentPageValue == 0) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => setState(() => noImages = true),
+          );
+        }
+        return;
+      }
+
       for (int i = 0; i < media.length; i++) {
         FutureBuilder<Uint8List?> gridViewImage =
             await getImageGallery(media, i);
@@ -166,7 +175,9 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       }
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
-      selectedImage.value = allImages.value[0];
+      if (allImages.value.isNotEmpty) {
+        selectedImage.value = allImages.value[0];
+      }
       currentPage.value++;
       isImagesReady.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
