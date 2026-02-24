@@ -131,8 +131,21 @@ class _ImagesViewPageState extends State<ImagesViewPage>
           ? RequestType.common
           : (widget.showInternalImages ? RequestType.image : RequestType.video);
 
+      final FilterOptionGroup filterOptionGroup = FilterOptionGroup(
+        orders: const [
+          OrderOption(
+            type: OrderOptionType.createDate,
+            asc: false,
+          ),
+        ],
+      );
+
       List<AssetPathEntity> albums =
-          await PhotoManager.getAssetPathList(onlyAll: true, type: type);
+          await PhotoManager.getAssetPathList(
+        onlyAll: true,
+        type: type,
+        filterOption: filterOptionGroup,
+      );
       if (albums.isEmpty) {
         WidgetsBinding.instance
             .addPostFrameCallback((_) => setState(() => noImages = true));
