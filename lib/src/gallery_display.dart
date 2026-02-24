@@ -67,7 +67,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
     super.initState();
   }
 
-  _initializeVariables() {
+  void _initializeVariables() {
     imagePickerDisplay =
         widget.galleryDisplaySettings ?? GalleryDisplaySettings();
     appTheme = imagePickerDisplay.appTheme ?? AppTheme();
@@ -186,11 +186,11 @@ class CustomImagePickerState extends State<CustomImagePicker>
     );
   }
 
-  replacingDeleteWidget(bool showDeleteText) {
+  void replacingDeleteWidget(bool showDeleteText) {
     this.showDeleteText.value = showDeleteText;
   }
 
-  moveToVideo() {
+  void moveToVideo() {
     setState(() {
       selectedPage.value = SelectedPage.right;
       selectedVideo.value = true;
@@ -395,7 +395,7 @@ class CustomImagePickerState extends State<CustomImagePicker>
     );
   }
 
-  centerPage({required int numPage, required SelectedPage selectedPage}) {
+  void centerPage({required int numPage, required SelectedPage selectedPage}) {
     if (!enableVideo && numPage == 1) selectedPage = SelectedPage.right;
 
     setState(() {

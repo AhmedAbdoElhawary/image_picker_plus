@@ -1,4 +1,4 @@
-part of image_crop;
+part of '../image_crop.dart';
 
 const _kCropGridColumnCount = 3;
 const _kCropGridRowCount = 3;
@@ -22,36 +22,34 @@ class Crop extends StatefulWidget {
   final ImageErrorListener? onImageError;
 
   const Crop({
-    Key? key,
+    super.key,
     required this.image,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
-  }) : super(key: key);
+  });
 
   Crop.file(
     File file, {
-    Key? key,
+    super.key,
     double scale = 1.0,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
-  })  : image = FileImage(file, scale: scale),
-        super(key: key);
+  }) : image = FileImage(file, scale: scale);
 
   Crop.asset(
     String assetName, {
-    Key? key,
+    super.key,
     AssetBundle? bundle,
     String? package,
     this.aspectRatio,
     this.maximumScale = 2.0,
     this.alwaysShowGrid = false,
     this.onImageError,
-  })  : image = AssetImage(assetName, bundle: bundle, package: package),
-        super(key: key);
+  }) : image = AssetImage(assetName, bundle: bundle, package: package);
 
   @override
   State<StatefulWidget> createState() => CropState();
@@ -762,7 +760,7 @@ class _CropPainter extends CustomPainter {
 
     final paint = Paint()
       ..isAntiAlias = false
-      ..color = _kCropGridColor.withOpacity(_kCropGridColor.opacity * active)
+      ..color = _kCropGridColor.withValues(alpha: _kCropGridColor.a * active)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 

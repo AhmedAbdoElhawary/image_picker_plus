@@ -8,12 +8,12 @@ class RecordCount extends StatefulWidget {
   final AppTheme appTheme;
 
   const RecordCount({
-    Key? key,
+    super.key,
     required this.appTheme,
     required this.startVideoCount,
     required this.makeProgressRed,
     required this.clearVideoRecord,
-  }) : super(key: key);
+  });
 
   @override
   RecordCountState createState() => RecordCountState();

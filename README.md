@@ -49,7 +49,6 @@ Add two rows to the `ios/Runner/Info.plist`:
 
 * one with the key `Privacy - Photo Usage Description` and a usage description.
 * and one with the key `Privacy - Camera Usage Description` and a usage description.
-* and one with the key `Privacy - Microphone Usage Description` and a usage description.
 
 If editing `Info.plist` as text, add:
 
@@ -58,8 +57,6 @@ If editing `Info.plist` as text, add:
 <string>your usage description here</string>
 <key>NSCameraUsageDescription</key>
 <string>your usage description here</string>
-<key>NSMicrophoneUsageDescription</key>
-<string>your usage description here</string>
 ```
 
 ## Android
@@ -67,7 +64,7 @@ If editing `Info.plist` as text, add:
 * Change the minimum Android sdk version to 21 (or higher), and compile sdk to 31 (or higher) in your `android/app/build.gradle` file.
 
 ```java
-compileSdkVersion 33
+compileSdkVersion 34
         minSdkVersion 21
 ```
 
@@ -83,8 +80,6 @@ compileSdkVersion 33
 
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE>" />
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     </manifest>
 ````
 

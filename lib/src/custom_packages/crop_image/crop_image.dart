@@ -26,7 +26,7 @@ class CustomCrop extends StatefulWidget {
   final bool isThatImage;
 
   const CustomCrop({
-    Key? key,
+    super.key,
     this.aspectRatio,
     this.paintColor,
     this.scrollCustomList,
@@ -35,7 +35,7 @@ class CustomCrop extends StatefulWidget {
     this.isThatImage = true,
     this.onImageError,
     required this.image,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => CustomCropState();
@@ -588,7 +588,7 @@ class _CropPainter extends CustomPainter {
 
     final paint = Paint()
       ..isAntiAlias = false
-      ..color = _kCropGridColor.withOpacity(_kCropGridColor.opacity * active)
+      ..color = _kCropGridColor.withValues(alpha: _kCropGridColor.a * active)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
@@ -622,7 +622,7 @@ class _CropPainter extends CustomPainter {
 
 class _DisplayVideo extends StatefulWidget {
   final File selectedFile;
-  const _DisplayVideo({Key? key, required this.selectedFile}) : super(key: key);
+  const _DisplayVideo({required this.selectedFile});
 
   @override
   State<_DisplayVideo> createState() => _DisplayVideoState();

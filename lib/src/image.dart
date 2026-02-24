@@ -7,8 +7,7 @@ class MemoryImageDisplay extends StatefulWidget {
   final AppTheme appTheme;
 
   const MemoryImageDisplay(
-      {Key? key, required this.imageBytes, required this.appTheme})
-      : super(key: key);
+      {super.key, required this.imageBytes, required this.appTheme});
 
   @override
   State<MemoryImageDisplay> createState() => _NetworkImageDisplayState();
