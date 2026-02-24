@@ -1,3 +1,6 @@
+## 0.5.10
+* update package code
+
 ## 0.5.9
 * solve camera button bug
 
