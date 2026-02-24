@@ -249,16 +249,56 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     return Align(
       alignment: Alignment.centerRight,
       child: IconButton(
-        onPressed: () {
-          final cameras = this.cameras;
-          if (cameras == null) return;
-
-          final sensor = controller?.description.name;
-          controller?.setDescription(cameras[sensor == "0" ? 1 : 0]);
-        },
+        onPressed: _toggleCamera,
         icon: Icon(Icons.rotate_right_rounded, color: Colors.white),
       ),
     );
+  }
+
+  Future<void> _toggleCamera() async {
+    final cams = cameras;
+    final c = controller;
+    if (cams == null || c == null) return;
+
+    if (c.value.isRecordingVideo) {
+      if (kDebugMode) {
+        print('Camera toggle ignored: recording in progress');
+      }
+      return;
+    }
+
+    CameraDescription current = c.description;
+    CameraDescription? next;
+
+    CameraLensDirection opposite =
+        current.lensDirection == CameraLensDirection.front
+            ? CameraLensDirection.back
+            : CameraLensDirection.front;
+
+    next = cams.firstWhere(
+      (cam) => cam.lensDirection == opposite,
+      orElse: () {
+        return cams.firstWhere(
+          (cam) => cam.name != current.name,
+          orElse: () => current,
+        );
+      },
+    );
+
+    if (identical(next, current)) {
+      if (kDebugMode) {
+        print('Camera toggle: no alternative camera found');
+      }
+      return;
+    }
+
+    try {
+      await c.setDescription(next);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Camera toggle error: $e');
+      }
+    }
   }
 
   CustomCrop buildCrop(File selectedImage) {
