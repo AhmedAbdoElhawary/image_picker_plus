@@ -270,10 +270,9 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     CameraDescription current = c.description;
     CameraDescription? next;
 
-    CameraLensDirection opposite =
-        current.lensDirection == CameraLensDirection.front
-            ? CameraLensDirection.back
-            : CameraLensDirection.front;
+    CameraLensDirection opposite = current.lensDirection == CameraLensDirection.front
+        ? CameraLensDirection.back
+        : CameraLensDirection.front;
 
     next = cams.firstWhere(
       (cam) => cam.lensDirection == opposite,
@@ -331,7 +330,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
           duration: const Duration(seconds: 1),
           switchInCurve: Curves.easeIn,
           child: IconButton(
-            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.blue, size: 30),
+            icon: Icon(Icons.arrow_forward_rounded, color: widget.appTheme.nextArrowIconColor, size: 30),
             onPressed: () async {
               if (videoRecordFile != null) {
                 Uint8List byte = await videoRecordFile!.readAsBytes();
