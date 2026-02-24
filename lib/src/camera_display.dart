@@ -97,8 +97,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     } catch (e) {
       allPermissionsAccessed = false;
       // it will already show failed message
-      await PhotoManager.cancelAllRequest().catchError((e){});
-
+      await PhotoManager.cancelAllRequest().catchError((e) {});
     }
     setState(() {});
   }
@@ -155,7 +154,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
                   ),
                 )
               ],
-              buildFlashIcons(),
+              buildHelperIcons(),
               buildPickImageContainer(whiteColor, context),
             ],
           ),
@@ -208,27 +207,56 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     );
   }
 
-  Align buildFlashIcons() {
+  Widget buildHelperIcons() {
+    return PositionedDirectional(
+      end: 0,
+      bottom: 270,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          buildFlashIcon(),
+          buildRearIcons(),
+        ],
+      ),
+    );
+  }
+
+  IconButton buildFlashIcon() {
+    return IconButton(
+      onPressed: () {
+        setState(() {
+          currentFlashMode = currentFlashMode == Flash.off
+              ? Flash.auto
+              : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
+        });
+        currentFlashMode == Flash.on
+            ? controller?.setFlashMode(FlashMode.torch)
+            : currentFlashMode == Flash.off
+                ? controller?.setFlashMode(FlashMode.off)
+                : controller?.setFlashMode(FlashMode.auto);
+      },
+      icon: Icon(
+          currentFlashMode == Flash.on
+              ? Icons.flash_on_rounded
+              : (currentFlashMode == Flash.auto ? Icons.flash_auto_rounded : Icons.flash_off_rounded),
+          color: Colors.white),
+    );
+  }
+
+  Align buildRearIcons() {
     return Align(
       alignment: Alignment.centerRight,
       child: IconButton(
         onPressed: () {
-          setState(() {
-            currentFlashMode = currentFlashMode == Flash.off
-                ? Flash.auto
-                : (currentFlashMode == Flash.auto ? Flash.on : Flash.off);
-          });
-          currentFlashMode == Flash.on
-              ? controller?.setFlashMode(FlashMode.torch)
-              : currentFlashMode == Flash.off
-                  ? controller?.setFlashMode(FlashMode.off)
-                  : controller?.setFlashMode(FlashMode.auto);
+          final cameras = this.cameras;
+          if (cameras == null) return;
+
+          final sensor = controller?.description.name;
+          controller?.setDescription(cameras[sensor == "0" ? 1 : 0]);
         },
-        icon: Icon(
-            currentFlashMode == Flash.on
-                ? Icons.flash_on_rounded
-                : (currentFlashMode == Flash.auto ? Icons.flash_auto_rounded : Icons.flash_off_rounded),
-            color: Colors.white),
+        icon: Icon(Icons.rotate_right_rounded, color: Colors.white),
       ),
     );
   }
@@ -372,12 +400,22 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
     }
   }
 
-  void onLongTap() {
-    controller?.startVideoRecording();
-    widget.moveToVideoScreen();
-    setState(() {
-      startVideoCount.value = true;
-    });
+  Future<void> onLongTap() async {
+    final c = controller;
+    if (c == null) return;
+
+    if (c.value.isRecordingVideo) return;
+
+    try {
+      await c.prepareForVideoRecording();
+      await c.startVideoRecording();
+      widget.moveToVideoScreen();
+      setState(() {
+        startVideoCount.value = true;
+      });
+    } catch (e) {
+      if (kDebugMode) print('startVideoRecording error: $e');
+    }
   }
 
   Future<void> onLongTapUp() async {
@@ -385,9 +423,30 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       startVideoCount.value = false;
       widget.replacingTabBar(true);
     });
-    XFile? video = await controller?.stopVideoRecording();
+    final XFile? video = await safeStopRecording();
     if (video == null) return;
     videoRecordFile = File(video.path);
+  }
+
+  Future<XFile?> safeStopRecording() async {
+    final c = controller;
+    if (c == null) return null;
+
+    try {
+      if (kDebugMode) {
+        print('safeStopRecording: starting stopVideoRecording, isRecording=${c.value.isRecordingVideo}');
+      }
+
+      final XFile video = await c.stopVideoRecording();
+
+      if (kDebugMode) {
+        print('safeStopRecording: stopVideoRecording completed, path=${video.path}');
+      }
+      return video;
+    } catch (e) {
+      if (kDebugMode) print('stopVideoRecording error: $e');
+      return null;
+    }
   }
 
   RecordFadeAnimation buildFadeAnimation() {
