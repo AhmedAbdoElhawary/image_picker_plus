@@ -79,14 +79,37 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Future<void> _initializeCamera() async {
     try {
       PermissionState state = await PhotoManager.requestPermissionExtend();
-      if (!state.hasAccess || !state.isAuth) {
+      switch (state) {
+        case PermissionState.limited:
+          await PhotoManager.presentLimited();
+          break;
+
+        case PermissionState.denied:
+        case PermissionState.restricted:
+          PhotoManager.openSetting();
+          break;
+
+        default:
+          break;
+      }
+
+      if (state != PermissionState.authorized &&
+          state != PermissionState.limited &&
+          (!state.hasAccess ||
+          !state.isAuth)) {
         allPermissionsAccessed = false;
         await PhotoManager.cancelAllRequest();
         return;
       }
+
       allPermissionsAccessed = true;
       cameras = await availableCameras();
       if (!mounted) return;
+      if (cameras?.isEmpty??true) {
+        debugPrint("There is no any camera founded");
+        return;
+      }
+
       controller = CameraController(
         cameras![0],
         ResolutionPreset.high,
