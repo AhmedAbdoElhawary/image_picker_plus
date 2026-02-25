@@ -1,3 +1,6 @@
+## 0.5.10+1
+* handle limit access for ios
+
 ## 0.5.10
 * update package code
 
