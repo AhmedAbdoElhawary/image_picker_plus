@@ -99,6 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
           /// When you make ImageSource from the camera these settings will be disabled because they belong to the gallery.
           galleryDisplaySettings: GalleryDisplaySettings(
             appTheme: AppTheme(
+              nextArrowIconColor: Colors.white,
               focusColor: Colors.white,
               primaryColor: Colors.black,
             ),
@@ -125,6 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
             appTheme: AppTheme(
               focusColor: Colors.white,
               primaryColor: Colors.black,
+              nextArrowIconColor: Colors.white,
             ),
             cropImage: true,
             showImagePreview: true,
@@ -237,12 +239,13 @@ class _MyHomePageState extends State<MyHomePage> {
             appTheme: AppTheme(
               focusColor: Colors.white,
               primaryColor: Colors.black,
+              nextArrowIconColor: Colors.white,
             ),
           ),
         );
         if (details != null) await displayDetails(details);
       },
-      child: const Text("camera 2"),
+      child: const Text("Camera 2"),
     );
   }
 
