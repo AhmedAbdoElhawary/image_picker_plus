@@ -379,7 +379,8 @@ class CustomReorderableListState extends State<CustomReorderableList> {
       physics: widget.physics,
       shrinkWrap: widget.shrinkWrap,
       anchor: widget.anchor,
-      cacheExtent: widget.cacheExtent,
+      scrollCacheExtent:
+          widget.cacheExtent != null ? ScrollCacheExtent.pixels(widget.cacheExtent!) : null,
       dragStartBehavior: widget.dragStartBehavior,
       keyboardDismissBehavior: widget.keyboardDismissBehavior,
       restorationId: widget.restorationId,

@@ -138,8 +138,6 @@ class EditMediaViewModel extends BaseCustomState {
   }
 
   void updateReorderListView({required int oldIndex, required int newIndex}) {
-    if (oldIndex < newIndex) newIndex -= 1;
-
     final croppedImageItem = _croppedSelectedImage.removeAt(oldIndex);
     _croppedSelectedImage.insert(newIndex, croppedImageItem);
 

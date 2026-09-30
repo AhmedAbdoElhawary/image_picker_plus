@@ -1,6 +1,7 @@
 import 'dart:async' show StreamController;
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/redesign_src/core/custom_screen_adapter/screen_size_extension.dart';
 import 'package:image_picker_plus/redesign_src/core/custom_state_management/state_selector.dart';
@@ -139,10 +140,10 @@ class _BuildImages extends StatelessWidget {
       builder: (context) {
         return ReorderableListView(
           /// to render the list of media to be able to crop it easy
-          cacheExtent: 10000,
+          scrollCacheExtent: const ScrollCacheExtent.pixels(10000),
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          onReorder: (oldIndex, newIndex) =>
+          onReorderItem: (oldIndex, newIndex) =>
               controller.updateReorderListView(oldIndex: oldIndex, newIndex: newIndex),
           proxyDecorator: proxyDecorator,
           footer: controller.allowForAddMoreImages
