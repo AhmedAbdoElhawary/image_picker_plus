@@ -40,16 +40,13 @@ In (image_picker_plus), we solve all those issues and many other features like:-
 
 ## IOS
 
-\* The camera plugin compiles for any version of iOS, but its functionality
-requires iOS 10 or higher. If compiling for iOS 9, make sure to programmatically
-check the version of iOS running on the device before using any camera plugin features.
-The [device_info_plus](https://pub.dev/packages/device_info_plus) plugin, for example, can be used to check the iOS version.
+\* The minimum iOS version is 13.
 
-Add two rows to the `ios/Runner/Info.plist`:
+Add three rows to the `ios/Runner/Info.plist`:
 
-* one with the key `Privacy - Photo Usage Description` and a usage description.
-* and one with the key `Privacy - Camera Usage Description` and a usage description.
-* and one with the key `Privacy - Microphone Usage Description` and a usage description.
+* one with the key `Privacy - Photo Library Usage Description` and a usage description.
+* one with the key `Privacy - Camera Usage Description` and a usage description.
+* and one with the key `Privacy - Microphone Usage Description` and a usage description, it's needed to record video with sound.
 
 If editing `Info.plist` as text, add:
 
@@ -64,14 +61,14 @@ If editing `Info.plist` as text, add:
 
 ## Android
 
-* Change the minimum Android sdk version to 21 (or higher), and compile sdk to 31 (or higher) in your `android/app/build.gradle` file.
+* The minimum Android sdk version is 24, and compile sdk is Flutter's default. A new Flutter project already has this in `android/app/build.gradle.kts`:
 
-```java
-compileSdkVersion 33
-        minSdkVersion 21
+```kotlin
+compileSdk = flutter.compileSdkVersion
+minSdk = flutter.minSdkVersion
 ```
 
-* Add this permission into your AndroidManifest.xml
+* Add these permissions into your AndroidManifest.xml
 ````xml
 <manifest>
     ...
@@ -81,10 +78,10 @@ compileSdkVersion 33
 </application>
 <uses-permission android:name="android.permission.INTERNET"/>
 
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE>" />
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     </manifest>
 ````
 

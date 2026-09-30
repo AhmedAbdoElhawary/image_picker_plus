@@ -17,9 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Custom gallery display',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: const MyHomePage(),
     );
   }
@@ -38,18 +36,19 @@ class _MyHomePageState extends State<MyHomePage> {
       color: Colors.white,
       child: SafeArea(
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              normal1(context),
-              normal2(context),
-              normal3(context),
-              preview1(context),
-              preview2(context),
-              preview3(context),
-              camera1(context),
-              camera2(context),
-            ]),
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            normal1(context),
+            normal2(context),
+            normal3(context),
+            preview1(context),
+            preview2(context),
+            preview3(context),
+            camera1(context),
+            camera2(context),
+          ],
+        ),
       ),
     );
   }
@@ -59,7 +58,9 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () async {
         ImagePickerPlus picker = ImagePickerPlus(context);
 
-        SelectedImagesDetails? details = await picker.pickImage(source: ImageSource.gallery);
+        SelectedImagesDetails? details = await picker.pickImage(
+          source: ImageSource.gallery,
+        );
         if (details != null) await displayDetails(details);
       },
       child: const Text("Normal 1"),
@@ -97,7 +98,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
           /// When you make ImageSource from the camera these settings will be disabled because they belong to the gallery.
           galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme: AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            appTheme: AppTheme(
+              nextArrowIconColor: Colors.white,
+              focusColor: Colors.white,
+              primaryColor: Colors.black,
+            ),
             gridDelegate: _sliverGrid3Delegate(),
           ),
         );
@@ -118,7 +123,11 @@ class _MyHomePageState extends State<MyHomePage> {
           multiSelection: true,
           galleryDisplaySettings: GalleryDisplaySettings(
             tabsTexts: _tabsTexts(),
-            appTheme: AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            appTheme: AppTheme(
+              focusColor: Colors.white,
+              primaryColor: Colors.black,
+              nextArrowIconColor: Colors.white,
+            ),
             cropImage: true,
             showImagePreview: true,
           ),
@@ -187,7 +196,10 @@ class _MyHomePageState extends State<MyHomePage> {
           /// On long tap, it will be available.
           multiSelection: true,
 
-          galleryDisplaySettings: GalleryDisplaySettings(cropImage: true, showImagePreview: true),
+          galleryDisplaySettings: GalleryDisplaySettings(
+            cropImage: true,
+            showImagePreview: true,
+          ),
         );
         if (details != null) await displayDetails(details);
       },
@@ -205,9 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
           /// On long tap, it will be available.
           multiSelection: true,
 
-          galleryDisplaySettings: GalleryDisplaySettings(
-            cropImage: true,
-          ),
+          galleryDisplaySettings: GalleryDisplaySettings(cropImage: true),
         );
         if (details != null) await displayDetails(details);
       },
@@ -226,12 +236,16 @@ class _MyHomePageState extends State<MyHomePage> {
           multiVideos: true,
 
           galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme: AppTheme(focusColor: Colors.white, primaryColor: Colors.black),
+            appTheme: AppTheme(
+              focusColor: Colors.white,
+              primaryColor: Colors.black,
+              nextArrowIconColor: Colors.white,
+            ),
           ),
         );
         if (details != null) await displayDetails(details);
       },
-      child: const Text("camera 2"),
+      child: const Text("Camera 2"),
     );
   }
 
@@ -240,7 +254,10 @@ class _MyHomePageState extends State<MyHomePage> {
       CupertinoPageRoute(
         builder: (context) {
           return DisplayImages(
-              selectedBytes: details.selectedFiles, details: details, aspectRatio: details.aspectRatio);
+            selectedBytes: details.selectedFiles,
+            details: details,
+            aspectRatio: details.aspectRatio,
+          );
         },
       ),
     );
@@ -343,13 +360,11 @@ class _DisplayVideoState extends State<_DisplayVideo> {
                     size: 45,
                   ),
                 ),
-              )
+              ),
             ],
           );
         } else {
-          return const Center(
-            child: CircularProgressIndicator(strokeWidth: 1),
-          );
+          return const Center(child: CircularProgressIndicator(strokeWidth: 1));
         }
       },
     );

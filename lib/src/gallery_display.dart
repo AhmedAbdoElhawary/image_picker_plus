@@ -7,14 +7,11 @@ import 'package:image_picker_plus/src/utilities/enum.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-/// todo: refactoring this
-
 class CustomImagePicker extends StatefulWidget {
   final ImageSource source;
   final bool multiSelection;
   final GalleryDisplaySettings? galleryDisplaySettings;
   final PickerSource pickerSource;
-
   const CustomImagePicker({
     required this.source,
     required this.multiSelection,
@@ -27,7 +24,8 @@ class CustomImagePicker extends StatefulWidget {
   CustomImagePickerState createState() => CustomImagePickerState();
 }
 
-class CustomImagePickerState extends State<CustomImagePicker> with TickerProviderStateMixin {
+class CustomImagePickerState extends State<CustomImagePicker>
+    with TickerProviderStateMixin {
   final pageController = ValueNotifier(PageController());
   final clearVideoRecord = ValueNotifier(false);
   final redDeleteText = ValueNotifier(false);
@@ -69,14 +67,16 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
     super.initState();
   }
 
-  _initializeVariables() {
-    imagePickerDisplay = widget.galleryDisplaySettings ?? GalleryDisplaySettings();
+  void _initializeVariables() {
+    imagePickerDisplay =
+        widget.galleryDisplaySettings ?? GalleryDisplaySettings();
     appTheme = imagePickerDisplay.appTheme ?? AppTheme();
     tapsNames = imagePickerDisplay.tabsTexts ?? TabsTexts();
     callbackFunction = imagePickerDisplay.callbackFunction;
     cropImage = imagePickerDisplay.cropImage;
     maximumSelection = imagePickerDisplay.maximumSelection;
-    limitingText = tapsNames.limitingText ?? "The limit is $maximumSelection photos or videos.";
+    limitingText = tapsNames.limitingText ??
+        "The limit is $maximumSelection photos or videos.";
 
     showImagePreview = cropImage || imagePickerDisplay.showImagePreview;
     gridDelegate = imagePickerDisplay.gridDelegate;
@@ -90,7 +90,8 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
     enableCamera = showInternalImages && notGallery;
     enableVideo = showInternalVideos && notGallery;
     cameraAndVideoEnabled = enableCamera && enableVideo;
-    cameraVideoOnlyEnabled = cameraAndVideoEnabled && widget.source == ImageSource.camera;
+    cameraVideoOnlyEnabled =
+        cameraAndVideoEnabled && widget.source == ImageSource.camera;
     showAllTabs = cameraAndVideoEnabled && noGallery;
     whiteColor = appTheme.primaryColor;
     blackColor = appTheme.focusColor;
@@ -139,10 +140,15 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (isThatDeleteText) Icon(Icons.arrow_back_ios_rounded, color: deleteColor, size: 15),
+              if (isThatDeleteText)
+                Icon(Icons.arrow_back_ios_rounded,
+                    color: deleteColor, size: 15),
               Text(
                 isThatDeleteText ? tapsNames.deletingText : limitingText,
-                style: TextStyle(fontSize: 14, color: deleteColor, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: deleteColor,
+                    fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -168,7 +174,10 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
             children: [
               Text(
                 tapsNames.clearImagesText,
-                style: TextStyle(fontSize: 14, color: appTheme.focusColor, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: appTheme.focusColor,
+                    fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -177,11 +186,11 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
     );
   }
 
-  replacingDeleteWidget(bool showDeleteText) {
+  void replacingDeleteWidget(bool showDeleteText) {
     this.showDeleteText.value = showDeleteText;
   }
 
-  moveToVideo() {
+  void moveToVideo() {
     setState(() {
       selectedPage.value = SelectedPage.right;
       selectedVideo.value = true;
@@ -189,7 +198,8 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
   }
 
   DefaultTabController tabController() {
-    return DefaultTabController(length: 2, child: Material(color: whiteColor, child: safeArea()));
+    return DefaultTabController(
+        length: 2, child: Material(color: whiteColor, child: safeArea()));
   }
 
   SafeArea safeArea() {
@@ -200,7 +210,8 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
           Flexible(
             child: ValueListenableBuilder(
               valueListenable: pageController,
-              builder: (context, PageController pageControllerValue, child) => PageView(
+              builder: (context, PageController pageControllerValue, child) =>
+                  PageView(
                 controller: pageControllerValue,
                 dragStartBehavior: DragStartBehavior.start,
                 physics: const NeverScrollableScrollPhysics(),
@@ -229,7 +240,9 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
                     );
                   }
                 } else {
-                  return multiSelectionModeValue ? clearSelectedImages() : const SizedBox();
+                  return multiSelectionModeValue
+                      ? clearSelectedImages()
+                      : const SizedBox();
                 }
               },
             )
@@ -246,7 +259,6 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
       valueListenable: selectedVideo,
       builder: (context, bool selectedVideoValue, child) => CustomCameraDisplay(
         appTheme: appTheme,
-        cropEditImageType: imagePickerDisplay.cropEditImageType,
         selectedCameraImage: selectedCameraImage,
         tapsNames: tapsNames,
         enableCamera: enableCamera,
@@ -271,7 +283,6 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
   ImagesViewPage imagesViewPage() {
     return ImagesViewPage(
       appTheme: appTheme,
-      cropEditImageType: imagePickerDisplay.cropEditImageType,
       clearMultiImages: clearMultiImages,
       callbackFunction: callbackFunction,
       gridDelegate: gridDelegate,
@@ -295,7 +306,8 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
       builder: (context, bool showDeleteTextValue, child) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeInOutQuart,
-        child: widget.source == ImageSource.both || widget.pickerSource == PickerSource.both
+        child: widget.source == ImageSource.both ||
+                widget.pickerSource == PickerSource.both
             ? (showDeleteTextValue ? tapBarMessage(true) : tabBar())
             : const SizedBox(),
       ),
@@ -309,7 +321,8 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
     return ValueListenableBuilder(
       valueListenable: selectedPage,
       builder: (context, SelectedPage selectedPageValue, child) {
-        Color photoColor = selectedPageValue == SelectedPage.center ? blackColor : Colors.grey;
+        Color photoColor =
+            selectedPageValue == SelectedPage.center ? blackColor : Colors.grey;
         return Stack(
           alignment: Alignment.bottomLeft,
           children: [
@@ -317,7 +330,7 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
               children: [
                 if (noGallery) galleryTabBar(widthOfTab, selectedPageValue),
                 if (enableCamera) photoTabBar(widthOfTab, photoColor),
-                if (enableVideo) _VideoTabBar(this, widthOfTab),
+                if (enableVideo) videoTabBar(widthOfTab),
               ],
             ),
             AnimatedPositioned(
@@ -336,7 +349,8 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
     );
   }
 
-  GestureDetector galleryTabBar(double widthOfTab, SelectedPage selectedPageValue) {
+  GestureDetector galleryTabBar(
+      double widthOfTab, SelectedPage selectedPageValue) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -350,7 +364,9 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
           child: Text(
             tapsNames.galleryText,
             style: TextStyle(
-                color: selectedPageValue == SelectedPage.left ? blackColor : Colors.grey,
+                color: selectedPageValue == SelectedPage.left
+                    ? blackColor
+                    : Colors.grey,
                 fontSize: 14,
                 fontWeight: FontWeight.w500),
           ),
@@ -363,54 +379,58 @@ class CustomImagePickerState extends State<CustomImagePicker> with TickerProvide
     return GestureDetector(
       onTap: () => centerPage(
           numPage: cameraVideoOnlyEnabled ? 0 : 1,
-          selectedPage: cameraVideoOnlyEnabled ? SelectedPage.left : SelectedPage.center),
+          selectedPage:
+              cameraVideoOnlyEnabled ? SelectedPage.left : SelectedPage.center),
       child: SizedBox(
         width: widthOfTab,
         height: 40,
         child: Center(
           child: Text(
             tapsNames.photoText,
-            style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(
+                color: textColor, fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ),
       ),
     );
   }
 
-  centerPage({required int numPage, required SelectedPage selectedPage}) {
+  void centerPage({required int numPage, required SelectedPage selectedPage}) {
     if (!enableVideo && numPage == 1) selectedPage = SelectedPage.right;
 
-    this.selectedPage.value = selectedPage;
-    pageController.value
-        .animateToPage(numPage, duration: const Duration(milliseconds: 400), curve: Curves.easeInOutQuad);
-    selectedVideo.value = false;
+    setState(() {
+      this.selectedPage.value = selectedPage;
+      pageController.value.animateToPage(numPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutQuad);
+      selectedVideo.value = false;
+    });
   }
-}
 
-class _VideoTabBar extends StatelessWidget {
-  const _VideoTabBar(this.state, this.widthOfTab);
-  final CustomImagePickerState state;
-  final double widthOfTab;
-  @override
-  Widget build(BuildContext context) {
+  GestureDetector videoTabBar(double widthOfTab) {
     return GestureDetector(
       onTap: () {
-        state.pageController.value.animateToPage(state.cameraVideoOnlyEnabled ? 0 : 1,
-            duration: const Duration(milliseconds: 400), curve: Curves.easeInOutQuad);
-        state.selectedPage.value = SelectedPage.right;
-        state.selectedVideo.value = true;
+        setState(
+          () {
+            pageController.value.animateToPage(cameraVideoOnlyEnabled ? 0 : 1,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOutQuad);
+            selectedPage.value = SelectedPage.right;
+            selectedVideo.value = true;
+          },
+        );
       },
       child: SizedBox(
         width: widthOfTab,
         height: 40,
         child: ValueListenableBuilder(
-          valueListenable: state.selectedVideo,
+          valueListenable: selectedVideo,
           builder: (context, bool selectedVideoValue, child) => Center(
             child: Text(
-              state.tapsNames.videoText,
+              tapsNames.videoText,
               style: TextStyle(
                   fontSize: 14,
-                  color: selectedVideoValue ? state.blackColor : Colors.grey,
+                  color: selectedVideoValue ? blackColor : Colors.grey,
                   fontWeight: FontWeight.w500),
             ),
           ),

@@ -2,37 +2,46 @@ import 'dart:typed_data';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:flutter/material.dart';
 
-class MemoryImageDisplay extends StatelessWidget {
+class MemoryImageDisplay extends StatefulWidget {
   final Uint8List imageBytes;
   final AppTheme appTheme;
 
-  const MemoryImageDisplay({super.key, required this.imageBytes, required this.appTheme});
+  const MemoryImageDisplay(
+      {super.key, required this.imageBytes, required this.appTheme});
+
+  @override
+  State<MemoryImageDisplay> createState() => _NetworkImageDisplayState();
+}
+
+class _NetworkImageDisplayState extends State<MemoryImageDisplay> {
+  @override
+  void didChangeDependencies() {
+    precacheImage(MemoryImage(widget.imageBytes), context);
+    super.didChangeDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {
-    precacheImage(MemoryImage(imageBytes), context);
+    return buildOctoImage();
+  }
 
+  Widget buildOctoImage() {
     return Container(
       width: double.infinity,
-      color: appTheme.shimmerBaseColor,
+      color: widget.appTheme.shimmerBaseColor,
       child: Image.memory(
-        imageBytes,
-        errorBuilder: (context, url, error) => _ErrorWidget(widget: this),
+        widget.imageBytes,
+        errorBuilder: (context, url, error) => buildError(),
         fit: BoxFit.cover,
         width: double.infinity,
       ),
     );
   }
-}
 
-class _ErrorWidget extends StatelessWidget {
-  const _ErrorWidget({required this.widget});
-
-  final MemoryImageDisplay widget;
-
-  @override
-  Widget build(BuildContext context) {
+  SizedBox buildError() {
     return SizedBox(
-        width: double.infinity, child: Icon(Icons.warning_amber_rounded, color: widget.appTheme.focusColor));
+        width: double.infinity,
+        child: Icon(Icons.warning_amber_rounded,
+            color: widget.appTheme.focusColor));
   }
 }
