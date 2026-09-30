@@ -126,7 +126,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Future<void> _fetchNewMedia({required int currentPageValue}) async {
     lastPage.value = currentPageValue;
     PermissionState result = await PhotoManager.requestPermissionExtend();
-    if (result.isAuth) {
+    if (result.hasAccess) {
       RequestType type = widget.showInternalVideos && widget.showInternalImages
           ? RequestType.common
           : (widget.showInternalImages ? RequestType.image : RequestType.video);

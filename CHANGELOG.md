@@ -1,3 +1,10 @@
+## 0.6.0
+* update dependencies (camera 0.12, shimmer 4, video_player 2.14, photo_manager 3.12, image 4.10, image_picker 1.2.3)
+* minimum flutter 3.44 / dart 3.12
+* minimum android sdk 24, ios 13
+* gallery now works with limited photo access
+* update permissions in README (microphone, android 14 selected photos, READ_EXTERNAL_STORAGE for android 12 and below)
+
 ## 0.5.10+1
 * handle limit access for ios
 
