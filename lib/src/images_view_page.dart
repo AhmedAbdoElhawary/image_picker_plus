@@ -175,7 +175,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       }
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
-      if (allImages.value.isNotEmpty) {
+      if (selectedImage.value == null) {
         selectedImage.value = allImages.value.firstOrNull;
       }
       currentPage.value++;
