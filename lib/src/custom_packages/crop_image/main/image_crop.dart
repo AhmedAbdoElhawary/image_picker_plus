@@ -1,4 +1,4 @@
-library image_crop;
+library;
 
 import 'dart:async';
 import 'dart:io';
