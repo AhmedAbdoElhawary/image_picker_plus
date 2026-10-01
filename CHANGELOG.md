@@ -4,6 +4,10 @@
 * minimum android sdk 24, ios 13
 * gallery now works with limited photo access
 * update permissions in README (microphone, android 14 selected photos, READ_EXTERNAL_STORAGE for android 12 and below)
+* show a message with close button when there is no camera, instead of loading forever
+* add close button when there is no images
+* fix blank preview sometimes when opening the gallery
+* fix preview going back to the first image when more images load
 
 ## 0.5.10+1
 * handle limit access for ios
