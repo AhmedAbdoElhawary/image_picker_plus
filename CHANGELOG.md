@@ -1,3 +1,16 @@
+## 1.0.0
+* new API: `ImagePickerPlus.pick(context, settings: PickerSettings(...))` returns `List<PickedItem>?` (breaking, see "Migrating from 0.6.0" in the README)
+* no native code anymore, the copied image_crop plugin is removed
+* own crop and filters, the result matches the preview and is saved as JPEG with no metadata
+* crop in the preview, then filters, reorder and crop again on the edit screen, for many images at once. going back keeps the edits
+* camera photos can be cropped too
+* camera tabs for photo and video, front/rear, flash, and clear messages when there's no camera or access
+* light and dark themes, custom colors and texts, RTL, reduced motion, layouts for phones and tablets
+* optional disk cache with a size limit, and `ImagePickerPlus.clearCache()`
+* faster gallery with paged loading and smaller thumbnails
+* fewer dependencies (shimmer and image_picker removed)
+* CI for every PR and releases from a version tag
+
 ## 0.6.0
 * update dependencies (camera 0.12, shimmer 4, video_player 2.14, photo_manager 3.12, image 4.10, image_picker 1.2.3)
 * minimum flutter 3.44 / dart 3.12
