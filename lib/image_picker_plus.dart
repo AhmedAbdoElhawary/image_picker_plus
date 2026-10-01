@@ -1,4 +1,4 @@
-library image_picker_plus;
+library;
 
 export 'src/entities/image_picker_display.dart';
 export 'src/utilities/enum_image_source.dart';

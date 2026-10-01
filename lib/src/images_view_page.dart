@@ -126,7 +126,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Future<void> _fetchNewMedia({required int currentPageValue}) async {
     lastPage.value = currentPageValue;
     PermissionState result = await PhotoManager.requestPermissionExtend();
-    if (result.isAuth) {
+    if (result.hasAccess) {
       RequestType type = widget.showInternalVideos && widget.showInternalImages
           ? RequestType.common
           : (widget.showInternalImages ? RequestType.image : RequestType.video);
@@ -176,7 +176,7 @@ class _ImagesViewPageState extends State<ImagesViewPage>
       _mediaList.value.addAll(temp);
       allImages.value.addAll(imageTemp);
       if (allImages.value.isNotEmpty) {
-        selectedImage.value = allImages.value[0];
+        selectedImage.value = allImages.value.firstOrNull;
       }
       currentPage.value++;
       isImagesReady.value = true;
@@ -235,11 +235,19 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Widget build(BuildContext context) {
     super.build(context);
     return noImages
-        ? Center(
-            child: Text(
-              widget.tabsTexts.noImagesFounded,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+        ? Column(
+            children: [
+              appBar(),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    widget.tabsTexts.noImagesFounded,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           )
         : buildGridView();
   }
