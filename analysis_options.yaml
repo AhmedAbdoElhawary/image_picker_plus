@@ -1,9 +1,20 @@
+include: package:flutter_lints/flutter.yaml
+
 analyzer:
   exclude:
     - build/**
-    - android/**
-    - ios/**
-include: package:flutter_lints/flutter.yaml
+    - example/build/**
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+linter:
+  rules:
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_locals
+    - avoid_print
+    - always_declare_return_types
+    - unawaited_futures
+    - use_build_context_synchronously
+    - sort_child_properties_last
+
+formatter:
+  page_width: 120
