@@ -50,6 +50,7 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
 
   bool initializeDone = false;
   bool allPermissionsAccessed = true;
+  bool noCamera = false;
 
   List<CameraDescription>? cameras;
   CameraController? controller;
@@ -105,8 +106,8 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
       allPermissionsAccessed = true;
       cameras = await availableCameras();
       if (!mounted) return;
-      if (cameras?.isEmpty??true) {
-        debugPrint("There is no any camera founded");
+      if (cameras?.isEmpty ?? true) {
+        setState(() => noCamera = true);
         return;
       }
 
@@ -129,8 +130,33 @@ class CustomCameraDisplayState extends State<CustomCameraDisplay> {
   Widget build(BuildContext context) {
     return Material(
       color: widget.appTheme.primaryColor,
-      child:
-          allPermissionsAccessed ? (initializeDone ? buildBody() : loadingProgress()) : failedPermissions(),
+      child: noCamera
+          ? Column(
+              children: [
+                AppBar(
+                  backgroundColor: widget.appTheme.primaryColor,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: Icon(Icons.clear_rounded,
+                        color: widget.appTheme.focusColor, size: 30),
+                    onPressed: () {
+                      Navigator.of(context).maybePop(null);
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      widget.tapsNames.noCameraFounded,
+                      style: TextStyle(color: widget.appTheme.focusColor,fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : allPermissionsAccessed
+              ? (initializeDone ? buildBody() : loadingProgress())
+              : failedPermissions(),
     );
   }
 
