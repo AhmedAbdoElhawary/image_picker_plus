@@ -1,0 +1,55 @@
+# TODO(ahmed): turn on pub.dev automated publishing (pub.dev → image_picker_plus → Admin → Automated publishing → GitHub, repo AhmedAbdoElhawary/image_picker_plus, tag pattern v{{version}}), without it the publish job fails
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag is on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main"; exit 1; }
+      - name: Tag matches pubspec and changelog
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          pubspec=$(grep -m1 '^version:' pubspec.yaml | awk '{print $2}')
+          [ "$version" = "$pubspec" ] || { echo "::error::tag $version but pubspec.yaml has $pubspec"; exit 1; }
+          grep -qx "## $version" CHANGELOG.md || { echo "::error::CHANGELOG.md has no '## $version' section"; exit 1; }
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      # gives pub the github oidc token, so no publish secret is stored
+      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter pub publish --force
+
+  release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: GitHub release with the changelog section
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v head="## $version" '$0 == head {found=1; next} found && /^## / {exit} found' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
