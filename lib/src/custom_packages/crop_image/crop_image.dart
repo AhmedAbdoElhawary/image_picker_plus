@@ -409,7 +409,13 @@ class CustomCropState extends State<CustomCrop> with TickerProviderStateMixin {
 
   void _updateImage(ImageInfo imageInfo, bool synchronousCall) {
     final boundaries = _boundaries;
-    if (boundaries == null) return;
+    // cached image can come before first layout, and the stream will not send it again
+    if (boundaries == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _updateImage(imageInfo, false);
+      });
+      return;
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final image = imageInfo.image;
