@@ -235,11 +235,19 @@ class _ImagesViewPageState extends State<ImagesViewPage>
   Widget build(BuildContext context) {
     super.build(context);
     return noImages
-        ? Center(
-            child: Text(
-              widget.tabsTexts.noImagesFounded,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+        ? Column(
+            children: [
+              appBar(),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    widget.tabsTexts.noImagesFounded,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           )
         : buildGridView();
   }
