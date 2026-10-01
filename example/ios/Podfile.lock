@@ -1,21 +1,15 @@
 PODS:
   - Flutter (1.0.0)
-  - image_picker_plus (0.5.10):
-    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - image_picker_plus (from `.symlinks/plugins/image_picker_plus/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  image_picker_plus:
-    :path: ".symlinks/plugins/image_picker_plus/ios"
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  image_picker_plus: 69556bbc1b946791d0ae624f249c4af5e8b817c6
 
 PODFILE CHECKSUM: ce2a4dd764e1c7aeed6a7cdc5e61d092b6dc6d32
 
