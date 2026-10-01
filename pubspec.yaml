@@ -16,7 +16,6 @@ dependencies:
   image: ^4.10.1
   video_player: ^2.14.0
   image_picker: ^1.2.3
-  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:
