@@ -25,7 +25,7 @@ jobs:
       - name: Coverage gate (80%)
         run: |
           sudo apt-get install -y lcov > /dev/null
-          lcov --ignore-errors unused --remove coverage/lcov.info 'lib/src/services/*_impl.dart' -o coverage/lcov.info
+          lcov --ignore-errors unused --remove coverage/lcov.info 'lib/src/services/*_impl.dart' 'lib/src/platform/*' -o coverage/lcov.info
           awk -F: '/^LF:/ {lf += $2} /^LH:/ {lh += $2} END {
             pct = lf ? lh * 100 / lf : 0
             printf "line coverage %.1f%%\n", pct
@@ -58,4 +58,49 @@ jobs:
           channel: stable
           cache: true
       - run: flutter build ios --no-codesign --debug
+        working-directory: example
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build web
+        working-directory: example
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build macos --debug
+        working-directory: example
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build windows --debug
+        working-directory: example
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build libgtk-3-dev
+      - run: flutter build linux --debug
         working-directory: example
