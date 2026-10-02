@@ -1,4 +1,3 @@
-# TODO(ahmed): turn on pub.dev automated publishing (pub.dev → image_picker_plus → Admin → Automated publishing → GitHub, repo AhmedAbdoElhawary/image_picker_plus, tag pattern v{{version}}), without it the publish job fails
 name: Release
 
 on:
