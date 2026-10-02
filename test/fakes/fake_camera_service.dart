@@ -44,13 +44,8 @@ class FakeCameraService implements CameraService {
   bool get hasFlash => flash;
 
   @override
-  Future<PickedItem> takePhoto() async => PickedItem(
-    file: XFile("/fake/photo.jpg"),
-    type: MediaType.image,
-    width: 300,
-    height: 400,
-    edited: false,
-  );
+  Future<PickedItem> takePhoto() async =>
+      PickedItem(file: XFile("/fake/photo.jpg"), type: MediaType.image, width: 300, height: 400, edited: false);
 
   @override
   Future<void> startVideo() async => recording = true;
@@ -58,13 +53,7 @@ class FakeCameraService implements CameraService {
   @override
   Future<PickedItem> stopVideo() async {
     recording = false;
-    return PickedItem(
-      file: XFile("/fake/video.mp4"),
-      type: MediaType.video,
-      width: 0,
-      height: 0,
-      edited: false,
-    );
+    return PickedItem(file: XFile("/fake/video.mp4"), type: MediaType.video, width: 0, height: 0, edited: false);
   }
 
   @override
