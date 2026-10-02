@@ -12,7 +12,7 @@ void main() {
         child: Selector<bool>(
           listenable: notifier,
           select: () => notifier.value.isEven,
-          builder: (context, even) {
+          builder: (context, even, _) {
             builds++;
             return Text("$even");
           },
@@ -36,7 +36,7 @@ void main() {
     final second = ValueNotifier<int>(10);
     Widget build(ValueNotifier<int> notifier) => Directionality(
       textDirection: TextDirection.ltr,
-      child: Selector<int>(listenable: notifier, select: () => notifier.value, builder: (_, v) => Text("$v")),
+      child: Selector<int>(listenable: notifier, select: () => notifier.value, builder: (_, v, _) => Text("$v")),
     );
     await tester.pumpWidget(build(first));
     await tester.pumpWidget(build(second));
@@ -45,5 +45,29 @@ void main() {
     second.value = 11;
     await tester.pump();
     expect(find.text("11"), findsOneWidget);
+  });
+
+  testWidgets("the child is kept across rebuilds", (tester) async {
+    final notifier = ValueNotifier<int>(1);
+    const child = Text("same");
+    final children = <Widget?>[];
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Selector<int>(
+          listenable: notifier,
+          select: () => notifier.value,
+          builder: (context, value, child) {
+            children.add(child);
+            return Column(children: [Text("$value"), child!]);
+          },
+          child: child,
+        ),
+      ),
+    );
+    notifier.value = 2;
+    await tester.pump();
+    expect(find.text("2"), findsOneWidget);
+    expect(children, [same(child), same(child)]);
   });
 }
