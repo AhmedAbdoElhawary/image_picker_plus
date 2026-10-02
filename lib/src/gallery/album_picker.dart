@@ -89,7 +89,14 @@ class _AlbumTile extends StatelessWidget {
         nameOf(album, controller, scope),
         style: TextStyle(color: selected ? scope.theme.accent : scope.theme.onSurface),
       ),
-      trailing: Text("${album.count}", style: TextStyle(color: scope.theme.onSurfaceMuted)),
+      trailing: Text(
+        "${album.count}",
+        style: TextStyle(
+          color: selected ? scope.theme.accent : scope.theme.onSurfaceMuted,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }
