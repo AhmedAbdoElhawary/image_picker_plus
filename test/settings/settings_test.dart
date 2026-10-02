@@ -11,12 +11,14 @@ void main() {
     expect(settings.mediaType, MediaType.image);
     expect(settings.maxSelection, 1);
     expect(settings.cropRatios, isEmpty);
+    expect(settings.resizePreview, isTrue);
     expect(settings.filters, isFalse);
     expect(settings.output.quality, 90);
     expect(settings.output.maxWidth, isNull);
     expect(settings.cache.enabled, isFalse);
     expect(settings.cache.maxBytes, 100 * 1024 * 1024);
     expect(settings.theme, isNull);
+    expect(settings.alwaysDarkTheme, isTrue);
     expect(settings.editing, isFalse);
     expect(settings.multi, isFalse);
   });
