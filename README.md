@@ -21,7 +21,21 @@ A picker for images and videos from the gallery or the camera, with a UI that fo
   </a>
 </p>
 
-Android and iOS are supported. On web, macOS, Linux and Windows the picker shows a "not supported yet" message.
+Works on Android, iOS, web, macOS, Windows and Linux.
+
+| | Android, iOS | macOS, Windows, Linux | Web |
+|---|---|---|---|
+| Picking | in-app gallery | system file picker | browser file picker |
+| Camera | yes | no, `PickerSource.camera` shows "not supported" | no, same |
+| Crop, filters, reorder | yes | yes | yes |
+| Edit screen | full page | a card on windows 600 px wide or more, full page under that | same as desktop |
+| Videos | play | play on macOS, a placeholder with the file name on Windows and Linux | play |
+| Cache | when enabled | never | never |
+| Edited images | JPEG in the temp folder | JPEG in the temp folder | JPEG in memory (`XFile.fromData`) |
+
+On web and desktop there's no gallery screen. The system picker opens right away, then the picked files go to the edit screen. Back on the edit screen opens the picker again.
+
+pub.dev lists Android, iOS and web only. The camera, gallery and video plugins don't declare desktop, so pub.dev can't list it, but macOS, Windows and Linux work.
 
 # Installing
 
@@ -63,6 +77,23 @@ The minimum Android sdk is 24. Add these permissions to `AndroidManifest.xml`:
 ```
 
 The camera and microphone permissions come from the `camera` plugin.
+
+## macOS
+
+Add this to `macos/Runner/DebugProfile.entitlements` and `macos/Runner/Release.entitlements`, so the app can open the files picked in the system picker:
+
+```xml
+<key>com.apple.security.files.user-selected.read-only</key>
+<true/>
+```
+
+## Web
+
+Call `ImagePickerPlus.pick` straight from the tap, with no `await` before it in that handler. The browser only opens a file picker right after a click.
+
+## Windows and Linux
+
+Nothing to set up.
 
 # Usage
 
@@ -123,6 +154,8 @@ PickerSettings(
     accent: Color(0xFFFF7A00),
     onAccent: Color(0xFFFFFFFF),
     scrim: Color(0xB3000000),
+    // behind the edit card on web and desktop, optional
+    barrier: Color(0x99000000),
   ),
   texts: const PickerTexts(next: "Weiter", done: "Fertig"),
 )
@@ -130,7 +163,7 @@ PickerSettings(
 
 ## Caching
 
-With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` thumbnails and edited images are kept on disk in the app's temp folder, and the oldest go first when it's over `maxBytes`. When caching is off nothing is saved, and an old cache folder is removed on the next open.
+With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` thumbnails and edited images are kept on disk in the app's temp folder, and the oldest go first when it's over `maxBytes`. When caching is off nothing is saved, and an old cache folder is removed on the next open. Caching is only on Android and iOS.
 
 ```dart
 await ImagePickerPlus.clearCache();
