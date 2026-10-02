@@ -9,6 +9,9 @@ class PickerTheme {
   final Color onAccent;
   final Color scrim;
 
+  /// behind the edit card on wide windows.
+  final Color barrier;
+
   const PickerTheme({
     required this.background,
     required this.surface,
@@ -17,6 +20,7 @@ class PickerTheme {
     required this.accent,
     required this.onAccent,
     required this.scrim,
+    this.barrier = const Color(0x99000000),
   });
 
   factory PickerTheme.light() => const PickerTheme(
