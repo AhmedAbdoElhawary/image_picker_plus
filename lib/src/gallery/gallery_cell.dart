@@ -105,7 +105,7 @@ class _OrderBadge extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: selected ? theme.accent : theme.scrim.withValues(alpha: 0.2),
-              border: Border.all(color: theme.onAccent, width: 1.5),
+              border: Border.all(color: theme.onAccent, width: 1),
             ),
             child: selected
                 ? Text(
