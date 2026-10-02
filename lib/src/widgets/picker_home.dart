@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/camera/camera_page.dart';
+import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/widgets/picker_tabs.dart';
@@ -36,7 +37,11 @@ class _PickerHomeState extends State<PickerHome> {
                   ),
                 // the camera is built only while shown, so it's released when leaving.
                 // no fade, two camera pages at once fight over the one camera
-                if (current != PickerTab.gallery) CameraPage(key: ValueKey(current), video: current == PickerTab.video),
+                if (current != PickerTab.gallery)
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height - (PickerLayout.pickerTabsHeight),
+                    child: CameraPage(key: ValueKey(current), video: current == PickerTab.video),
+                  ),
               ],
             ),
           ),
