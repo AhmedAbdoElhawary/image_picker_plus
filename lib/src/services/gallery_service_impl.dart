@@ -23,7 +23,7 @@ class GalleryServiceImpl implements GalleryService {
 
   @override
   Future<List<Album>> albums(MediaType type) async {
-    final paths = await PhotoManager.getAssetPathList(type: _requestType(type));
+    final paths = await PhotoManager.getAssetPathList(type: _requestType(type), filterOption: _filter);
     paths.sort((a, b) => a.isAll == b.isAll ? 0 : (a.isAll ? -1 : 1));
     final albums = <Album>[];
     for (final path in paths) {
@@ -53,11 +53,11 @@ class GalleryServiceImpl implements GalleryService {
   }
 
   @override
-  Future<XFile?> file(MediaItem item) async {
+  Future<XFile?> file(MediaItem item, {bool editable = false}) async {
     final asset = await _asset(item.id);
     if (asset == null) return null;
     // cloud items can fail on the origin file, the edited copy still works
-    final file = await asset.originFile ?? await asset.file;
+    final file = editable ? await asset.file ?? await asset.originFile : await asset.originFile ?? await asset.file;
     return file == null ? null : XFile(file.path);
   }
 
@@ -101,8 +101,16 @@ class GalleryServiceImpl implements GalleryService {
       height: asset.orientatedHeight,
       duration: asset.videoDuration,
       modified: asset.modifiedDateTime,
+      created: asset.createDateTime,
     );
   }
+
+  // android sorts by id without an order, and the size check drops items with no size saved
+  static final FilterOptionGroup _filter = FilterOptionGroup(
+    imageOption: const FilterOption(sizeConstraint: SizeConstraint(ignoreSize: true)),
+    videoOption: const FilterOption(sizeConstraint: SizeConstraint(ignoreSize: true)),
+    orders: const [OrderOption(type: OrderOptionType.createDate, asc: false)],
+  );
 
   static RequestType _requestType(MediaType type) => switch (type) {
     MediaType.image => RequestType.image,
