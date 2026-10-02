@@ -6,6 +6,7 @@ import 'package:image_picker_plus/src/settings/picker_theme.dart';
 
 import 'fake_cache_service.dart';
 import 'fake_camera_service.dart';
+import 'fake_files_service.dart';
 import 'fake_gallery_service.dart';
 import 'fake_image_service.dart';
 
@@ -13,15 +14,22 @@ class Fakes {
   final FakeGalleryService gallery;
   final FakeCameraService camera;
   final FakeImageService image;
+  final FakeFilesService files;
   final FakeCacheService? cache;
 
-  Fakes({FakeGalleryService? gallery, FakeCameraService? camera, FakeImageService? image, this.cache})
-    : gallery = gallery ?? FakeGalleryService(),
-      camera = camera ?? FakeCameraService(),
-      image = image ?? FakeImageService();
+  Fakes({
+    FakeGalleryService? gallery,
+    FakeCameraService? camera,
+    FakeImageService? image,
+    FakeFilesService? files,
+    this.cache,
+  }) : gallery = gallery ?? FakeGalleryService(),
+       camera = camera ?? FakeCameraService(),
+       image = image ?? FakeImageService(),
+       files = files ?? FakeFilesService();
 
   PickerServices get services =>
-      PickerServices(gallery: gallery, camera: () => camera, image: image, cache: cache);
+      PickerServices(gallery: gallery, camera: () => camera, image: image, files: files, cache: cache);
 }
 
 /// pumps [child] inside a route of a [MaterialApp], with a [PickerScope] of fakes.
@@ -46,11 +54,7 @@ Future<void> pumpPicker(
   final services = (fakes ?? Fakes()).services;
   await tester.pumpWidget(
     MediaQuery(
-      data: MediaQueryData(
-        size: size,
-        disableAnimations: disableAnimations,
-        textScaler: TextScaler.linear(textScale),
-      ),
+      data: MediaQueryData(size: size, disableAnimations: disableAnimations, textScaler: TextScaler.linear(textScale)),
       child: MaterialApp(
         theme: ThemeData(brightness: brightness),
         builder: (context, app) => Directionality(textDirection: direction, child: app!),
