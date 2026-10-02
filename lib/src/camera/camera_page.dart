@@ -119,51 +119,59 @@ class _CameraPageState extends State<CameraPage> {
             actionText: scope.texts.openSettings,
             onAction: scope.services.gallery.openSettings,
           ),
-          _ => Scaffold(
-            key: const ValueKey(CaptureState.ready),
-            backgroundColor: scope.theme.background,
-            body: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                _Preview(controller: controller),
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: PickerAppBar(
-                    color: scope.theme.background.withValues(alpha: 0.6),
-                    // title: Text(widget.video ? scope.texts.video : scope.texts.photo),
-                    onClose: _close,
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
+          _ => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height - (PickerLayout.pickerTabsHeight),
+
+              child: Material(
+                key: const ValueKey(CaptureState.ready),
+                color: scope.theme.background,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
                   children: [
-                    if (widget.video) _MicrophoneNote(controller: controller),
+                    _Preview(controller: controller),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: PickerAppBar(
+                          color: scope.theme.background.withValues(alpha: 0.6),
+                          onClose: _close,
+                        ),
+                      ),
+                    ),
                     ColoredBox(
                       color: scope.theme.background.withValues(alpha: 0.6),
                       child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding*2.47),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            FlashButton(controller: controller),
-                            ValueListenableBuilder<CaptureState>(
-                              valueListenable: controller.state,
-                              builder: (context, state, _) => CaptureButton(
-                                video: widget.video,
-                                recording: state == CaptureState.recording,
-                                onTap: state == CaptureState.initializing ? null : _capture,
-                              ),
+                         _MicrophoneNote(controller: controller),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                FlashButton(controller: controller),
+                                ValueListenableBuilder<CaptureState>(
+                                  valueListenable: controller.state,
+                                  builder: (context, state, _) => CaptureButton(
+                                    video: widget.video,
+                                    recording: state == CaptureState.recording,
+                                    onTap: state == CaptureState.initializing ? null : _capture,
+                                  ),
+                                ),
+                                SwitchCameraButton(controller: controller),
+                              ],
                             ),
-                            SwitchCameraButton(controller: controller),
                           ],
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         },
@@ -184,7 +192,8 @@ class _Preview extends StatelessWidget {
       select: () => controller.service,
       builder: (context, service) {
         if (service == null) return const LoadingBox();
-        return Center(
+        return Align(
+          alignment: AlignmentDirectional.topCenter,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(PickerLayout.radius),
             child: AspectRatio(aspectRatio: service.aspectRatio, child: service.preview()),
