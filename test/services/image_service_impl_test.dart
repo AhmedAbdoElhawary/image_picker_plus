@@ -117,6 +117,24 @@ void main() {
     });
   });
 
+  testWidgets("a jpeg is turned by its exif and the output keeps no exif", (tester) async {
+    await tester.runAsync(() async {
+      final image = img.Image(width: 200, height: 100)
+        ..exif.imageIfd.orientation = 6
+        ..exif.gpsIfd["GPSLatitude"] = 30.0;
+      final file = File("${dir.path}/turned.jpg")..writeAsBytesSync(img.encodeJpg(image));
+      final item = await service.export(
+        XFile(file.path),
+        const EditState(filterIndex: 1),
+        filters[1],
+        const OutputOptions(),
+      );
+      expect((item.width, item.height), (100, 200));
+      final out = img.decodeJpg(await item.file.readAsBytes())!;
+      expect(out.exif.isEmpty, isTrue);
+    });
+  });
+
   testWidgets("the same edit comes from the cache", (tester) async {
     await tester.runAsync(() async {
       final cache = FakeCacheService();
