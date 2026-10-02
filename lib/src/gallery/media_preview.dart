@@ -66,12 +66,7 @@ class PreviewImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     return Image(
-      image: mediaImage(
-        item,
-        MediaPreview.imageSize,
-        gallery: scope.services.gallery,
-        cache: scope.services.cache,
-      ),
+      image: mediaImage(item, MediaPreview.imageSize, gallery: scope.services.gallery, cache: scope.services.cache),
       fit: fit,
       gaplessPlayback: true,
       width: double.infinity,
