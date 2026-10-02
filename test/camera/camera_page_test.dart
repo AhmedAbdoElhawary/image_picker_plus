@@ -61,8 +61,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CropView), findsOneWidget);
     await tester.tap(find.text("1:1"));
-    await tester.pump();
-    expect(find.text("4:5"), findsOneWidget);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("4:5"));
+    await tester.pumpAndSettle();
+    expect(tester.widget<CropView>(find.byType(CropView)).controller.ratio, CropRatio.portrait);
   });
 
   testWidgets("video records and stops, with the microphone note when denied", (tester) async {
