@@ -33,7 +33,7 @@ class _GalleryPageState extends State<GalleryPage> {
     super.didChangeDependencies();
     if (_controller != null) return;
     final scope = PickerScope.of(context);
-    _controller = GalleryController(service: scope.services.gallery, settings: scope.settings)..init();
+    _controller = GalleryController(service: scope.services.gallery!, settings: scope.settings)..init();
   }
 
   @override
@@ -86,30 +86,30 @@ class _GalleryPageState extends State<GalleryPage> {
     final controller = _controller!;
     return ValueListenableBuilder<GalleryState>(
       valueListenable: controller.state,
-      builder: (context, state, _) => AnimatedSwitcher(
-        duration: PickerDurations.of(context).medium,
-        child: switch (state) {
-          GalleryState.denied => MessageView(
-            scope.texts.accessDenied,
-            key: const ValueKey(GalleryState.denied),
-            onClose: _close,
-            actionText: scope.texts.openSettings,
-            onAction: scope.services.gallery.openSettings,
+      builder: (context, state, _) => Scaffold(
+        key: const ValueKey(GalleryState.ready),
+        backgroundColor: scope.theme.background,
+        appBar: PickerAppBar(
+          title: AlbumPicker(controller: controller),
+          onClose: _close,
+          action: AnimatedSwitcher(
+            duration: PickerDurations.of(context).medium,
+            child: state == GalleryState.ready
+                ? _NextButton(controller: controller, busy: _finishing, onPressed: _next)
+                : const SizedBox.shrink(),
           ),
-          GalleryState.empty => MessageView(
-            scope.texts.noImages,
-            key: const ValueKey(GalleryState.empty),
-            onClose: _close,
-          ),
-          _ => Scaffold(
-            key: const ValueKey(GalleryState.ready),
-            backgroundColor: scope.theme.background,
-            appBar: PickerAppBar(
-              title: AlbumPicker(controller: controller),
-              onClose: _close,
-              action: _NextButton(controller: controller, busy: _finishing, onPressed: _next),
+        ),
+        body: AnimatedSwitcher(
+          duration: PickerDurations.of(context).medium,
+          child: switch (state) {
+            GalleryState.denied => MessageView(
+              scope.texts.accessDenied,
+              key: const ValueKey(GalleryState.denied),
+              actionText: scope.texts.openSettings,
+              onAction: scope.services.gallery!.openSettings,
             ),
-            body: Column(
+            GalleryState.empty => MessageView(scope.texts.noImages, key: const ValueKey(GalleryState.empty)),
+            _ => Column(
               children: [
                 _LimitedBar(controller: controller),
                 Expanded(
@@ -118,14 +118,13 @@ class _GalleryPageState extends State<GalleryPage> {
                       : GalleryLayout(
                           preview: scope.settings.showPreview ? MediaPreview(controller: controller) : null,
                           reveal: controller.preview,
-                          grid: (padding) =>
-                              GalleryGrid(controller: controller, onTap: _onTap, padding: padding),
+                          grid: (padding) => GalleryGrid(controller: controller, onTap: _onTap, padding: padding),
                         ),
                 ),
               ],
             ),
-          ),
-        },
+          },
+        ),
       ),
     );
   }
@@ -144,13 +143,18 @@ class _NextButton extends StatelessWidget {
     return Selector<bool>(
       listenable: Listenable.merge([controller.selection, busy]),
       select: () => controller.selection.value.isEmpty || busy.value,
-      builder: (context, disabled) => TextButton(
+      builder: (context, disabled, _) => TextButton(
         onPressed: disabled ? null : onPressed,
         style: TextButton.styleFrom(
           foregroundColor: scope.theme.accent,
-          minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minTouch),
+          minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
         ),
-        child: Text(scope.texts.next, style: const TextStyle(fontWeight: FontWeight.w600)),
+        child: Text(
+          scope.texts.next,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
@@ -172,7 +176,7 @@ class _LimitedBar extends StatelessWidget {
           alignment: AlignmentDirectional.centerEnd,
           child: TextButton(
             onPressed: () async {
-              await scope.services.gallery.manageLimitedAccess();
+              await scope.services.gallery!.manageLimitedAccess();
               await controller.reload();
             },
             style: TextButton.styleFrom(foregroundColor: scope.theme.accent),
