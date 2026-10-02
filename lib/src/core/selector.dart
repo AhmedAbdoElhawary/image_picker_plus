@@ -4,9 +4,12 @@ import 'package:flutter/widgets.dart';
 class Selector<R> extends StatefulWidget {
   final Listenable listenable;
   final R Function() select;
-  final Widget Function(BuildContext context, R value) builder;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
 
-  const Selector({required this.listenable, required this.select, required this.builder, super.key});
+  /// built once and given to [builder], for the part that doesn't depend on the value.
+  final Widget? child;
+
+  const Selector({required this.listenable, required this.select, required this.builder, this.child, super.key});
 
   @override
   State<Selector<R>> createState() => _SelectorState<R>();
@@ -45,5 +48,5 @@ class _SelectorState<R> extends State<Selector<R>> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, _value);
+  Widget build(BuildContext context) => widget.builder(context, _value, widget.child);
 }
