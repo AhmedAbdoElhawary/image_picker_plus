@@ -26,12 +26,24 @@ class EditPage extends StatefulWidget {
   /// null pops, the system picker flow picks again instead.
   final VoidCallback? onBack;
 
+  /// shown first, null shows the first item.
+  final MediaItem? initial;
+
+  /// null hides the plus after the items.
+  final VoidCallback? onAdd;
+
+  /// so the page that opened this keeps the order set here.
+  final ValueChanged<List<MediaItem>>? onReorder;
+
   const EditPage({
     required this.items,
     this.crops = const {},
     this.filterIndexes = const {},
     this.changeRatio = false,
     this.onBack,
+    this.initial,
+    this.onAdd,
+    this.onReorder,
     super.key,
   });
 
@@ -51,9 +63,13 @@ class _EditPageState extends State<EditPage> {
       services: scope.services,
       output: scope.settings.output,
       items: widget.items,
+      initial: widget.initial,
       crops: widget.crops,
       filterIndexes: widget.filterIndexes,
     );
+    final onReorder = widget.onReorder;
+    final items = _controller!.items;
+    if (onReorder != null) items.addListener(() => onReorder(items.value));
   }
 
   @override
@@ -80,50 +96,48 @@ class _EditPageState extends State<EditPage> {
     final scope = PickerScope.of(context);
     final controller = _controller!;
     final back = widget.onBack ?? () => Navigator.of(context).pop();
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.escape): back,
-        const SingleActivator(LogicalKeyboardKey.enter): _done,
-      },
-      child: Focus(
-        autofocus: true,
-        child: Scaffold(
-          backgroundColor: scope.theme.background,
-          appBar: PickerAppBar(
-            title: const SizedBox.shrink(),
-            closeIcon: Icons.arrow_back_rounded,
-            onClose: back,
-            action: TextButton(
-              onPressed: _done,
-              style: TextButton.styleFrom(
-                foregroundColor: scope.theme.accent,
-                minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
-              ),
-              child: Text(
-                scope.texts.done,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-          body: Stack(
-            children: [
-              SafeArea(
-                top: false,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: _CurrentItem(controller: controller, changeRatio: widget.changeRatio),
-                    ),
-                    if (scope.settings.filters) FilterStrip(controller: controller),
-                    if (widget.items.length > 1) ReorderStrip(controller: controller),
-                    const SizedBox(height: PickerLayout.padding / 2),
-                  ],
+    return _ExportingOverlay(
+      controller: controller,
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): back,
+          const SingleActivator(LogicalKeyboardKey.enter): _done,
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            backgroundColor: scope.theme.background,
+            appBar: PickerAppBar(
+              title: const SizedBox.shrink(),
+              closeIcon: Icons.arrow_back_rounded,
+              onClose: back,
+              action: TextButton(
+                onPressed: _done,
+                style: TextButton.styleFrom(
+                  foregroundColor: scope.theme.accent,
+                  minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+                ),
+                child: Text(
+                  scope.texts.done,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
                 ),
               ),
-              _ExportingOverlay(controller: controller),
-            ],
+            ),
+            body: SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: _CurrentItem(controller: controller, changeRatio: widget.changeRatio),
+                  ),
+                  if (scope.settings.filters) FilterStrip(controller: controller),
+                  if (widget.items.length > 1) ReorderStrip(controller: controller, onAdd: widget.onAdd),
+                  const SizedBox(height: PickerLayout.padding / 2),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -144,7 +158,7 @@ class _CurrentItem extends StatelessWidget {
       valueListenable: controller.current,
       builder: (context, item, _) {
         final crop = controller.crops[item.id];
-        final image = _FilteredImage(item: item, filter: controller.filterIndexes[item.id]);
+        final image = _FilteredImage(item: item, filter: controller.filterIndexes[item.id], crop: crop);
         final Widget child;
         if (item.isVideo) {
           child = Column(
@@ -193,12 +207,13 @@ class _CurrentItem extends StatelessWidget {
 class _FilteredImage extends StatelessWidget {
   final MediaItem item;
   final ValueNotifier<int>? filter;
+  final CropController? crop;
 
-  const _FilteredImage({required this.item, required this.filter});
+  const _FilteredImage({required this.item, required this.filter, required this.crop});
 
   @override
   Widget build(BuildContext context) {
-    final image = PreviewImage(item: item, fit: BoxFit.fill);
+    final image = PreviewImage(item: item, fit: BoxFit.fill, crop: crop);
     final filter = this.filter;
     if (filter == null) return image;
     return ValueListenableBuilder<int>(
@@ -209,34 +224,88 @@ class _FilteredImage extends StatelessWidget {
   }
 }
 
-class _ExportingOverlay extends StatelessWidget {
+/// over everything in the root overlay, also over the app bar and the wide card,
+/// and the page under it takes no taps, back or keys while saving.
+class _ExportingOverlay extends StatefulWidget {
   final EditController controller;
+  final Widget child;
 
-  const _ExportingOverlay({required this.controller});
+  const _ExportingOverlay({required this.controller, required this.child});
+
+  @override
+  State<_ExportingOverlay> createState() => _ExportingOverlayState();
+}
+
+class _ExportingOverlayState extends State<_ExportingOverlay> {
+  final OverlayPortalController _portal = OverlayPortalController();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.exporting.addListener(_toggle);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.exporting.removeListener(_toggle);
+    super.dispose();
+  }
+
+  void _toggle() => widget.controller.exporting.value ? _portal.show() : _portal.hide();
+
+  @override
+  Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _portal,
+      overlayLocation: OverlayChildLocation.rootOverlay,
+      overlayChildBuilder: (context) => const _ProcessingPopup(),
+      child: ValueListenableBuilder<bool>(
+        valueListenable: widget.controller.exporting,
+        builder: (context, exporting, child) => PopScope(
+          canPop: !exporting,
+          // takes the focus off the page, so esc, enter and the strips do nothing
+          child: ExcludeFocus(excluding: exporting, child: child!),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _ProcessingPopup extends StatelessWidget {
+  const _ProcessingPopup();
 
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
-    return ValueListenableBuilder<bool>(
-      valueListenable: controller.exporting,
-      builder: (context, exporting, _) {
-        if (!exporting) return const SizedBox.shrink();
-        return Positioned.fill(
-          child: ColoredBox(
-            color: scope.theme.scrim,
-            child: Center(
-              child: Column(
+    return Positioned.fill(
+      child: ColoredBox(
+        color: scope.theme.barrier,
+        child: Center(
+          // material for the text style, the overlay is above the page's scaffold
+          child: Material(
+            color: scope.theme.surface,
+            borderRadius: BorderRadius.circular(5),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 30, vertical: 15),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: scope.theme.onAccent),
-                  const SizedBox(height: PickerLayout.padding),
-                  Text(scope.texts.exporting, style: TextStyle(color: scope.theme.onAccent)),
+                  // it spins every frame, alone it doesn't repaint the popup with it
+                  RepaintBoundary(
+                    child: SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.onSurface),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(scope.texts.processing, style: TextStyle(color: scope.theme.onSurface)),
                 ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
