@@ -122,29 +122,46 @@ class _CameraPageState extends State<CameraPage> {
           _ => Scaffold(
             key: const ValueKey(CaptureState.ready),
             backgroundColor: scope.theme.background,
-            appBar: PickerAppBar(title: Text(widget.video ? scope.texts.video : scope.texts.photo), onClose: _close),
-            body: Column(
+            body: Stack(
+              alignment: Alignment.bottomCenter,
               children: [
-                Expanded(child: _Preview(controller: controller)),
-                if (widget.video) _MicrophoneNote(controller: controller),
-                Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      FlashButton(controller: controller),
-                      ValueListenableBuilder<CaptureState>(
-                        valueListenable: controller.state,
-                        builder: (context, state, _) => CaptureButton(
-                          video: widget.video,
-                          recording: state == CaptureState.recording,
-                          onTap: state == CaptureState.initializing ? null : _capture,
+                _Preview(controller: controller),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: PickerAppBar(
+                    color: scope.theme.background.withValues(alpha: 0.6),
+                    // title: Text(widget.video ? scope.texts.video : scope.texts.photo),
+                    onClose: _close,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (widget.video) _MicrophoneNote(controller: controller),
+                    ColoredBox(
+                      color: scope.theme.background.withValues(alpha: 0.6),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            FlashButton(controller: controller),
+                            ValueListenableBuilder<CaptureState>(
+                              valueListenable: controller.state,
+                              builder: (context, state, _) => CaptureButton(
+                                video: widget.video,
+                                recording: state == CaptureState.recording,
+                                onTap: state == CaptureState.initializing ? null : _capture,
+                              ),
+                            ),
+                            SwitchCameraButton(controller: controller),
+                          ],
                         ),
                       ),
-                      SwitchCameraButton(controller: controller),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
