@@ -82,12 +82,7 @@ class _DemoState extends State<Demo> {
         cropRatios: switch (crop) {
           CropChoice.off => const [],
           CropChoice.squarePortrait => const [CropRatio.square, CropRatio.portrait],
-          CropChoice.all => const [
-            CropRatio.square,
-            CropRatio.portrait,
-            CropRatio.landscape,
-            CropRatio.original,
-          ],
+          CropChoice.all => const [CropRatio.square, CropRatio.portrait, CropRatio.landscape, CropRatio.original],
         },
         filters: filters,
         cache: PickerCache(enabled: cache),
@@ -101,9 +96,7 @@ class _DemoState extends State<Demo> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("image_picker_plus"),
-        actions: [
-          IconButton(onPressed: ImagePickerPlus.clearCache, icon: const Icon(Icons.delete_sweep_outlined)),
-        ],
+        actions: [IconButton(onPressed: ImagePickerPlus.clearCache, icon: const Icon(Icons.delete_sweep_outlined))],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _pick,
@@ -146,22 +139,12 @@ class _DemoState extends State<Demo> {
             value: filters,
             onChanged: (value) => setState(() => filters = value),
           ),
-          SwitchListTile(
-            title: const Text("Cache"),
-            value: cache,
-            onChanged: (value) => setState(() => cache = value),
-          ),
+          SwitchListTile(title: const Text("Cache"), value: cache, onChanged: (value) => setState(() => cache = value)),
           SwitchListTile(title: const Text("Dark"), value: widget.dark, onChanged: widget.onDark),
           SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
           ListTile(
             title: Text("Text scale: ${widget.textScale.toStringAsFixed(1)}"),
-            subtitle: Slider(
-              value: widget.textScale,
-              min: 0.8,
-              max: 2,
-              divisions: 12,
-              onChanged: widget.onTextScale,
-            ),
+            subtitle: Slider(value: widget.textScale, min: 0.8, max: 2, divisions: 12, onChanged: widget.onTextScale),
           ),
           _Results(items),
         ],
