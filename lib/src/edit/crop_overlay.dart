@@ -36,15 +36,15 @@ class _OverlayPainter extends CustomPainter {
       Path()..addRect(window),
     );
     canvas.drawPath(outside, Paint()..color = scrim);
+    if (!showGrid) return;
     final border = Paint()
-      ..color = line.withValues(alpha: 0.9)
+      ..color = line
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawRect(window, border);
-    if (!showGrid) return;
     final grid = Paint()
-      ..color = line.withValues(alpha: 0.5)
-      ..strokeWidth = 0.5;
+      ..color = line
+      ..strokeWidth = 1;
     for (var i = 1; i < 3; i++) {
       final x = window.left + window.width * i / 3;
       final y = window.top + window.height * i / 3;
