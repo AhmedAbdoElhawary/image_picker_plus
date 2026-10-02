@@ -14,33 +14,43 @@ void main() {
     settings: PickerSettings(maxSelection: max),
   );
 
-  test("loads page 0 with size 80 and previews the first item", () async {
-    final gallery = FakeGalleryService.withItems(200);
+  Future<GalleryController> counting(FakeGalleryService gallery, {required int max}) async {
+    final controller = controllerFor(gallery, max: max);
+    await controller.init();
+    controller.startMulti(controller.preview.value);
+    return controller;
+  }
+
+  test("shows the first page, then loads the rest 20 at a time to the end", () async {
+    final gallery = FakeGalleryService.withItems(50);
     final controller = controllerFor(gallery);
     await controller.init();
-    expect(gallery.pageCalls, [("all", 0)]);
-    expect(controller.items.value.length, GalleryController.pageSize);
+    expect(gallery.pageCalls.first, ("all", 0));
     expect(controller.state.value, GalleryState.ready);
     expect(controller.preview.value?.id, "0");
     expect(controller.selection.value.map((e) => e.id), ["0"]);
+
+    await pumpEventQueue();
+    expect(gallery.pageCalls, [("all", 0), ("all", 1), ("all", 2)]);
+    expect(controller.items.value.length, 50);
+    expect(controller.ended.value, isTrue);
   });
 
-  test("loadMore never loads the same page twice and stops at the end", () async {
-    final gallery = FakeGalleryService.withItems(200);
-    final controller = controllerFor(gallery);
+  test("an album switch shows its first item, a single selection follows it", () async {
+    final gallery = FakeGalleryService(
+      data: {"all": List.generate(10, (i) => fakeItem("a$i")), "other": List.generate(5, (i) => fakeItem("b$i"))},
+    );
+    final controller = controllerFor(gallery, max: 3);
     await controller.init();
-    await Future.wait([controller.loadMore(), controller.loadMore()]);
-    await controller.loadMore();
-    await controller.loadMore();
-    expect(gallery.pageCalls, [("all", 0), ("all", 1), ("all", 2)]);
-    expect(controller.items.value.length, 200);
-    expect(controller.ended.value, isTrue);
+    controller.toggle(controller.items.value[3]);
+    await controller.switchAlbum(const Album(id: "other", name: "other", count: 5));
+    expect(controller.preview.value?.id, "b0");
+    expect(controller.selection.value.map((e) => e.id), ["b0"]);
   });
 
   test("an extra item over the max isn't added", () async {
     final gallery = FakeGalleryService.withItems(10);
-    final controller = controllerFor(gallery, max: 2);
-    await controller.init();
+    final controller = await counting(gallery, max: 2);
     final items = controller.items.value;
     expect(controller.toggle(items[1]), isTrue);
     expect(controller.toggle(items[2]), isFalse);
@@ -51,8 +61,7 @@ void main() {
 
   test("tap on the shown selected item removes it, on another selected one shows it", () async {
     final gallery = FakeGalleryService.withItems(10);
-    final controller = controllerFor(gallery, max: 3);
-    await controller.init();
+    final controller = await counting(gallery, max: 3);
     final items = controller.items.value;
     controller.toggle(items[1]);
     expect(controller.preview.value, items[1]);
@@ -80,10 +89,10 @@ void main() {
     final gallery = FakeGalleryService(
       data: {"all": List.generate(10, (i) => fakeItem("a$i")), "other": List.generate(5, (i) => fakeItem("b$i"))},
     );
-    final controller = controllerFor(gallery, max: 5);
-    await controller.init();
+    final controller = await counting(gallery, max: 5);
     controller.toggle(controller.items.value[2]);
     await controller.switchAlbum(const Album(id: "other", name: "other", count: 5));
+    expect(controller.preview.value?.id, "b0");
     controller.toggle(controller.items.value[1]);
     expect(controller.selection.value.map((e) => e.id), ["a0", "a2", "b1"]);
     expect(controller.items.value.first.id, "b0");
@@ -91,17 +100,15 @@ void main() {
 
   test("preview stays on the selected item when a page loads", () async {
     final gallery = FakeGalleryService.withItems(200);
-    final controller = controllerFor(gallery, max: 3);
-    await controller.init();
+    final controller = await counting(gallery, max: 3);
     controller.toggle(controller.items.value[5]);
-    await controller.loadMore();
+    await pumpEventQueue();
     expect(controller.preview.value?.id, "5");
   });
 
   test("a gallery change reloads and drops selected items that are gone", () async {
     final gallery = FakeGalleryService.withItems(10);
-    final controller = controllerFor(gallery, max: 3);
-    await controller.init();
+    final controller = await counting(gallery, max: 3);
     controller.toggle(controller.items.value[4]);
     gallery.data["all"]!.removeAt(4);
     gallery.emitChange();
@@ -146,10 +153,58 @@ void main() {
     expect(noAlbums.state.value, GalleryState.empty);
   });
 
-  test("picked items keep the selection order", () async {
+  test("a tap replaces the item until counting starts, even with a max over 1", () async {
     final gallery = FakeGalleryService.withItems(10);
     final controller = controllerFor(gallery, max: 3);
     await controller.init();
+    final items = controller.items.value;
+    expect(controller.multi.value, isFalse);
+    controller.toggle(items[2]);
+    controller.toggle(items[3]);
+    expect(controller.selection.value, [items[3]]);
+  });
+
+  test("counting starts from the given item and cancel keeps only the shown one", () async {
+    final gallery = FakeGalleryService.withItems(10);
+    final controller = controllerFor(gallery, max: 3);
+    await controller.init();
+    final items = controller.items.value;
+    controller.startMulti(items[4]);
+    expect(controller.multi.value, isTrue);
+    expect(controller.selection.value, [items[4]]);
+    expect(controller.preview.value, items[4]);
+
+    controller.toggle(items[6]);
+    controller.toggle(items[1]);
+    controller.toggle(items[6]);
+    expect(controller.selection.value, [items[4], items[6], items[1]]);
+    expect(controller.preview.value, items[6]);
+
+    controller.cancelMulti();
+    expect(controller.multi.value, isFalse);
+    expect(controller.selection.value, [items[6]]);
+  });
+
+  test("counting stays on with nothing selected", () async {
+    final gallery = FakeGalleryService.withItems(10);
+    final controller = await counting(gallery, max: 3);
+    controller.toggle(controller.items.value[0]);
+    expect(controller.selection.value, isEmpty);
+    expect(controller.multi.value, isTrue);
+  });
+
+  test("a max of 1 never starts counting", () async {
+    final gallery = FakeGalleryService.withItems(10);
+    final controller = controllerFor(gallery);
+    await controller.init();
+    controller.startMulti(controller.items.value[3]);
+    expect(controller.multi.value, isFalse);
+    expect(controller.selection.value.map((e) => e.id), ["0"]);
+  });
+
+  test("picked items keep the selection order", () async {
+    final gallery = FakeGalleryService.withItems(10);
+    final controller = await counting(gallery, max: 3);
     controller.toggle(controller.items.value[7]);
     controller.toggle(controller.items.value[3]);
     final picked = await controller.pickedItems();
