@@ -131,7 +131,7 @@ class _CameraPageState extends State<CameraPage> {
                   children: [
                     _Preview(controller: controller),
                     Padding(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(9),
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: PickerAppBar(

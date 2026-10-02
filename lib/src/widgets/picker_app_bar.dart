@@ -36,12 +36,17 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
     final theme = scope.theme;
 
     if (action == null && title == null && onClose != null) {
-      return Container(
-        decoration: BoxDecoration(
-          color: color ?? theme.background,
-          borderRadius: const BorderRadius.all(Radius.circular(50)),
+      return InkWell(
+        borderRadius: const BorderRadius.all(Radius.circular(50)),
+        onTap: onClose,
+        child: Container(
+          decoration: BoxDecoration(
+            color: color ?? theme.background,
+            borderRadius: const BorderRadius.all(Radius.circular(50)),
+          ),
+          padding: const EdgeInsets.all(5),
+          child: Icon(closeIcon, color: theme.onSurface, size: 28),
         ),
-        child: getCloseIcon(context),
       );
     }
     return Material(
