@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/widgets/back_button.dart';
 
 class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
@@ -36,18 +37,7 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
     final theme = scope.theme;
 
     if (action == null && title == null && onClose != null) {
-      return InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(50)),
-        onTap: onClose,
-        child: Container(
-          decoration: BoxDecoration(
-            color: color ?? theme.background,
-            borderRadius: const BorderRadius.all(Radius.circular(50)),
-          ),
-          padding: const EdgeInsets.all(5),
-          child: Icon(closeIcon, color: theme.onSurface, size: 28),
-        ),
-      );
+      return CustomBackButton(onClose: onClose, color: color, closeIcon: closeIcon);
     }
     return Material(
       color: color ?? theme.background,
