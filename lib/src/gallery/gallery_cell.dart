@@ -15,13 +15,7 @@ class GalleryCell extends StatelessWidget {
   final int size;
   final VoidCallback onTap;
 
-  const GalleryCell({
-    required this.item,
-    required this.controller,
-    required this.size,
-    required this.onTap,
-    super.key,
-  });
+  const GalleryCell({required this.item, required this.controller, required this.size, required this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +26,7 @@ class GalleryCell extends StatelessWidget {
       child: Selector<int>(
         listenable: controller.selection,
         select: () => controller.orderOf(item),
-        builder: (context, order) => Semantics(
+        builder: (context, order, _) => Semantics(
           button: true,
           selected: order > 0,
           label: item.isVideo ? scope.texts.video : scope.texts.photo,
@@ -45,16 +39,10 @@ class GalleryCell extends StatelessWidget {
                   scale: order > 0 ? 0.92 : 1,
                   duration: durations.short,
                   child: Image(
-                    image: AssetThumbnail(
-                      item,
-                      size,
-                      gallery: scope.services.gallery,
-                      cache: scope.services.cache,
-                    ),
+                    image: AssetThumbnail(item, size, gallery: scope.services.gallery!, cache: scope.services.cache),
                     fit: BoxFit.cover,
                     gaplessPlayback: true,
-                    frameBuilder: (context, child, frame, sync) =>
-                        frame == null && !sync ? const LoadingBox() : child,
+                    frameBuilder: (context, child, frame, sync) => frame == null && !sync ? const LoadingBox() : child,
                     errorBuilder: (context, error, stack) =>
                         Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
                   ),
@@ -84,7 +72,7 @@ class _PreviewDim extends StatelessWidget {
     return Selector<bool>(
       listenable: controller.preview,
       select: () => controller.preview.value == item,
-      builder: (context, shown) => AnimatedOpacity(
+      builder: (context, shown, _) => AnimatedOpacity(
         opacity: shown ? 0.45 : 0,
         duration: PickerDurations.of(context).short,
         child: ColoredBox(color: theme.background),
