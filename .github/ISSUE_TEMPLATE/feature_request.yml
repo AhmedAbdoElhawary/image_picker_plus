@@ -1,0 +1,29 @@
+name: Feature request
+description: An idea to make the picker better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you need
+      description: What are you trying to do that the picker doesn't let you do now?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How would you like it to work? Code or a sketch is welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else
+      description: Other ways you tried, apps that do it well, screenshots.
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Help
+      options:
+        - label: I'd like to make a PR for this
