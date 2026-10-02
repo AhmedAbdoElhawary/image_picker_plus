@@ -10,6 +10,9 @@ class MediaItem {
   /// part of the cache key, so an edited photo never gets an old thumbnail.
   final DateTime modified;
 
+  /// when it was taken, only set for gallery items.
+  final DateTime? created;
+
   /// set for a photo just taken, it isn't in the gallery.
   final String? path;
 
@@ -23,6 +26,7 @@ class MediaItem {
     required this.height,
     required this.modified,
     this.duration = Duration.zero,
+    this.created,
     this.path,
     this.name,
   });
