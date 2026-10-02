@@ -14,12 +14,7 @@ class CropOverlay extends StatelessWidget {
     return IgnorePointer(
       child: CustomPaint(
         size: Size.infinite,
-        painter: _OverlayPainter(
-          window: window,
-          showGrid: showGrid,
-          scrim: theme.scrim,
-          line: theme.onAccent,
-        ),
+        painter: _OverlayPainter(window: window, showGrid: showGrid, scrim: theme.scrim, line: theme.onAccent),
       ),
     );
   }
