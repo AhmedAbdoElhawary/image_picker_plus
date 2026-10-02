@@ -54,6 +54,8 @@ void main() {
       fakes: fakes,
       settings: const PickerSettings(source: PickerSource.both, maxSelection: 3),
     );
+    await tester.tap(find.text("Select"));
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey("3")));
     await tester.pump();
     await tester.tap(find.text("Photo"));
