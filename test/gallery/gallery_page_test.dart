@@ -4,6 +4,8 @@ import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/gallery/gallery_cell.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
+import 'package:image_picker_plus/src/gallery/media_preview.dart';
+import 'package:image_picker_plus/src/gallery/ratio_button.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
@@ -129,7 +131,11 @@ void main() {
     expect(find.byType(CropView), findsOneWidget);
     expect(find.text("1:1"), findsOneWidget);
     await tester.tap(find.text("1:1"));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("4:5"));
+    await tester.pumpAndSettle();
+    // the menu closed and the button shows the pick
+    expect(find.text("1:1"), findsNothing);
     expect(find.text("4:5"), findsOneWidget);
 
     await tester.tap(find.text("Next"));
@@ -167,5 +173,49 @@ void main() {
     await tester.drag(find.byType(CropView), const Offset(-100, 0));
     await tester.pump();
     expect(view.controller.value.left, greaterThan(before.left));
+  });
+
+  testWidgets("a tap outside the ratio menu closes it and keeps the ratio", (tester) async {
+    await pumpPicker(
+      tester,
+      const GalleryPage(),
+      settings: const PickerSettings(cropRatios: [CropRatio.square, CropRatio.portrait]),
+    );
+    await tester.tap(find.text("1:1"));
+    await tester.pumpAndSettle();
+    expect(find.text("4:5"), findsOneWidget);
+    await tester.tapAt(const Offset(200, 700));
+    await tester.pumpAndSettle();
+    expect(find.text("4:5"), findsNothing);
+    expect(find.text("1:1"), findsOneWidget);
+  });
+
+  testWidgets("no preview: no crop view, and the edit page crops at the image's own ratio", (tester) async {
+    final fakes = Fakes(gallery: FakeGalleryService.withItems(10));
+    await pumpPicker(
+      tester,
+      const GalleryPage(),
+      fakes: fakes,
+      settings: const PickerSettings(showPreview: false, cropRatios: [CropRatio.square]),
+    );
+    expect(find.byType(MediaPreview), findsNothing);
+    await tester.tap(find.text("Next"));
+    await tester.pumpAndSettle();
+    final crop = tester.widget<CropView>(find.byType(CropView)).controller;
+    expect(crop.ratio, CropRatio.original);
+    expect(find.byType(RatioButton), findsNothing);
+  });
+
+  testWidgets("scrolling the grid slides the preview up to a strip, and a tap on it brings it back", (tester) async {
+    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
+    final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
+    await tester.drag(find.byType(GridView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+    final strip = tester.getBottomLeft(find.byType(MediaPreview)).dy;
+    expect(tester.getTopLeft(find.byType(MediaPreview)).dy, lessThan(top));
+    expect(strip - top, closeTo(48, 0.5));
+    await tester.tapAt(Offset(200, strip - 10));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(MediaPreview)).dy, top);
   });
 }
