@@ -13,7 +13,14 @@ class PickerLayout {
   static const double ratioButtonBottomPadding = 5;
   static const double radius = 14;
   static const double minTouch = 48;
+  static const double minButtonTouchHeight = 30;
   static const double pickerTabsHeight = 52;
+
+  /// the edit page on web and desktop is a card from this width up.
+  static const double cardBreakpoint = 600;
+  static const double cardMaxWidth = 960;
+  static const double cardMaxHeight = 900;
+  static const double cardMargin = 24;
 
   factory PickerLayout.of(BuildContext context) => PickerLayout.forSize(MediaQuery.sizeOf(context));
 
