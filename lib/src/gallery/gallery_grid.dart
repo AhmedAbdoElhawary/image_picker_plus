@@ -14,12 +14,7 @@ class GalleryGrid extends StatelessWidget {
   /// room for what floats over the grid, like the preview.
   final EdgeInsetsGeometry padding;
 
-  const GalleryGrid({
-    required this.controller,
-    required this.onTap,
-    this.padding = EdgeInsets.zero,
-    super.key,
-  });
+  const GalleryGrid({required this.controller, required this.onTap, this.padding = EdgeInsets.zero, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +37,9 @@ class GalleryGrid extends StatelessWidget {
               final count = ended ? items.length : items.length + columns;
               return NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  if (notification.metrics.extentAfter < (cellHeight + PickerLayout.gap) * 2)
+                  if (notification.metrics.extentAfter < (cellHeight + PickerLayout.gap) * 2) {
                     controller.loadMore();
+                  }
                   return false;
                 },
                 child: GridView.builder(
