@@ -78,10 +78,7 @@ void main() {
 
   test("selection is kept in order across album switch", () async {
     final gallery = FakeGalleryService(
-      data: {
-        "all": List.generate(10, (i) => fakeItem("a$i")),
-        "other": List.generate(5, (i) => fakeItem("b$i")),
-      },
+      data: {"all": List.generate(10, (i) => fakeItem("a$i")), "other": List.generate(5, (i) => fakeItem("b$i"))},
     );
     final controller = controllerFor(gallery, max: 5);
     await controller.init();
@@ -116,10 +113,7 @@ void main() {
 
   test("an old page result is dropped after an album switch", () async {
     final gallery = FakeGalleryService(
-      data: {
-        "all": List.generate(10, (i) => fakeItem("a$i")),
-        "other": List.generate(5, (i) => fakeItem("b$i")),
-      },
+      data: {"all": List.generate(10, (i) => fakeItem("a$i")), "other": List.generate(5, (i) => fakeItem("b$i"))},
     );
     final controller = controllerFor(gallery);
     final gate = Completer<void>();
