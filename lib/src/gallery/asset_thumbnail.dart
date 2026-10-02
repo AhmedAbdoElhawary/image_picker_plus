@@ -11,7 +11,12 @@ import 'package:image_picker_plus/src/services/gallery_service.dart';
 /// [gallery] is only used for gallery items, which have no path.
 ImageProvider mediaImage(MediaItem item, int size, {required GalleryService? gallery, CacheService? cache}) {
   final path = item.path;
-  if (path != null) return ResizeImage(fileImage(path), width: size, height: size, policy: ResizeImagePolicy.fit);
+  // short side at size like the gallery thumbnail, so a cover fit is never blurry
+  if (path != null) {
+    return item.width >= item.height
+        ? ResizeImage(fileImage(path), height: size)
+        : ResizeImage(fileImage(path), width: size);
+  }
   return AssetThumbnail(item, size, gallery: gallery!, cache: cache);
 }
 
