@@ -33,13 +33,26 @@ class ImageServiceImpl implements ImageService {
   }) async {
     final cached = cacheKey == null ? null : await cache?.read(cacheKey);
     if (cached != null) return _save(cached);
-    final rect = state.cropRect;
+    final (jpeg, width, height) =
+        await editJpeg(source, state.cropRect, colorMatrix, output) ??
+        await _editOnEngine(source, state.cropRect, colorMatrix, output);
+    if (cacheKey != null) await cache?.write(cacheKey, jpeg);
+    return _save(jpeg, width: width, height: height);
+  }
+
+  /// for what the image package can't read, like heic. it runs on the main side, so it can drop frames.
+  Future<(Uint8List, int, int)> _editOnEngine(
+    XFile source,
+    Rect rect,
+    List<double> colorMatrix,
+    OutputOptions output,
+  ) async {
     late double scale;
     late double cropWidth;
     late double cropHeight;
     // ImageDescriptor.width throws on web, this gives the real size on every platform
     final codec = await ui.instantiateImageCodecWithSize(
-      await ui.ImmutableBuffer.fromUint8List(await source.readAsBytes()),
+      await imageBuffer(source),
       getTargetSize: (width, height) {
         cropWidth = rect.width * width;
         cropHeight = rect.height * height;
@@ -81,8 +94,7 @@ class ImageServiceImpl implements ImageService {
     // raw pixels carry no exif, so the output has no location or camera data
     final jpeg = await encodeJpeg(pixels, width, height, output.quality);
 
-    if (cacheKey != null) await cache?.write(cacheKey, jpeg);
-    return _save(jpeg, width: width, height: height);
+    return (jpeg, width, height);
   }
 
   Future<PickedItem> _save(Uint8List jpeg, {int? width, int? height}) async {
