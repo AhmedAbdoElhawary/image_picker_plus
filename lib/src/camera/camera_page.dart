@@ -13,7 +13,6 @@ import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
-import 'package:image_picker_plus/src/widgets/loading_box.dart';
 import 'package:image_picker_plus/src/widgets/message_view.dart';
 import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
 
@@ -104,7 +103,7 @@ class _CameraPageState extends State<CameraPage> {
         CaptureState.noCamera || CaptureState.denied => controller.state.value,
         _ => CaptureState.ready,
       },
-      builder: (context, state) => AnimatedSwitcher(
+      builder: (context, state, _) => AnimatedSwitcher(
         duration: PickerDurations.of(context).medium,
         child: switch (state) {
           CaptureState.noCamera => MessageView(
@@ -117,7 +116,7 @@ class _CameraPageState extends State<CameraPage> {
             key: const ValueKey(CaptureState.denied),
             onClose: _close,
             actionText: scope.texts.openSettings,
-            onAction: scope.services.gallery.openSettings,
+            onAction: scope.services.gallery!.openSettings,
           ),
           _ => SafeArea(
             child: SizedBox(
@@ -130,42 +129,41 @@ class _CameraPageState extends State<CameraPage> {
                   alignment: Alignment.bottomCenter,
                   children: [
                     _Preview(controller: controller),
-                    Padding(
-                      padding: const EdgeInsets.all(9),
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: PickerAppBar(
-                          color: scope.theme.background.withValues(alpha: 0.6),
-                          onClose: _close,
-                        ),
-                      ),
-                    ),
-                    ColoredBox(
-                      color: scope.theme.background.withValues(alpha: 0.6),
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding * 2.47),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            if (widget.video) _MicrophoneNote(controller: controller),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                FlashButton(controller: controller),
-                                ValueListenableBuilder<CaptureState>(
-                                  valueListenable: controller.state,
-                                  builder: (context, state, _) => CaptureButton(
-                                    video: widget.video,
-                                    recording: state == CaptureState.recording,
-                                    onTap: state == CaptureState.initializing ? null : _capture,
+                    PickerAppBar(color: scope.theme.background.withValues(alpha: 0.6), onClose: _close),
+                    Selector<CameraService?>(
+                      listenable: controller.state,
+                      select: () => controller.service,
+                      builder: (context, service, child) {
+                        if (service == null) return const SizedBox.shrink();
+                        return child ?? const SizedBox.shrink();
+                      },
+                      child: ColoredBox(
+                        color: scope.theme.background.withValues(alpha: 0.6),
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding * 2.47),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (widget.video) _MicrophoneNote(controller: controller),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  FlashButton(controller: controller),
+                                  ValueListenableBuilder<CaptureState>(
+                                    valueListenable: controller.state,
+                                    builder: (context, state, _) => CaptureButton(
+                                      video: widget.video,
+                                      recording: state == CaptureState.recording,
+                                      onTap: state == CaptureState.initializing ? null : _capture,
+                                    ),
                                   ),
-                                ),
-                                SwitchCameraButton(controller: controller),
-                              ],
-                            ),
-                          ],
+                                  SwitchCameraButton(controller: controller),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -187,11 +185,14 @@ class _Preview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = PickerScope.of(context);
+
     return Selector<CameraService?>(
       listenable: controller.state,
       select: () => controller.service,
-      builder: (context, service) {
-        if (service == null) return const LoadingBox();
+      builder: (context, service, _) {
+        if (service == null) return Center(child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.accent));
+
         return Align(
           alignment: AlignmentDirectional.topCenter,
           child: ClipRRect(
