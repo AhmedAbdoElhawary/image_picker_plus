@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/gallery/gallery_cell.dart';
@@ -9,16 +11,23 @@ class GalleryGrid extends StatelessWidget {
   final GalleryController controller;
   final void Function(MediaItem item) onTap;
 
-  const GalleryGrid({required this.controller, required this.onTap, super.key});
+  /// room for what floats over the grid, like the preview.
+  final EdgeInsetsGeometry padding;
+
+  const GalleryGrid({required this.controller, required this.onTap, this.padding = EdgeInsets.zero, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final columns = PickerLayout.of(context).columns;
+    final settings = controller.settings;
+    final columns = settings.gridColumns ?? PickerLayout.of(context).columns;
+    final aspect = settings.gridCellAspectRatio;
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cell = (constraints.maxWidth - PickerLayout.gap * (columns - 1)) / columns;
-        final size = (cell * pixelRatio).ceil();
+        final cellWidth = (constraints.maxWidth - PickerLayout.gap * (columns - 1)) / columns;
+        final cellHeight = cellWidth / aspect;
+        // the thumbnail's short side is size, so it has to cover the cell's longer side
+        final size = (max(cellWidth, cellHeight) * pixelRatio).ceil();
         return ValueListenableBuilder<List<MediaItem>>(
           valueListenable: controller.items,
           builder: (context, items, _) => ValueListenableBuilder<bool>(
@@ -28,14 +37,15 @@ class GalleryGrid extends StatelessWidget {
               final count = ended ? items.length : items.length + columns;
               return NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  if (notification.metrics.extentAfter < (cell + PickerLayout.gap) * 2) controller.loadMore();
+                  if (notification.metrics.extentAfter < (cellHeight + PickerLayout.gap) * 2) controller.loadMore();
                   return false;
                 },
                 child: GridView.builder(
-                  padding: EdgeInsets.zero,
+                  padding: padding,
                   itemCount: count,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
+                    childAspectRatio: aspect,
                     mainAxisSpacing: PickerLayout.gap,
                     crossAxisSpacing: PickerLayout.gap,
                   ),
