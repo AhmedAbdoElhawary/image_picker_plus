@@ -1,25 +1,53 @@
+<h1 align="center">Image picker plus</h1>
 
-<h1 align="left">Image picker plus</h1>
+<p align="center">
+  A gallery and camera picker that lives inside your app.<br>
+  Pick images and videos, crop them, add filters, reorder them, and get the files back.<br>
+  In your theme and your language, on mobile, web and desktop.
+</p>
 
-A picker for images and videos from the gallery or the camera, with a UI that follows your app.
+<p align="center">
+  <a href="https://pub.dev/packages/image_picker_plus"><img src="https://img.shields.io/pub/v/image_picker_plus.svg" alt="pub version" /></a>
+  <a href="https://github.com/AhmedAbdoElhawary/image_picker_plus/actions/workflows/ci.yml"><img src="https://github.com/AhmedAbdoElhawary/image_picker_plus/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
+  <a href="https://pub.dev/packages/image_picker_plus/score"><img src="https://img.shields.io/pub/points/image_picker_plus" alt="pub points" /></a>
+  <a href="https://pub.dev/packages/image_picker_plus/score"><img src="https://img.shields.io/pub/likes/image_picker_plus" alt="pub likes" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-blue" alt="platforms" />
+</p>
 
-- Gallery with albums, single or multi selection, and a preview.
+<!-- TODO(ahmed): record these 5 gifs of 1.0.0 into screenshots/ with these exact names (keep each under ~2 MB). until they're pushed to main the README shows broken images, on pub.dev too -->
+| Gallery | Crop | Filters and reorder | Camera |
+|:---:|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/gallery.gif" width="200" alt="gallery" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/crop.gif" width="200" alt="crop" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/edit.gif" width="200" alt="filters and reorder" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/camera.gif" width="200" alt="camera" /> |
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/desktop.gif" width="820" alt="edit screen on desktop" />
+</p>
+
+# Why
+
+`image_picker` opens the phone's own picker. It works, but it looks nothing like your app, it can't crop, and you get the files back as they are.
+
+image_picker_plus shows the gallery inside your app instead, so it follows your design, and the user can crop and edit before you get anything back. One call, one `await`, a list of files.
+
+# Features
+
+- Gallery with albums newest first, a preview, and a scrollbar with the month while scrolling. A tap picks one, a long press or the select button picks many up to a limit.
 - Crop in the preview with the ratios you allow, then filters and reorder before returning.
 - Camera tabs for photo and video, with front/rear and flash.
 - Light and dark themes, your own colors and texts, RTL, and layouts for phones and tablets.
 - Optional disk cache for a faster reopen.
 - No native code of its own, so there's nothing to set up besides the permissions.
 
-<!-- TODO(ahmed): add new screenshots/gif of 1.0.0 -->
+# Quick start
 
-<p align="left">
-  <a href="https://pub.dev/packages/image_picker_plus">
-    <img src="https://img.shields.io/pub/v/image_picker_plus.svg" alt="Pub Package" />
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" />
-  </a>
-</p>
+```dart
+final items = await ImagePickerPlus.pick(context);
+```
+
+That's it. You get a `List<PickedItem>`, or `null` if the user closed the picker. Add the [permissions](#installing) and look at [Settings](#settings) for the rest.
+
+# Platforms
 
 Works on Android, iOS, web, macOS, Windows and Linux.
 
@@ -127,14 +155,16 @@ for (final item in items) {
 |---------|---------|---|
 | `source` | `PickerSource.gallery` | `gallery`, `camera` or `both`. With `both` there are tabs for gallery, photo and video |
 | `mediaType` | `MediaType.image` | `image`, `video` or `all` |
-| `maxSelection` | `1` | `1` is single selection |
+| `maxSelection` | `1` | `1` is single selection. above 1, counting starts on a long press or the select button |
 | `cropRatios` | `[]` | empty means no crop. Presets: `CropRatio.original`, `square`, `portrait` (4:5), `landscape` (16:9), or `CropRatio(3, 2)`. Only these show in the ratio menu |
 | `showPreview` | `true` | `false` hides the preview above the grid. The crop is then only on the edit screen, at the image's own ratio |
+| `resizePreview` | `true` | decodes the preview and edit images at the size they're shown. `false` decodes them at 1080 pixels, more memory but sharper when zooming the crop |
 | `gridColumns` | `null` | images per row, `null` follows the screen width (4, 6 or 8) |
 | `gridCellAspectRatio` | `1` | width / height of a grid cell, `0.5` is twice as tall as wide |
 | `filters` | `false` | shows the filters on the edit screen |
 | `output` | `OutputOptions()` | JPEG quality (90) and optional max width and height for edited images |
-| `theme` | `null` | `null` follows the app brightness with `PickerTheme.light()` / `PickerTheme.dark()` |
+| `theme` | `null` | `null` uses `PickerTheme.dark()`, or follows the app brightness with `PickerTheme.light()` / `PickerTheme.dark()` when `alwaysDarkTheme` is `false` |
+| `alwaysDarkTheme` | `true` | `false` follows the app brightness. A custom `theme` wins over it |
 | `texts` | `PickerTexts()` | every text the picker shows, English by default |
 | `cache` | `PickerCache()` | off by default, see below |
 
@@ -210,26 +240,8 @@ final files = items?.map((e) => File(e.file.path)).toList();
 
 # Contributing
 
-Run the same checks as the CI before a PR:
+Bug reports, ideas and PRs are welcome. Have a look at [CONTRIBUTING](.github/CONTRIBUTING.md) first, it has the setup and the checks the CI runs.
 
-```
-dart format --output=none --set-exit-if-changed lib test example/lib example/integration_test example/test_driver
-flutter analyze --fatal-infos
-flutter test --coverage
-flutter pub publish --dry-run
-```
+# License
 
-The CI fails when line coverage is under 80% (the `services/*_impl.dart` and `platform/*` files are left out, only a device can run them). For speed numbers, run the profile test in the example on a real device:
-
-```
-cd example
-flutter drive --profile --driver=test_driver/perf_driver.dart --target=integration_test/gallery_scroll_test.dart
-```
-
-## Releasing
-
-1. Bump `version:` in `pubspec.yaml` and add a `## x.y.z` section at the top of `CHANGELOG.md`.
-2. Merge to `main`.
-3. Push the tag: `git tag vx.y.z && git push origin vx.y.z`.
-
-The release workflow checks the tag against `pubspec.yaml` and `CHANGELOG.md`, publishes to pub.dev and creates the GitHub release with that CHANGELOG section.
+MIT, see [LICENSE](LICENSE).
