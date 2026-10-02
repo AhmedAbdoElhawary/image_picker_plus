@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
+import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/widgets/loading_box.dart';
 import 'package:video_player/video_player.dart';
 
@@ -27,13 +26,13 @@ class _VideoPreviewState extends State<VideoPreview> {
   }
 
   Future<void> _load() async {
-    final file = await PickerScope.of(context).services.gallery.file(widget.item);
+    final path = widget.item.path ?? (await PickerScope.of(context).services.gallery!.file(widget.item))?.path;
     if (!mounted) return;
-    if (file == null) {
+    if (path == null) {
       setState(() => _failed = true);
       return;
     }
-    final player = VideoPlayerController.file(File(file.path));
+    final player = videoPlayer(path);
     _player = player;
     try {
       await player.initialize();
@@ -63,7 +62,28 @@ class _VideoPreviewState extends State<VideoPreview> {
   @override
   Widget build(BuildContext context) {
     final theme = PickerScope.of(context).theme;
-    if (_failed) return Center(child: Icon(Icons.videocam_off_outlined, color: theme.onSurfaceMuted));
+    final name = widget.item.name;
+    if (_failed) {
+      // windows and linux have no player, the name tells the videos apart
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.videocam_off_outlined, color: theme.onSurfaceMuted),
+            if (name != null)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(top: 8),
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: theme.onSurfaceMuted),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
     final player = _player;
     if (player == null || !player.value.isInitialized) return const LoadingBox();
     return GestureDetector(
