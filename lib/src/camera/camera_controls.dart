@@ -21,6 +21,7 @@ class FlashButton extends StatelessWidget {
           icon: Icon(
             controller.flash.value ? Icons.flash_on_rounded : Icons.flash_off_rounded,
             color: scope.theme.onSurface,
+            size: 28,
           ),
         );
       },
@@ -43,7 +44,7 @@ class SwitchCameraButton extends StatelessWidget {
         return IconButton(
           onPressed: controller.switchCamera,
           tooltip: scope.texts.switchCamera,
-          icon: Icon(Icons.cameraswitch_rounded, color: scope.theme.onSurface),
+          icon: Icon(Icons.flip_camera_android_rounded, color: scope.theme.onSurface, size: 28),
         );
       },
     );
