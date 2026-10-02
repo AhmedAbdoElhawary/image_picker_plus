@@ -6,6 +6,7 @@ import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
+import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 enum GalleryState { loading, ready, denied, empty }
@@ -58,7 +59,9 @@ class GalleryController {
       if (item.isVideo) continue;
       if (settings.cropRatios.isNotEmpty && !crops.containsKey(item.id)) {
         final aspect = item.height == 0 ? 1.0 : item.width / item.height;
-        crops[item.id] = CropController(imageAspect: aspect, ratio: settings.cropRatios.first);
+        // no preview means no ratio picker, so the edit page crops at the image's own ratio
+        final ratio = settings.showPreview ? settings.cropRatios.first : CropRatio.original;
+        crops[item.id] = CropController(imageAspect: aspect, ratio: ratio);
       }
       if (settings.filters) filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
     }
