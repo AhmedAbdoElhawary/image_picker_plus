@@ -13,6 +13,9 @@ class MediaItem {
   /// set for a photo just taken, it isn't in the gallery.
   final String? path;
 
+  /// the file name from the system picker, null for gallery items.
+  final String? name;
+
   const MediaItem({
     required this.id,
     required this.type,
@@ -21,6 +24,7 @@ class MediaItem {
     required this.modified,
     this.duration = Duration.zero,
     this.path,
+    this.name,
   });
 
   bool get isVideo => type == MediaType.video;
