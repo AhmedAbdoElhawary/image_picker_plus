@@ -40,3 +40,6 @@ example/linux/
 example/macos/
 example/windows/
 example/web/
+
+# gifs for the README, linked from github so they are not in the package
+screenshots/
