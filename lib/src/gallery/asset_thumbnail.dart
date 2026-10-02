@@ -1,18 +1,18 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
+import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/services/cache_service.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 
 /// the thumbnail of a gallery item, or the file itself for a photo just taken.
-ImageProvider mediaImage(MediaItem item, int size, {required GalleryService gallery, CacheService? cache}) {
+/// [gallery] is only used for gallery items, which have no path.
+ImageProvider mediaImage(MediaItem item, int size, {required GalleryService? gallery, CacheService? cache}) {
   final path = item.path;
-  if (path != null)
-    return ResizeImage(FileImage(File(path)), width: size, height: size, policy: ResizeImagePolicy.fit);
-  return AssetThumbnail(item, size, gallery: gallery, cache: cache);
+  if (path != null) return ResizeImage(fileImage(path), width: size, height: size, policy: ResizeImagePolicy.fit);
+  return AssetThumbnail(item, size, gallery: gallery!, cache: cache);
 }
 
 class AssetThumbnail extends ImageProvider<AssetThumbnail> {
@@ -51,10 +51,7 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
 
   @override
   bool operator ==(Object other) =>
-      other is AssetThumbnail &&
-      other.item.id == item.id &&
-      other.item.modified == item.modified &&
-      other.size == size;
+      other is AssetThumbnail && other.item.id == item.id && other.item.modified == item.modified && other.size == size;
 
   @override
   int get hashCode => Object.hash(item.id, item.modified, size);
