@@ -17,7 +17,7 @@ A picker for images and videos from the gallery or the camera, with a UI that fo
     <img src="https://img.shields.io/pub/v/image_picker_plus.svg" alt="Pub Package" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/apm/l/atomic-design-ui.svg?" alt="License: MIT" />
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" />
   </a>
 </p>
 
@@ -213,13 +213,13 @@ final files = items?.map((e) => File(e.file.path)).toList();
 Run the same checks as the CI before a PR:
 
 ```
-dart format --output=none --set-exit-if-changed lib test example/lib
+dart format --output=none --set-exit-if-changed lib test example/lib example/integration_test example/test_driver
 flutter analyze --fatal-infos
 flutter test --coverage
 flutter pub publish --dry-run
 ```
 
-The CI fails when line coverage is under 80% (the `services/*_impl.dart` files are left out, only a device can run them). For speed numbers, run the profile test in the example on a real device:
+The CI fails when line coverage is under 80% (the `services/*_impl.dart` and `platform/*` files are left out, only a device can run them). For speed numbers, run the profile test in the example on a real device:
 
 ```
 cd example
