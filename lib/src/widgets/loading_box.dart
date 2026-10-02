@@ -10,10 +10,7 @@ class LoadingBox extends StatefulWidget {
 }
 
 class _LoadingBoxState extends State<LoadingBox> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 1),
-  );
+  late final AnimationController _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1));
 
   @override
   void didChangeDependencies() {
