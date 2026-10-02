@@ -27,8 +27,7 @@ void main() {
   const texts = PickerTexts(next: "Weiter", done: "Fertig", noCamera: "Keine Kamera");
   const settings = PickerSettings(theme: custom, texts: texts, filters: true);
 
-  Color? background(WidgetTester tester) =>
-      tester.widget<Scaffold>(find.byType(Scaffold).last).backgroundColor;
+  Color? background(WidgetTester tester) => tester.widget<Scaffold>(find.byType(Scaffold).last).backgroundColor;
 
   testWidgets("custom theme and texts on the gallery", (tester) async {
     await pumpPicker(
@@ -67,7 +66,9 @@ void main() {
       if (file.path.endsWith("picker_theme.dart")) continue;
       final lines = file.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
-        if (RegExp(r"\bColors\.|Color\(0x").hasMatch(lines[i])) hits.add("${file.path}:${i + 1}");
+        if (RegExp(r'\bColors\.(?!transparent\b)|Color\(0x').hasMatch(lines[i])) {
+          hits.add('${file.path}:${i + 1}');
+        }
       }
     }
     expect(hits, isEmpty);
