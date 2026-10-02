@@ -26,6 +26,10 @@ class PickerTexts {
   final String exporting;
   final String exportFailed;
 
+  /// `{max}` is replaced with the max selection.
+  final String maxKept;
+  final String filesSkipped;
+
   /// one name per filter, in the same order.
   final List<String> filterNames;
 
@@ -54,6 +58,8 @@ class PickerTexts {
     this.capture = "Capture",
     this.exporting = "Saving",
     this.exportFailed = "Couldn't save the images, try again",
+    this.maxKept = "Only the first {max} were kept",
+    this.filesSkipped = "Some files couldn't be opened",
     this.filterNames = const [
       "Normal",
       "Warm",
@@ -73,4 +79,6 @@ class PickerTexts {
   });
 
   String maxReachedFor(int max) => maxReached.replaceAll("{max}", "$max");
+
+  String maxKeptFor(int max) => maxKept.replaceAll("{max}", "$max");
 }
