@@ -149,9 +149,7 @@ class GalleryController {
     selection.value = selection.value.where((item) => !before.contains(item) || now.contains(item)).toList();
     final shown = preview.value;
     if (shown != null && before.contains(shown) && !now.contains(shown)) {
-      preview.value = selection.value.isNotEmpty
-          ? selection.value.last
-          : (fresh.isEmpty ? null : fresh.first);
+      preview.value = selection.value.isNotEmpty ? selection.value.last : (fresh.isEmpty ? null : fresh.first);
     }
     state.value = fresh.isEmpty ? GalleryState.empty : GalleryState.ready;
   }
@@ -189,9 +187,7 @@ class GalleryController {
     for (final item in selection.value) {
       final file = await service.file(item);
       if (file == null) continue;
-      picked.add(
-        PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
-      );
+      picked.add(PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false));
     }
     return picked;
   }
