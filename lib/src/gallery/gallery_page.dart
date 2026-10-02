@@ -118,7 +118,8 @@ class _GalleryPageState extends State<GalleryPage> {
                       : GalleryLayout(
                           preview: scope.settings.showPreview ? MediaPreview(controller: controller) : null,
                           reveal: controller.preview,
-                          grid: (padding) => GalleryGrid(controller: controller, onTap: _onTap, padding: padding),
+                          grid: (padding) =>
+                              GalleryGrid(controller: controller, onTap: _onTap, padding: padding),
                         ),
                 ),
               ],

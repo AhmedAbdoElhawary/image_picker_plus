@@ -24,5 +24,6 @@ class CropRatio {
   @override
   String toString() => ratio == null ? "original" : "${_trim(width)}:${_trim(height)}";
 
-  static String _trim(double value) => value == value.roundToDouble() ? value.toInt().toString() : value.toString();
+  static String _trim(double value) =>
+      value == value.roundToDouble() ? value.toInt().toString() : value.toString();
 }

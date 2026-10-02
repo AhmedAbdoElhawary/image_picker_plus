@@ -94,7 +94,9 @@ class CaptureController with WidgetsBindingObserver {
     final current = this.state.value;
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
       if (current == CaptureState.ready || current == CaptureState.recording) _release();
-    } else if (state == AppLifecycleState.resumed && current == CaptureState.initializing && _service == null) {
+    } else if (state == AppLifecycleState.resumed &&
+        current == CaptureState.initializing &&
+        _service == null) {
       init();
     }
   }

@@ -44,7 +44,12 @@ class CropController extends ValueNotifier<Rect> {
     final size = _maxSize / scale;
     final fx = (center.dx - value.left) / value.width;
     final fy = (center.dy - value.top) / value.height;
-    final rect = Rect.fromLTWH(center.dx - size.width * fx, center.dy - size.height * fy, size.width, size.height);
+    final rect = Rect.fromLTWH(
+      center.dx - size.width * fx,
+      center.dy - size.height * fy,
+      size.width,
+      size.height,
+    );
     value = _clamp(rect);
   }
 

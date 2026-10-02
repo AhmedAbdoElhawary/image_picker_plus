@@ -20,7 +20,10 @@ abstract final class ImagePickerPlus {
   static PickerServices? debugServices;
 
   /// null when the user closes the picker.
-  static Future<List<PickedItem>?> pick(BuildContext context, {PickerSettings settings = const PickerSettings()}) {
+  static Future<List<PickedItem>?> pick(
+    BuildContext context, {
+    PickerSettings settings = const PickerSettings(),
+  }) {
     final theme = PickerTheme.resolve(settings.theme, Theme.of(context).brightness);
     // turned off later, so the old files go
     if (!settings.cache.enabled) unawaited(clearCache());
@@ -39,7 +42,8 @@ abstract final class ImagePickerPlus {
   }
 
   static bool get _supported =>
-      !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
   static Future<void> clearCache() => CacheServiceImpl(maxBytes: 1).clear();
 

@@ -61,7 +61,9 @@ class EditController {
         if (file == null) continue;
         final state = stateOf(item);
         if (state == null || !state.edited) {
-          picked.add(PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false));
+          picked.add(
+            PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
+          );
           continue;
         }
         picked.add(

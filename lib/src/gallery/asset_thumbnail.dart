@@ -10,7 +10,8 @@ import 'package:image_picker_plus/src/services/gallery_service.dart';
 /// the thumbnail of a gallery item, or the file itself for a photo just taken.
 ImageProvider mediaImage(MediaItem item, int size, {required GalleryService gallery, CacheService? cache}) {
   final path = item.path;
-  if (path != null) return ResizeImage(FileImage(File(path)), width: size, height: size, policy: ResizeImagePolicy.fit);
+  if (path != null)
+    return ResizeImage(FileImage(File(path)), width: size, height: size, policy: ResizeImagePolicy.fit);
   return AssetThumbnail(item, size, gallery: gallery, cache: cache);
 }
 
@@ -50,7 +51,10 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
 
   @override
   bool operator ==(Object other) =>
-      other is AssetThumbnail && other.item.id == item.id && other.item.modified == item.modified && other.size == size;
+      other is AssetThumbnail &&
+      other.item.id == item.id &&
+      other.item.modified == item.modified &&
+      other.size == size;
 
   @override
   int get hashCode => Object.hash(item.id, item.modified, size);

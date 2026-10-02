@@ -124,7 +124,8 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
                       onTap: collapsed ? _reveal : null,
                       onVerticalDragStart: collapsed ? (_) => _snap.stop() : null,
                       onVerticalDragUpdate: collapsed
-                          ? (details) => _collapse.value = (_collapse.value - details.delta.dy).clamp(0, _maxCollapse)
+                          ? (details) =>
+                                _collapse.value = (_collapse.value - details.delta.dy).clamp(0, _maxCollapse)
                           : null,
                       onVerticalDragEnd: collapsed ? _onDragEnd : null,
                       child: AbsorbPointer(absorbing: collapsed, child: preview),

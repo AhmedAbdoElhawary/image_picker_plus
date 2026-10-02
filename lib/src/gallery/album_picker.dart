@@ -77,7 +77,9 @@ class _AlbumTile extends StatelessWidget {
 
   /// the first album is all items, its name differs by platform.
   static String nameOf(Album album, GalleryController controller, PickerScope scope) =>
-      controller.albums.value.isNotEmpty && controller.albums.value.first == album ? scope.texts.recent : album.name;
+      controller.albums.value.isNotEmpty && controller.albums.value.first == album
+      ? scope.texts.recent
+      : album.name;
 
   @override
   Widget build(BuildContext context) {

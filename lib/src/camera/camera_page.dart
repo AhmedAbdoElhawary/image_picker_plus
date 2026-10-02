@@ -143,12 +143,12 @@ class _CameraPageState extends State<CameraPage> {
                     ColoredBox(
                       color: scope.theme.background.withValues(alpha: 0.6),
                       child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding*2.47),
+                        padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding * 2.47),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                         _MicrophoneNote(controller: controller),
+                            if (widget.video) _MicrophoneNote(controller: controller),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               crossAxisAlignment: CrossAxisAlignment.end,

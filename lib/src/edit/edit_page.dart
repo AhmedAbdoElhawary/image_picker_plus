@@ -132,7 +132,10 @@ class _CurrentItem extends StatelessWidget {
               Expanded(child: PreviewImage(item: item)),
               Padding(
                 padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
-                child: Text(scope.texts.videoNotEditable, style: TextStyle(color: scope.theme.onSurfaceMuted)),
+                child: Text(
+                  scope.texts.videoNotEditable,
+                  style: TextStyle(color: scope.theme.onSurfaceMuted),
+                ),
               ),
             ],
           );
@@ -179,7 +182,8 @@ class _FilteredImage extends StatelessWidget {
     if (filter == null) return image;
     return ValueListenableBuilder<int>(
       valueListenable: filter,
-      builder: (context, index, image) => ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
+      builder: (context, index, image) =>
+          ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
       child: image,
     );
   }
