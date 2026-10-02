@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 
@@ -214,6 +215,9 @@ class _Results extends StatelessWidget {
           children: [
             item.type == MediaType.video
                 ? const ColoredBox(color: Colors.black12, child: Icon(Icons.videocam_outlined))
+                // on web the path is a blob url
+                : kIsWeb
+                ? Image.network(item.file.path, fit: BoxFit.cover)
                 : Image.file(File(item.file.path), fit: BoxFit.cover),
             PositionedDirectional(
               start: 4,
