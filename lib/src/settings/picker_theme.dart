@@ -26,7 +26,7 @@ class PickerTheme {
     onSurfaceMuted: Color(0xFF6E6E78),
     accent: Color(0xFF3B6EF5),
     onAccent: Color(0xFFFFFFFF),
-    scrim: Color(0x99000000),
+    scrim: Color(0xFFFFFFFF),
   );
 
   factory PickerTheme.dark() => const PickerTheme(
@@ -36,7 +36,7 @@ class PickerTheme {
     onSurfaceMuted: Color(0xFF9A9AA4),
     accent: Color(0xFF5B8BFF),
     onAccent: Color(0xFFFFFFFF),
-    scrim: Color(0xB3000000),
+    scrim: Color(0xFF000000),
   );
 
   static PickerTheme resolve(PickerTheme? custom, Brightness brightness) {
