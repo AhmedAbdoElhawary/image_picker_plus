@@ -8,6 +8,12 @@ void main() {
     expect(const PickerTexts(maxReached: "max {max}").maxReachedFor(2), "max 2");
   });
 
+  test("maxKeptFor puts the number in", () {
+    expect(const PickerTexts().maxKeptFor(5), "Only the first 5 were kept");
+    expect(const PickerTexts(maxKept: "kept {max}").maxKeptFor(3), "kept 3");
+    expect(const PickerTexts().filesSkipped, "Some files couldn't be opened");
+  });
+
   test("one name per filter", () {
     expect(const PickerTexts().filterNames.length, filters.length);
     for (final matrix in filters) {
