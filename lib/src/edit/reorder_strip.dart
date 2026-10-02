@@ -13,7 +13,10 @@ import 'package:image_picker_plus/src/models/media_item.dart';
 class ReorderStrip extends StatelessWidget {
   final EditController controller;
 
-  const ReorderStrip({required this.controller, super.key});
+  /// null hides the plus, it also hides at the max.
+  final VoidCallback? onAdd;
+
+  const ReorderStrip({required this.controller, this.onAdd, super.key});
 
   static const double _size = 56;
 
@@ -31,6 +34,8 @@ class ReorderStrip extends StatelessWidget {
       child: ValueListenableBuilder<List<MediaItem>>(
         valueListenable: controller.items,
         builder: (context, items, _) => ReorderableListView.builder(
+          // a footer can't be dragged, and nothing can be dropped after it
+          footer: onAdd != null && items.length < scope.settings.maxSelection ? _AddTile(onTap: onAdd!) : null,
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: PickerLayout.padding, vertical: 8),
           buildDefaultDragHandles: false,
@@ -49,6 +54,33 @@ class ReorderStrip extends StatelessWidget {
                   index: index,
                   child: _Thumb(item: items[index], controller: controller),
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddTile extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AddTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PickerScope.of(context);
+    return Semantics(
+      button: true,
+      label: scope.texts.add,
+      child: Material(
+        color: scope.theme.surface,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox.square(
+            dimension: ReorderStrip._size,
+            child: Icon(Icons.add_rounded, color: scope.theme.onSurface, size: 28),
+          ),
         ),
       ),
     );
