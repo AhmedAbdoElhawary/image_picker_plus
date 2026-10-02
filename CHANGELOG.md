@@ -4,6 +4,9 @@
 * own crop and filters, the result matches the preview and is saved as JPEG with no metadata
 * crop in the preview, then filters, reorder and crop again on the edit screen, for many images at once. going back keeps the edits
 * camera photos can be cropped too
+* the preview slides up under the app bar while scrolling the grid, drag it down or scroll to the top to bring it back. it can be hidden with `showPreview: false`
+* ratio menu under the crop button
+* grid columns and cell shape can be set
 * camera tabs for photo and video, front/rear, flash, and clear messages when there's no camera or access
 * light and dark themes, custom colors and texts, RTL, reduced motion, layouts for phones and tablets
 * optional disk cache with a size limit, and `ImagePickerPlus.clearCache()`
