@@ -7,6 +7,7 @@ import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/image_picker_plus.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_theme.dart';
 
 import 'fakes/fake_files_service.dart';
 import 'fakes/pump_picker.dart';
@@ -109,5 +110,17 @@ void main() {
     await tester.pumpAndSettle();
     expect((await result)!.single.file.path, "/fake/0");
     expect(fakes.files.opens, 0);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+  testWidgets("dark in a light app by default, alwaysDarkTheme false follows the app", (tester) async {
+    Color? background() => tester
+        .widget<Scaffold>(find.descendant(of: find.byType(GalleryPage), matching: find.byType(Scaffold)))
+        .backgroundColor;
+    await open(tester);
+    expect(background(), PickerTheme.dark().background);
+
+    await tester.pumpWidget(const SizedBox());
+    await open(tester, settings: const PickerSettings(alwaysDarkTheme: false));
+    expect(background(), PickerTheme.light().background);
   }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 }
