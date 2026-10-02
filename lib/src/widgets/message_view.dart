@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/widgets/back_button.dart';
 
 class MessageView extends StatelessWidget {
   final String text;
@@ -28,7 +29,9 @@ class MessageView extends StatelessWidget {
                     Text(
                       text,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: theme.onSurface),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(color: theme.onSurface, fontWeight: FontWeight.w600),
                     ),
                     if (actionText != null && onAction != null) ...[
                       const SizedBox(height: PickerLayout.padding),
@@ -46,15 +49,7 @@ class MessageView extends StatelessWidget {
                 ),
               ),
             ),
-            if (onClose != null)
-              Align(
-                alignment: AlignmentDirectional.topStart,
-                child: IconButton(
-                  onPressed: onClose,
-                  tooltip: scope.texts.close,
-                  icon: Icon(Icons.close_rounded, color: theme.onSurface),
-                ),
-              ),
+            if (onClose != null) CustomBackButton(onClose: onClose),
           ],
         ),
       ),
