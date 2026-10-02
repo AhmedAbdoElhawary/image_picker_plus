@@ -62,7 +62,7 @@ Future<void> pumpPicker(
           onResult: onResult,
           page: PickerScope(
             settings: settings,
-            theme: PickerTheme.resolve(settings.theme, brightness),
+            theme: PickerTheme.resolve(settings.theme, settings.alwaysDarkTheme ? Brightness.dark : brightness),
             services: services,
             child: child,
           ),
