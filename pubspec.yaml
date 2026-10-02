@@ -1,7 +1,9 @@
 name: image_picker_plus
 description: Image and video picker with gallery, camera, crop, filters, themes and optional caching, on mobile, web and desktop. No native code of its own.
 version: 1.0.0
-homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus.git
+homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus
+repository: https://github.com/AhmedAbdoElhawary/image_picker_plus
+issue_tracker: https://github.com/AhmedAbdoElhawary/image_picker_plus/issues
 
 environment:
   sdk: ^3.12.0
