@@ -19,7 +19,11 @@ class FilesFlow extends StatefulWidget {
 }
 
 class _FilesFlowState extends State<FilesFlow> {
+  /// in the order set on the edit page.
   List<MediaItem>? _items;
+
+  /// shown first on the edit page, the first added one after adding.
+  MediaItem? _initial;
   final Map<String, CropController> _crops = {};
   final Map<String, ValueNotifier<int>> _filterIndexes = {};
 
@@ -53,7 +57,16 @@ class _FilesFlowState extends State<FilesFlow> {
       return;
     }
     _clear();
-    for (final item in pick.items) {
+    _prepare(pick.items);
+    setState(() {
+      _items = pick.items;
+      _initial = null;
+    });
+  }
+
+  void _prepare(List<MediaItem> items) {
+    final settings = PickerScope.of(context).settings;
+    for (final item in items) {
       if (item.isVideo) continue;
       if (settings.cropRatios.isNotEmpty) {
         final aspect = item.height == 0 ? 1.0 : item.width / item.height;
@@ -61,7 +74,31 @@ class _FilesFlowState extends State<FilesFlow> {
       }
       if (settings.filters) _filterIndexes[item.id] = ValueNotifier(0);
     }
-    setState(() => _items = pick.items);
+  }
+
+  /// the new files go after the ones there, only as many as still fit.
+  void _add() {
+    final scope = PickerScope.of(context);
+    final generation = _generation;
+    // no await before open, browsers only allow it right after the click
+    scope.services.files.open(multi: true, type: scope.settings.mediaType).then((files) async {
+      final items = _items;
+      if (!mounted || generation != _generation || items == null || files.isEmpty) return;
+      // the same file again would be two items with one id
+      final fresh = files.where((file) => !items.any((item) => item.path == file.path)).toList();
+      final room = scope.settings.maxSelection - items.length;
+      final pick = await FilesPicker(services: scope.services, settings: scope.settings).read(fresh, room: room);
+      if (!mounted || generation != _generation) return;
+      pick.showMessages(ScaffoldMessenger.maybeOf(context), scope.settings);
+      final added = pick.items;
+      if (added.isEmpty) return;
+      _prepare(added);
+      setState(() {
+        _generation++;
+        _items = [..._items!, ...added];
+        _initial = added.first;
+      });
+    });
   }
 
   void _repick() {
@@ -102,10 +139,13 @@ class _FilesFlowState extends State<FilesFlow> {
       child: EditPage(
         key: ValueKey(_generation),
         items: items,
+        initial: _initial,
         crops: _crops,
         filterIndexes: _filterIndexes,
         changeRatio: true,
         onBack: _repick,
+        onAdd: _add,
+        onReorder: (items) => _items = items,
       ),
     );
   }
