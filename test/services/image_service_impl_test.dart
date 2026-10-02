@@ -17,7 +17,7 @@ void main() {
 
   setUp(() {
     dir = Directory.systemTemp.createTempSync("image_service_test");
-    service = ImageServiceImpl(root: dir);
+    service = ImageServiceImpl(root: dir.path);
   });
   tearDown(() => dir.deleteSync(recursive: true));
 
@@ -95,12 +95,7 @@ void main() {
 
   testWidgets("with no max the long side is capped", (tester) async {
     await tester.runAsync(() async {
-      final item = await service.export(
-        grid(5000, 10),
-        const EditState(),
-        filters.first,
-        const OutputOptions(),
-      );
+      final item = await service.export(grid(5000, 10), const EditState(), filters.first, const OutputOptions());
       expect(item.width, OutputOptions.safeMaxSide);
     });
   });
@@ -113,12 +108,7 @@ void main() {
         filters[3],
         const OutputOptions(quality: 100),
       );
-      final low = await service.export(
-        grid(200, 100),
-        const EditState(),
-        filters[3],
-        const OutputOptions(quality: 10),
-      );
+      final low = await service.export(grid(200, 100), const EditState(), filters[3], const OutputOptions(quality: 10));
       final bytes = await high.file.readAsBytes();
       expect(bytes.sublist(0, 2), [0xFF, 0xD8]);
       expect(String.fromCharCodes(bytes).contains("Exif"), isFalse);
@@ -130,22 +120,10 @@ void main() {
   testWidgets("the same edit comes from the cache", (tester) async {
     await tester.runAsync(() async {
       final cache = FakeCacheService();
-      final cached = ImageServiceImpl(root: dir, cache: cache);
+      final cached = ImageServiceImpl(root: dir.path, cache: cache);
       const state = EditState(filterIndex: 1);
-      final first = await cached.export(
-        grid(200, 100),
-        state,
-        filters[1],
-        const OutputOptions(),
-        cacheKey: "k",
-      );
-      final second = await cached.export(
-        grid(200, 100),
-        state,
-        filters[1],
-        const OutputOptions(),
-        cacheKey: "k",
-      );
+      final first = await cached.export(grid(200, 100), state, filters[1], const OutputOptions(), cacheKey: "k");
+      final second = await cached.export(grid(200, 100), state, filters[1], const OutputOptions(), cacheKey: "k");
       expect(cache.writes, 1);
       expect((second.width, second.height), (first.width, first.height));
       expect(await second.file.readAsBytes(), await first.file.readAsBytes());
