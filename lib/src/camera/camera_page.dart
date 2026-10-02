@@ -191,7 +191,9 @@ class _Preview extends StatelessWidget {
       listenable: controller.state,
       select: () => controller.service,
       builder: (context, service, _) {
-        if (service == null) return Center(child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.accent));
+        if (service == null) {
+          return Center(child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.onSurface));
+        }
 
         return Align(
           alignment: AlignmentDirectional.topCenter,
