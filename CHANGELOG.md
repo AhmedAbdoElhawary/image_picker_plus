@@ -2,20 +2,28 @@
 * new API: `ImagePickerPlus.pick(context, settings: PickerSettings(...))` returns `List<PickedItem>?` (breaking, see "Migrating from 0.6.0" in the README)
 * no native code anymore, the copied image_crop plugin is removed
 * own crop and filters, the result matches the preview and is saved as JPEG with no metadata
+* saving the edits runs in a background isolate (decode, crop, filters and encode), with a small processing popup. on web it stays on the engine
 * crop in the preview, then filters, reorder and crop again on the edit screen, for many images at once. going back keeps the edits
 * camera photos can be cropped too
 * the preview slides up under the app bar while scrolling the grid, drag it down or scroll to the top to bring it back. it can be hidden with `showPreview: false`
+* the preview and edit images are decoded at the size they're shown, `resizePreview: false` keeps them at 1080 pixels
 * ratio menu under the crop button
 * grid columns and cell shape can be set
 * camera tabs for photo and video, front/rear, flash, and clear messages when there's no camera or access
 * light and dark themes, custom colors and texts, RTL, reduced motion, layouts for phones and tablets
 * optional disk cache with a size limit, and `ImagePickerPlus.clearCache()`
-* faster gallery with paged loading and smaller thumbnails
+* faster gallery: the first 20 show right away and the rest loads 20 at a time behind them, with smaller thumbnails
 * fewer dependencies (shimmer and image_picker removed)
 * CI for every PR and releases from a version tag
 * web, macOS, Windows and Linux: the system file picker opens, then the edit screen with crop, filters and reorder. no gallery or camera there
 * the edit screen is a card on wide windows, with mouse wheel and trackpad zoom, drag to reorder, hover, and Esc / Enter / Tab
-* new texts `maxKept` and `filesSkipped`, and `PickerTheme.barrier`
+* a tap picks one image. a long press (with a vibration) or the select button starts counting up to `maxSelection`, cancel goes back to the shown image
+* switching album goes back to the top, shows the preview fully with the album's first image
+* a plus after the images on the edit screen goes back to pick more (the system picker on web and desktop). they're added last, never past `maxSelection`, and the plus hides at the max
+* albums are sorted by the date taken, newest first, and images with no size saved show up too
+* a scrollbar with the month and year shows while scrolling the grid, drag it to jump
+* the picker is dark by default, `alwaysDarkTheme: false` follows the app brightness
+* new texts `maxKept`, `filesSkipped`, `select`, `cancel`, `add` and `months`, and `PickerTheme.barrier`
 
 ## 0.6.0
 * update dependencies (camera 0.12, shimmer 4, video_player 2.14, photo_manager 3.12, image 4.10, image_picker 1.2.3)
