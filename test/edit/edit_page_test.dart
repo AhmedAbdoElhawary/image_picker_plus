@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/gallery/media_preview.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
@@ -77,11 +78,55 @@ void main() {
     expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/b", "/fake/v", "/fake/a"]);
   });
 
-  testWidgets("done shows progress while saving", (tester) async {
-    final fakes = Fakes()..image.gate = Completer<void>();
+  testWidgets("the plus shows under the max and calls back", (tester) async {
+    var adds = 0;
     await pumpPicker(
       tester,
-      EditPage(items: [a], filterIndexes: filtersOf([a])),
+      EditPage(items: [a, b], onAdd: () => adds++),
+      settings: const PickerSettings(maxSelection: 3, filters: true),
+    );
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    expect(adds, 1);
+  });
+
+  testWidgets("no plus at the max", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a, b], onAdd: () {}),
+      settings: const PickerSettings(maxSelection: 2, filters: true),
+    );
+    expect(find.byIcon(Icons.add_rounded), findsNothing);
+  });
+
+  testWidgets("no plus with no add", (tester) async {
+    await pumpPicker(tester, EditPage(items: [a, b]), settings: settings);
+    expect(find.byIcon(Icons.add_rounded), findsNothing);
+  });
+
+  testWidgets("initial is shown first and a reorder is reported", (tester) async {
+    List<MediaItem>? order;
+    await pumpPicker(
+      tester,
+      EditPage(items: [a, b, v], initial: b, onReorder: (items) => order = items),
+      settings: settings,
+    );
+    expect(tester.widget<PreviewImage>(find.byType(PreviewImage)).item, b);
+
+    final gesture = await tester.startGesture(tester.getCenter(find.byKey(const ValueKey("a"))));
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 100));
+    await gesture.moveBy(const Offset(200, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(order, [b, v, a]);
+  });
+
+  testWidgets("done shows progress over the whole screen and freezes the page while saving", (tester) async {
+    final fakes = Fakes()..image.gate = Completer<void>();
+    final filters = filtersOf([a]);
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], filterIndexes: filters),
       settings: settings,
       fakes: fakes,
     );
@@ -89,7 +134,18 @@ void main() {
     await tester.pump();
     await tester.tap(find.text("Done"));
     await tester.pump();
-    expect(find.text("Saving"), findsOneWidget);
+    expect(find.text("Processing"), findsOneWidget);
+    final barrier = find.ancestor(of: find.text("Processing"), matching: find.byType(ColoredBox)).last;
+    expect(tester.getSize(barrier), const Size(400, 800));
+
+    await tester.tap(find.text("Cool"), warnIfMissed: false);
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded), warnIfMissed: false);
+    await tester.binding.handlePopRoute();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    expect(find.byType(EditPage), findsOneWidget);
+    expect(filters["a"]!.value, 1);
+
     fakes.image.gate!.complete();
     await tester.pumpAndSettle();
     expect(find.byType(EditPage), findsNothing);
