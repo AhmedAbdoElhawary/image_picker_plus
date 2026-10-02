@@ -30,9 +30,10 @@ class FilesPicker {
 
   const FilesPicker({required this.services, required this.settings});
 
-  Future<FilesPick> read(List<XFile> files) async {
+  /// [room] is how many more fit, the max when nothing is picked yet.
+  Future<FilesPick> read(List<XFile> files, {int? room}) async {
     // cut before reading, so a skipped file doesn't pull in one past the max
-    final kept = files.take(settings.maxSelection).toList();
+    final kept = files.take(room ?? settings.maxSelection).toList();
     final items = <MediaItem>[];
     for (final file in kept) {
       final item = await services.files.read(file);
