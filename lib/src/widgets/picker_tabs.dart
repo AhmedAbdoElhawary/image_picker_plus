@@ -42,6 +42,9 @@ class PickerTabs extends StatelessWidget {
                   button: true,
                   child: InkWell(
                     onTap: () => onChanged(tab),
+                    hoverColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: PickerLayout.pickerTabsHeight),
                       child: Center(
@@ -49,7 +52,7 @@ class PickerTabs extends StatelessWidget {
                           duration: PickerDurations.of(context).short,
                           style: Theme.of(context).textTheme.labelLarge!.copyWith(
                             color: tab == current ? scope.theme.onSurface : scope.theme.onSurfaceMuted,
-                            fontWeight: tab == current ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: tab == current ? FontWeight.w700 : FontWeight.w600,
                           ),
                           child: Text(switch (tab) {
                             PickerTab.gallery => texts.gallery,
