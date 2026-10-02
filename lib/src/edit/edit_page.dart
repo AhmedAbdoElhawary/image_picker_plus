@@ -144,7 +144,7 @@ class _CurrentItem extends StatelessWidget {
               if (changeRatio && scope.settings.cropRatios.length > 1)
                 PositionedDirectional(
                   start: PickerLayout.padding,
-                  bottom: PickerLayout.padding,
+                  bottom: PickerLayout.ratioButtonBottomPadding,
                   child: RatioButton(controller: crop),
                 ),
             ],
@@ -157,7 +157,7 @@ class _CurrentItem extends StatelessWidget {
           );
         }
         return Padding(
-          padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
+          padding: const EdgeInsetsDirectional.only(bottom: PickerLayout.padding * 0.8),
           child: AnimatedSwitcher(duration: PickerDurations.of(context).short, child: child),
         );
       },
