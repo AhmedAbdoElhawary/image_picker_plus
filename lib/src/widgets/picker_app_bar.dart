@@ -3,12 +3,19 @@ import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 
 class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final Widget title;
+  final Widget? title;
   final VoidCallback? onClose;
   final IconData closeIcon;
   final Widget? action;
-
-  const PickerAppBar({required this.title, this.onClose, this.closeIcon = Icons.close_rounded, this.action, super.key});
+  final Color? color;
+  const PickerAppBar({
+    this.title,
+    this.color,
+    this.onClose,
+    this.closeIcon = Icons.close_rounded,
+    this.action,
+    super.key,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(56);
@@ -18,7 +25,7 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
     final scope = PickerScope.of(context);
     final theme = scope.theme;
     return Material(
-      color: theme.background,
+      color: color ?? theme.background,
       child: SafeArea(
         bottom: false,
         child: SizedBox(
@@ -31,7 +38,7 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
                   IconButton(
                     onPressed: onClose,
                     tooltip: scope.texts.close,
-                    icon: Icon(closeIcon, color: theme.onSurface),
+                    icon: Icon(closeIcon, color: theme.onSurface, size: 28),
                   ),
                 Expanded(
                   child: DefaultTextStyle.merge(
