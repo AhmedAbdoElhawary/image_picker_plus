@@ -76,6 +76,31 @@ void main() {
     expect(fakes.image.calls.map((call) => call.$1), ["/picked/new.jpg"]);
   });
 
+  testWidgets("the plus adds files after the others, only as many as fit, and skips ones already there", (
+    tester,
+  ) async {
+    Object? result;
+    final service = FakeFilesService(next: [...FakeFilesService.files(1), ...FakeFilesService.files(6).skip(2)]);
+    final fakes = await open(tester, FakeFilesService.files(2), service: service, onResult: (r) => result = r);
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+    expect(service.lastMulti, isTrue);
+    expect(find.text("Only the first 5 were kept"), findsOneWidget);
+    expect(tester.widget<EditPage>(find.byType(EditPage)).initial?.id, "/picked/2.jpg");
+    expect(find.byIcon(Icons.add_rounded), findsNothing);
+
+    await tester.tap(find.text("Done"));
+    await tester.pumpAndSettle();
+    expect(result, isA<List<PickedItem>>());
+    expect(fakes.image.calls.map((call) => call.$1), [
+      "/picked/0.jpg",
+      "/picked/1.jpg",
+      "/picked/2.jpg",
+      "/picked/3.jpg",
+      "/picked/4.jpg",
+    ]);
+  });
+
   testWidgets("back and cancel closes with null", (tester) async {
     Object? result = "not closed";
     await open(tester, FakeFilesService.files(2), onResult: (r) => result = r);
