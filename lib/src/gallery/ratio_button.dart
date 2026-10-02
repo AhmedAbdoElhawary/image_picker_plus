@@ -73,7 +73,7 @@ class _RatioButtonState extends State<RatioButton> with SingleTickerProviderStat
           child: Selector<CropRatio>(
             listenable: controller,
             select: () => controller.ratio,
-            builder: (context, ratio) => Semantics(
+            builder: (context, ratio, _) => Semantics(
               button: true,
               label: scope.texts.crop,
               child: Material(
@@ -121,8 +121,7 @@ class _RatioButtonState extends State<RatioButton> with SingleTickerProviderStat
     if (box == null || !box.hasSize) return false;
     final bottom = box.localToGlobal(Offset(0, box.size.height)).dy;
     final menuHeight = count * PickerLayout.minTouch + _RatioMenu.gap + _RatioMenu.padding * 2;
-    return bottom + menuHeight >
-        MediaQuery.sizeOf(overlayContext).height - MediaQuery.paddingOf(overlayContext).bottom;
+    return bottom + menuHeight > MediaQuery.sizeOf(overlayContext).height - MediaQuery.paddingOf(overlayContext).bottom;
   }
 }
 
@@ -183,16 +182,12 @@ class _RatioMenu extends StatelessWidget {
                           child: Selector<CropRatio>(
                             listenable: controller,
                             select: () => controller.ratio,
-                            builder: (context, current) => Column(
+                            builder: (context, current, _) => Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 for (final ratio in scope.settings.cropRatios)
-                                  _RatioRow(
-                                    ratio: ratio,
-                                    selected: ratio == current,
-                                    onTap: () => onPick(ratio),
-                                  ),
+                                  _RatioRow(ratio: ratio, selected: ratio == current, onTap: () => onPick(ratio)),
                               ],
                             ),
                           ),
