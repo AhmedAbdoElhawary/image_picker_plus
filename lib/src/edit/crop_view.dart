@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
+import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_overlay.dart';
@@ -40,6 +41,8 @@ class _CropViewState extends State<CropView> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
+    final scope = PickerScope.of(context);
+
     return LayoutBuilder(
       // only a ratio change moves the window, panning and zooming rebuild just the image below
       builder: (context, constraints) => Selector<double>(
@@ -86,20 +89,23 @@ class _CropViewState extends State<CropView> with SingleTickerProviderStateMixin
                 children: [
                   Positioned.fromRect(
                     rect: window,
-                    child: ListenableBuilder(
-                      listenable: Listenable.merge([controller, _overscroll]),
-                      builder: (context, image) {
-                        final rect = controller.value;
-                        final overscroll = _overscroll.value;
-                        return CroppedImage(
-                          rect: rect.shift(
-                            Offset(_rubber(overscroll.dx, rect.width), _rubber(overscroll.dy, rect.height)),
-                          ),
-                          clip: false,
-                          child: image!,
-                        );
-                      },
-                      child: widget.image,
+                    child: ColoredBox(
+                      color: scope.theme.surface,
+                      child: ListenableBuilder(
+                        listenable: Listenable.merge([controller, _overscroll]),
+                        builder: (context, image) {
+                          final rect = controller.value;
+                          final overscroll = _overscroll.value;
+                          return CroppedImage(
+                            rect: rect.shift(
+                              Offset(_rubber(overscroll.dx, rect.width), _rubber(overscroll.dy, rect.height)),
+                            ),
+                            clip: false,
+                            child: image!,
+                          );
+                        },
+                        child: widget.image,
+                      ),
                     ),
                   ),
                   ValueListenableBuilder<bool>(
