@@ -1,5 +1,5 @@
 name: image_picker_plus
-description: Image and video picker with gallery, camera, crop, filters, themes and optional caching. No native code of its own.
+description: Image and video picker with gallery, camera, crop, filters, themes and optional caching, on mobile, web and desktop. No native code of its own.
 version: 1.0.0
 homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus.git
 
@@ -15,6 +15,8 @@ dependencies:
   image: ^4.10.1
   video_player: ^2.14.0
   cross_file: ^0.3.5+5
+  file_selector: ^1.1.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
