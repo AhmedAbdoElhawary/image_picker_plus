@@ -116,8 +116,9 @@ class _GalleryPageState extends State<GalleryPage> {
                   child: state == GalleryState.loading
                       ? const LoadingBox()
                       : GalleryLayout(
-                          preview: MediaPreview(controller: controller),
-                          grid: GalleryGrid(controller: controller, onTap: _onTap),
+                          preview: scope.settings.showPreview ? MediaPreview(controller: controller) : null,
+                          reveal: controller.preview,
+                          grid: (padding) => GalleryGrid(controller: controller, onTap: _onTap, padding: padding),
                         ),
                 ),
               ],
