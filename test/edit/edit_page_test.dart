@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
@@ -119,4 +121,83 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text("Videos can only be reordered"), findsOneWidget);
   });
+
+  testWidgets("esc goes back and enter is done", (tester) async {
+    var backs = 0;
+    final fakes = Fakes();
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], filterIndexes: filtersOf([a]), onBack: () => backs++),
+      settings: settings,
+      fakes: fakes,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(backs, 1);
+    await tester.tap(find.text("Warm"));
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(fakes.image.calls, hasLength(1));
+  });
+
+  testWidgets("tab reaches a filter and enter picks it instead of done", (tester) async {
+    final fakes = Fakes();
+    final filters = filtersOf([a]);
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], filterIndexes: filters),
+      settings: settings,
+      fakes: fakes,
+    );
+    final warm = find.ancestor(of: find.text("Warm"), matching: find.byType(FocusableActionDetector));
+    for (var i = 0; i < 30; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final focused = FocusManager.instance.primaryFocus?.context;
+      if (focused?.findAncestorWidgetOfExactType<FocusableActionDetector>() == tester.widget(warm)) break;
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(filters[a.id]!.value, 1);
+    expect(fakes.image.calls, isEmpty);
+  });
+
+  testWidgets("a mouse over a filter shows the click cursor", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], filterIndexes: filtersOf([a])),
+      settings: settings,
+    );
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: tester.getCenter(find.text("Warm")));
+    await tester.pump();
+    expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.click);
+    await gesture.removePointer();
+  });
+
+  testWidgets("on desktop a plain drag reorders", (tester) async {
+    Object? result;
+    await pumpPicker(
+      tester,
+      EditPage(items: [a, b], filterIndexes: filtersOf([a, b])),
+      settings: settings,
+      onResult: (r) => result = r,
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey("a"))),
+      kind: PointerDeviceKind.mouse,
+    );
+    // the first move only gets past the drag slop
+    await gesture.moveBy(const Offset(20, 0));
+    await tester.pump();
+    for (var i = 0; i < 5; i++) {
+      await gesture.moveBy(const Offset(20, 0));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Done"));
+    await tester.pumpAndSettle();
+    expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/b", "/fake/a"]);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 }
