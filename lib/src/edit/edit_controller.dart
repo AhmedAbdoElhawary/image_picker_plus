@@ -26,10 +26,11 @@ class EditController {
     required this.services,
     required this.output,
     required List<MediaItem> items,
+    MediaItem? initial,
     this.crops = const {},
     this.filterIndexes = const {},
   }) : items = ValueNotifier(items),
-       current = ValueNotifier(items.first);
+       current = ValueNotifier(initial ?? items.first);
 
   /// null for videos.
   EditState? stateOf(MediaItem item) {
@@ -57,10 +58,11 @@ class EditController {
       final picked = <PickedItem>[];
       for (final item in items.value) {
         final path = item.path;
-        final file = path != null ? XFile(path) : await services.gallery!.file(item);
-        if (file == null) continue;
         final state = stateOf(item);
-        if (state == null || !state.edited) {
+        final edited = state != null && state.edited;
+        final file = path != null ? XFile(path) : await services.gallery!.file(item, editable: edited);
+        if (file == null) continue;
+        if (state == null || !edited) {
           picked.add(PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false));
           continue;
         }
