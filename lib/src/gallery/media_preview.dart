@@ -21,7 +21,7 @@ class MediaPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     return ColoredBox(
-      color: scope.theme.surface,
+      color: scope.theme.scrim,
       child: ValueListenableBuilder<MediaItem?>(
         valueListenable: controller.preview,
         builder: (context, item, _) {
@@ -43,7 +43,7 @@ class MediaPreview extends StatelessWidget {
                       if (scope.settings.cropRatios.length > 1)
                         PositionedDirectional(
                           start: PickerLayout.padding,
-                          bottom: PickerLayout.padding,
+                          bottom: PickerLayout.ratioButtonBottomPadding,
                           child: RatioButton(controller: crop),
                         ),
                     ],
