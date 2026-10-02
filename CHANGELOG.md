@@ -13,6 +13,9 @@
 * faster gallery with paged loading and smaller thumbnails
 * fewer dependencies (shimmer and image_picker removed)
 * CI for every PR and releases from a version tag
+* web, macOS, Windows and Linux: the system file picker opens, then the edit screen with crop, filters and reorder. no gallery or camera there
+* the edit screen is a card on wide windows, with mouse wheel and trackpad zoom, drag to reorder, hover, and Esc / Enter / Tab
+* new texts `maxKept` and `filesSkipped`, and `PickerTheme.barrier`
 
 ## 0.6.0
 * update dependencies (camera 0.12, shimmer 4, video_player 2.14, photo_manager 3.12, image 4.10, image_picker 1.2.3)
