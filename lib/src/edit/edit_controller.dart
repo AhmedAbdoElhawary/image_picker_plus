@@ -57,13 +57,11 @@ class EditController {
       final picked = <PickedItem>[];
       for (final item in items.value) {
         final path = item.path;
-        final file = path != null ? XFile(path) : await services.gallery.file(item);
+        final file = path != null ? XFile(path) : await services.gallery!.file(item);
         if (file == null) continue;
         final state = stateOf(item);
         if (state == null || !state.edited) {
-          picked.add(
-            PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
-          );
+          picked.add(PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false));
           continue;
         }
         picked.add(
