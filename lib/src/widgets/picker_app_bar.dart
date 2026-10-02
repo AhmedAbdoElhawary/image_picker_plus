@@ -19,11 +19,31 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(56);
+  Widget getCloseIcon(BuildContext context) {
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
+
+    return IconButton(
+      onPressed: onClose,
+      tooltip: scope.texts.close,
+      icon: Icon(closeIcon, color: theme.onSurface, size: 28),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final theme = scope.theme;
+
+    if (action == null && title == null && onClose != null) {
+      return Container(
+        decoration: BoxDecoration(
+          color: color ?? theme.background,
+          borderRadius: const BorderRadius.all(Radius.circular(50)),
+        ),
+        child: getCloseIcon(context),
+      );
+    }
     return Material(
       color: color ?? theme.background,
       child: SafeArea(
@@ -34,12 +54,7 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsetsDirectional.symmetric(horizontal: PickerLayout.padding / 4),
             child: Row(
               children: [
-                if (onClose != null)
-                  IconButton(
-                    onPressed: onClose,
-                    tooltip: scope.texts.close,
-                    icon: Icon(closeIcon, color: theme.onSurface, size: 28),
-                  ),
+                if (onClose != null) getCloseIcon(context),
                 Expanded(
                   child: DefaultTextStyle.merge(
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: theme.onSurface),
