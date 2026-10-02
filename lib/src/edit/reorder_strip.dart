@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
+import 'package:image_picker_plus/src/edit/video_tile.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 
@@ -13,6 +16,12 @@ class ReorderStrip extends StatelessWidget {
   const ReorderStrip({required this.controller, super.key});
 
   static const double _size = 56;
+
+  /// a mouse drags right away. a phone browser reports android or ios, there a plain drag has to scroll the strip.
+  static bool get _desktop => switch (defaultTargetPlatform) {
+    TargetPlatform.macOS || TargetPlatform.windows || TargetPlatform.linux => true,
+    _ => false,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -29,48 +38,83 @@ class ReorderStrip extends StatelessWidget {
           onReorderItem: controller.reorder,
           // the dragged copy is built in the overlay, outside the scope
           proxyDecorator: (child, _, _) => scope.wrap(child),
-          itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
-            key: ValueKey(items[index].id),
-            index: index,
-            child: _Thumb(item: items[index], controller: controller),
-          ),
+          itemBuilder: (context, index) => _desktop
+              ? ReorderableDragStartListener(
+                  key: ValueKey(items[index].id),
+                  index: index,
+                  child: _Thumb(item: items[index], controller: controller),
+                )
+              : ReorderableDelayedDragStartListener(
+                  key: ValueKey(items[index].id),
+                  index: index,
+                  child: _Thumb(item: items[index], controller: controller),
+                ),
         ),
       ),
     );
   }
 }
 
-class _Thumb extends StatelessWidget {
+class _Thumb extends StatefulWidget {
   final MediaItem item;
   final EditController controller;
 
   const _Thumb({required this.item, required this.controller});
 
   @override
+  State<_Thumb> createState() => _ThumbState();
+}
+
+class _ThumbState extends State<_Thumb> {
+  bool _focused = false;
+  bool _hovered = false;
+
+  void _select() => widget.controller.current.value = widget.item;
+
+  @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
+    final item = widget.item;
+    final controller = widget.controller;
     final pixels = (ReorderStrip._size * MediaQuery.devicePixelRatioOf(context)).ceil();
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 8),
-      child: GestureDetector(
-        onTap: () => controller.current.value = item,
-        child: Selector<bool>(
-          listenable: controller.current,
-          select: () => controller.current.value == item,
-          builder: (context, current) => Container(
-            width: ReorderStrip._size,
-            height: ReorderStrip._size,
-            padding: const EdgeInsetsDirectional.all(2),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: current ? scope.theme.accent : scope.theme.background, width: 2),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: Image(
-                image: mediaImage(item, pixels, gallery: scope.services.gallery, cache: scope.services.cache),
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
+      child: FocusableActionDetector(
+        mouseCursor: SystemMouseCursors.click,
+        // closer than the page's enter, so enter here selects instead of done
+        shortcuts: const {SingleActivator(LogicalKeyboardKey.enter): ActivateIntent()},
+        actions: {ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) => _select())},
+        onShowFocusHighlight: (value) => setState(() => _focused = value),
+        onShowHoverHighlight: (value) => setState(() => _hovered = value),
+        child: GestureDetector(
+          onTap: _select,
+          child: Selector<bool>(
+            listenable: controller.current,
+            select: () => controller.current.value == item,
+            builder: (context, current, _) => Container(
+              width: ReorderStrip._size,
+              height: ReorderStrip._size,
+              padding: const EdgeInsetsDirectional.all(2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: current || _focused
+                      ? scope.theme.accent
+                      : (_hovered ? scope.theme.onSurfaceMuted : scope.theme.background),
+                  width: 2,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: item.isVideo && item.path != null
+                    ? const VideoTile()
+                    : Image(
+                        image: mediaImage(item, pixels, gallery: scope.services.gallery, cache: scope.services.cache),
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                        errorBuilder: (context, error, stack) =>
+                            Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
+                      ),
               ),
             ),
           ),
