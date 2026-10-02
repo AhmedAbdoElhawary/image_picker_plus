@@ -17,6 +17,15 @@ class PickerSettings {
 
   /// empty means no crop.
   final List<CropRatio> cropRatios;
+
+  /// false hides the gallery preview, the crop is then only on the edit page at the image's own ratio.
+  final bool showPreview;
+
+  /// images per row, null follows the screen width.
+  final int? gridColumns;
+
+  /// width / height of a grid cell, 0.5 is twice as tall as wide.
+  final double gridCellAspectRatio;
   final bool filters;
   final OutputOptions output;
 
@@ -30,12 +39,17 @@ class PickerSettings {
     this.mediaType = MediaType.image,
     this.maxSelection = 1,
     this.cropRatios = const [],
+    this.showPreview = true,
+    this.gridColumns,
+    this.gridCellAspectRatio = 1,
     this.filters = false,
     this.output = const OutputOptions(),
     this.theme,
     this.texts = const PickerTexts(),
     this.cache = const PickerCache(),
-  }) : assert(maxSelection >= 1);
+  }) : assert(maxSelection >= 1),
+       assert(gridColumns == null || gridColumns > 0),
+       assert(gridCellAspectRatio > 0);
 
   bool get editing => cropRatios.isNotEmpty || filters;
 
