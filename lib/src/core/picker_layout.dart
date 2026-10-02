@@ -13,6 +13,7 @@ class PickerLayout {
   static const double ratioButtonBottomPadding = 5;
   static const double radius = 14;
   static const double minTouch = 48;
+  static const double pickerTabsHeight = 52;
 
   factory PickerLayout.of(BuildContext context) => PickerLayout.forSize(MediaQuery.sizeOf(context));
 

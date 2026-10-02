@@ -43,7 +43,7 @@ class PickerTabs extends StatelessWidget {
                   child: InkWell(
                     onTap: () => onChanged(tab),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: PickerLayout.minTouch + 4),
+                      constraints: const BoxConstraints(minHeight: PickerLayout.pickerTabsHeight),
                       child: Center(
                         child: AnimatedDefaultTextStyle(
                           duration: PickerDurations.of(context).short,
