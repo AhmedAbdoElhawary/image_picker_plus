@@ -119,13 +119,12 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
                   child: Selector<bool>(
                     listenable: _collapse,
                     select: () => _collapse.value > 0,
-                    builder: (context, collapsed) => GestureDetector(
+                    builder: (context, collapsed, _) => GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: collapsed ? _reveal : null,
                       onVerticalDragStart: collapsed ? (_) => _snap.stop() : null,
                       onVerticalDragUpdate: collapsed
-                          ? (details) =>
-                                _collapse.value = (_collapse.value - details.delta.dy).clamp(0, _maxCollapse)
+                          ? (details) => _collapse.value = (_collapse.value - details.delta.dy).clamp(0, _maxCollapse)
                           : null,
                       onVerticalDragEnd: collapsed ? _onDragEnd : null,
                       child: AbsorbPointer(absorbing: collapsed, child: preview),
