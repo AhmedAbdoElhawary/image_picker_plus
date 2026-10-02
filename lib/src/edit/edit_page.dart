@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
@@ -10,6 +11,7 @@ import 'package:image_picker_plus/src/edit/filters.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
 import 'package:image_picker_plus/src/gallery/media_preview.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
+import 'package:image_picker_plus/src/gallery/video_preview.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
 
@@ -21,11 +23,15 @@ class EditPage extends StatefulWidget {
   /// a camera photo has no gallery preview to pick the ratio in, so it's picked here.
   final bool changeRatio;
 
+  /// null pops, the system picker flow picks again instead.
+  final VoidCallback? onBack;
+
   const EditPage({
     required this.items,
     this.crops = const {},
     this.filterIndexes = const {},
     this.changeRatio = false,
+    this.onBack,
     super.key,
   });
 
@@ -73,38 +79,53 @@ class _EditPageState extends State<EditPage> {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final controller = _controller!;
-    return Scaffold(
-      backgroundColor: scope.theme.background,
-      appBar: PickerAppBar(
-        title: const SizedBox.shrink(),
-        closeIcon: Icons.arrow_back_rounded,
-        onClose: () => Navigator.of(context).pop(),
-        action: TextButton(
-          onPressed: _done,
-          style: TextButton.styleFrom(
-            foregroundColor: scope.theme.accent,
-            minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minTouch),
-          ),
-          child: Text(scope.texts.done, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ),
-      ),
-      body: Stack(
-        children: [
-          SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                Expanded(
-                  child: _CurrentItem(controller: controller, changeRatio: widget.changeRatio),
-                ),
-                if (scope.settings.filters) FilterStrip(controller: controller),
-                if (widget.items.length > 1) ReorderStrip(controller: controller),
-                const SizedBox(height: PickerLayout.padding / 2),
-              ],
+    final back = widget.onBack ?? () => Navigator.of(context).pop();
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): back,
+        const SingleActivator(LogicalKeyboardKey.enter): _done,
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: scope.theme.background,
+          appBar: PickerAppBar(
+            title: const SizedBox.shrink(),
+            closeIcon: Icons.arrow_back_rounded,
+            onClose: back,
+            action: TextButton(
+              onPressed: _done,
+              style: TextButton.styleFrom(
+                foregroundColor: scope.theme.accent,
+                minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+              ),
+              child: Text(
+                scope.texts.done,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
-          _ExportingOverlay(controller: controller),
-        ],
+          body: Stack(
+            children: [
+              SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: _CurrentItem(controller: controller, changeRatio: widget.changeRatio),
+                    ),
+                    if (scope.settings.filters) FilterStrip(controller: controller),
+                    if (widget.items.length > 1) ReorderStrip(controller: controller),
+                    const SizedBox(height: PickerLayout.padding / 2),
+                  ],
+                ),
+              ),
+              _ExportingOverlay(controller: controller),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -129,13 +150,13 @@ class _CurrentItem extends StatelessWidget {
           child = Column(
             key: ObjectKey(item),
             children: [
-              Expanded(child: PreviewImage(item: item)),
+              // a picked file has no gallery thumbnail, so it plays instead
+              Expanded(
+                child: item.path != null ? VideoPreview(item: item) : PreviewImage(item: item),
+              ),
               Padding(
                 padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
-                child: Text(
-                  scope.texts.videoNotEditable,
-                  style: TextStyle(color: scope.theme.onSurfaceMuted),
-                ),
+                child: Text(scope.texts.videoNotEditable, style: TextStyle(color: scope.theme.onSurfaceMuted)),
               ),
             ],
           );
@@ -182,8 +203,7 @@ class _FilteredImage extends StatelessWidget {
     if (filter == null) return image;
     return ValueListenableBuilder<int>(
       valueListenable: filter,
-      builder: (context, index, image) =>
-          ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
+      builder: (context, index, image) => ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
       child: image,
     );
   }
