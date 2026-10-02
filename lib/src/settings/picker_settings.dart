@@ -21,6 +21,10 @@ class PickerSettings {
   /// false hides the gallery preview, the crop is then only on the edit page at the image's own ratio.
   final bool showPreview;
 
+  /// decodes the preview and edit images at the size they're shown, false decodes them at 1080 pixels.
+  /// false uses more memory but stays sharper when zooming the crop.
+  final bool resizePreview;
+
   /// images per row, null follows the screen width.
   final int? gridColumns;
 
@@ -29,8 +33,11 @@ class PickerSettings {
   final bool filters;
   final OutputOptions output;
 
-  /// null follows the app brightness.
+  /// null uses the dark theme, or follows the app brightness when [alwaysDarkTheme] is false.
   final PickerTheme? theme;
+
+  /// false follows the app brightness. a custom [theme] wins over it.
+  final bool alwaysDarkTheme;
   final PickerTexts texts;
   final PickerCache cache;
 
@@ -40,11 +47,13 @@ class PickerSettings {
     this.maxSelection = 1,
     this.cropRatios = const [],
     this.showPreview = true,
+    this.resizePreview = true,
     this.gridColumns,
     this.gridCellAspectRatio = 1,
     this.filters = false,
     this.output = const OutputOptions(),
     this.theme,
+    this.alwaysDarkTheme = true,
     this.texts = const PickerTexts(),
     this.cache = const PickerCache(),
   }) : assert(maxSelection >= 1),
