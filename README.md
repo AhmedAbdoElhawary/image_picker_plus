@@ -97,7 +97,10 @@ for (final item in items) {
 | `source` | `PickerSource.gallery` | `gallery`, `camera` or `both`. With `both` there are tabs for gallery, photo and video |
 | `mediaType` | `MediaType.image` | `image`, `video` or `all` |
 | `maxSelection` | `1` | `1` is single selection |
-| `cropRatios` | `[]` | empty means no crop. Presets: `CropRatio.original`, `square`, `portrait` (4:5), `landscape` (16:9), or `CropRatio(3, 2)` |
+| `cropRatios` | `[]` | empty means no crop. Presets: `CropRatio.original`, `square`, `portrait` (4:5), `landscape` (16:9), or `CropRatio(3, 2)`. Only these show in the ratio menu |
+| `showPreview` | `true` | `false` hides the preview above the grid. The crop is then only on the edit screen, at the image's own ratio |
+| `gridColumns` | `null` | images per row, `null` follows the screen width (4, 6 or 8) |
+| `gridCellAspectRatio` | `1` | width / height of a grid cell, `0.5` is twice as tall as wide |
 | `filters` | `false` | shows the filters on the edit screen |
 | `output` | `OutputOptions()` | JPEG quality (90) and optional max width and height for edited images |
 | `theme` | `null` | `null` follows the app brightness with `PickerTheme.light()` / `PickerTheme.dark()` |
@@ -142,8 +145,8 @@ await ImagePickerPlus.clearCache();
 | `ImagePickerPlus(context).pickImage/pickVideo/pickBoth(source: ...)` | `ImagePickerPlus.pick(context, settings: PickerSettings(mediaType: ..., source: ...))` |
 | `ImageSource.gallery/camera/both` | `PickerSource` |
 | `GalleryDisplaySettings.maximumSelection` | `PickerSettings.maxSelection` |
-| `GalleryDisplaySettings.cropImage` / `showImagePreview` | `cropRatios` (the preview always shows) |
-| `GalleryDisplaySettings.gridDelegate` | removed, the columns follow the screen width |
+| `GalleryDisplaySettings.cropImage` / `showImagePreview` | `cropRatios` / `showPreview` |
+| `GalleryDisplaySettings.gridDelegate` | `gridColumns` and `gridCellAspectRatio` |
 | `GalleryDisplaySettings.callbackFunction` | removed, `await` the result |
 | `multiSelection: true` | `maxSelection > 1` |
 | `AppTheme` | `PickerTheme` |
