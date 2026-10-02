@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
@@ -11,8 +12,8 @@ class GalleryLayout extends StatefulWidget {
   /// null when the preview is off.
   final Widget? preview;
 
-  /// [padding] keeps the first row out from under the preview.
-  final Widget Function(EdgeInsetsGeometry padding) grid;
+  /// [padding] keeps the first row out from under the preview, [collapse] is how far it's slid up.
+  final Widget Function(EdgeInsetsGeometry padding, ValueListenable<double> collapse) grid;
 
   /// shows the whole preview again when it notifies, like when an image is tapped.
   final Listenable reveal;
@@ -80,7 +81,7 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final preview = widget.preview;
-    if (preview == null) return widget.grid(EdgeInsets.zero);
+    if (preview == null) return widget.grid(EdgeInsets.zero, _collapse);
     if (PickerLayout.of(context).previewBeside) {
       return Row(
         children: [
@@ -90,7 +91,7 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
               child: ClipRRect(borderRadius: BorderRadius.circular(PickerLayout.radius), child: preview),
             ),
           ),
-          Expanded(child: widget.grid(EdgeInsets.zero)),
+          Expanded(child: widget.grid(EdgeInsets.zero, _collapse)),
         ],
       );
     }
@@ -104,7 +105,7 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
             children: [
               NotificationListener<ScrollUpdateNotification>(
                 onNotification: _onScroll,
-                child: widget.grid(EdgeInsetsDirectional.only(top: height + PickerLayout.gap)),
+                child: widget.grid(EdgeInsetsDirectional.only(top: height + PickerLayout.gap), _collapse),
               ),
               Positioned(
                 top: 0,
