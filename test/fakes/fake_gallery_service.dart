@@ -22,6 +22,7 @@ MediaItem fakeItem(String id, {MediaType type = MediaType.image}) => MediaItem(
   width: 400,
   height: 300,
   modified: DateTime(2026),
+  created: DateTime(2026),
   duration: type == MediaType.video ? const Duration(seconds: 75) : Duration.zero,
 );
 
@@ -73,7 +74,8 @@ class FakeGalleryService implements GalleryService {
   }
 
   @override
-  Future<XFile?> file(MediaItem item) async => XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
+  Future<XFile?> file(MediaItem item, {bool editable = false}) async =>
+      XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
 
   @override
   Stream<void> get changes => _changes.stream;
