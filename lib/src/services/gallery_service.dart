@@ -17,7 +17,8 @@ abstract class GalleryService {
 
   Future<Uint8List?> thumbnail(MediaItem item, int size);
 
-  Future<XFile?> file(MediaItem item);
+  /// [editable] asks for one the image package can read, ios gives a jpeg of a heic photo then.
+  Future<XFile?> file(MediaItem item, {bool editable = false});
 
   Stream<void> get changes;
 
