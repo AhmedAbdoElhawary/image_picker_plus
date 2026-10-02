@@ -27,7 +27,8 @@ abstract final class ImagePickerPlus {
     BuildContext context, {
     PickerSettings settings = const PickerSettings(),
   }) async {
-    final theme = PickerTheme.resolve(settings.theme, Theme.of(context).brightness);
+    final brightness = settings.alwaysDarkTheme ? Brightness.dark : Theme.of(context).brightness;
+    final theme = PickerTheme.resolve(settings.theme, brightness);
     // turned off later, so the old files go
     if (!settings.cache.enabled) unawaited(clearCache());
     final services = debugServices ?? platform.platformServices(settings);
