@@ -8,8 +8,9 @@ class PickerLayout {
 
   const PickerLayout._(this.columns, this.previewBeside);
 
-  static const double gap = 2;
+  static const double gap = 1;
   static const double padding = 16;
+  static const double ratioButtonBottomPadding = 5;
   static const double radius = 14;
   static const double minTouch = 48;
 
