@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/gallery/gallery_cell.dart';
 import 'package:image_picker_plus/src/gallery/gallery_grid.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/gallery/media_preview.dart';
+
+import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 import '../fakes/pump_picker.dart';
 
@@ -19,10 +22,23 @@ void main() {
     await pumpPicker(tester, const GalleryPage(), size: const Size(400, 800));
     expect(columns(tester), 4);
     expect(beside(tester), isFalse);
+    // the grid runs under the preview, its first row starts below it
     expect(
-      tester.getTopLeft(find.byType(GalleryGrid)).dy,
-      greaterThan(tester.getTopLeft(find.byType(MediaPreview)).dy),
+      tester.getTopLeft(find.byType(GalleryCell).first).dy,
+      greaterThan(tester.getBottomLeft(find.byType(MediaPreview)).dy),
     );
+  });
+
+  testWidgets("columns and cell shape from the settings", (tester) async {
+    await pumpPicker(
+      tester,
+      const GalleryPage(),
+      size: const Size(1300, 900),
+      settings: const PickerSettings(gridColumns: 2, gridCellAspectRatio: 0.5),
+    );
+    expect(columns(tester), 2);
+    final size = tester.getSize(find.byType(GalleryCell).first);
+    expect(size.height, closeTo(size.width * 2, 0.5));
   });
 
   testWidgets("landscape tablet: preview beside with 6 columns", (tester) async {
