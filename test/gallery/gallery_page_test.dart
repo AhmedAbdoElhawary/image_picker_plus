@@ -106,7 +106,10 @@ void main() {
 
   testWidgets("switching album from the sheet", (tester) async {
     final gallery = FakeGalleryService(
-      data: {"all": List.generate(10, (i) => fakeItem("a$i")), "Camera": List.generate(3, (i) => fakeItem("b$i"))},
+      data: {
+        "all": List.generate(10, (i) => fakeItem("a$i")),
+        "Camera": List.generate(3, (i) => fakeItem("b$i")),
+      },
     );
     await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: gallery));
     expect(find.text("Recent"), findsOneWidget);
@@ -167,7 +170,11 @@ void main() {
   });
 
   testWidgets("dragging the crop moves it", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
+    await pumpPicker(
+      tester,
+      const GalleryPage(),
+      settings: const PickerSettings(cropRatios: [CropRatio.square]),
+    );
     final view = tester.widget<CropView>(find.byType(CropView));
     final before = view.controller.value;
     await tester.drag(find.byType(CropView), const Offset(-100, 0));
@@ -206,7 +213,9 @@ void main() {
     expect(find.byType(RatioButton), findsNothing);
   });
 
-  testWidgets("scrolling the grid slides the preview up to a strip, and a tap on it brings it back", (tester) async {
+  testWidgets("scrolling the grid slides the preview up to a strip, and a tap on it brings it back", (
+    tester,
+  ) async {
     await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
     final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
     await tester.drag(find.byType(GridView), const Offset(0, -600));

@@ -21,18 +21,10 @@ class _DemoAppState extends State<DemoApp> {
       debugShowCheckedModeBanner: false,
       themeMode: dark ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(colorSchemeSeed: Colors.blue),
-      darkTheme: ThemeData(
-        colorSchemeSeed: Colors.blue,
-        brightness: Brightness.dark,
-      ),
+      darkTheme: ThemeData(colorSchemeSeed: Colors.blue, brightness: Brightness.dark),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
-        child: Directionality(
-          textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
-          child: child!,
-        ),
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: Directionality(textDirection: rtl ? TextDirection.rtl : TextDirection.ltr, child: child!),
       ),
       home: Demo(
         dark: dark,
@@ -88,10 +80,7 @@ class _DemoState extends State<Demo> {
         maxSelection: maxSelection,
         cropRatios: switch (crop) {
           CropChoice.off => const [],
-          CropChoice.squarePortrait => const [
-            CropRatio.square,
-            CropRatio.portrait,
-          ],
+          CropChoice.squarePortrait => const [CropRatio.square, CropRatio.portrait],
           CropChoice.all => const [
             CropRatio.square,
             CropRatio.portrait,
@@ -112,10 +101,7 @@ class _DemoState extends State<Demo> {
       appBar: AppBar(
         title: const Text("image_picker_plus"),
         actions: [
-          IconButton(
-            onPressed: ImagePickerPlus.clearCache,
-            icon: const Icon(Icons.delete_sweep_outlined),
-          ),
+          IconButton(onPressed: ImagePickerPlus.clearCache, icon: const Icon(Icons.delete_sweep_outlined)),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -145,8 +131,7 @@ class _DemoState extends State<Demo> {
               min: 1,
               max: 20,
               divisions: 19,
-              onChanged: (value) =>
-                  setState(() => maxSelection = value.round()),
+              onChanged: (value) => setState(() => maxSelection = value.round()),
             ),
           ),
           _Choice<CropChoice>(
@@ -165,16 +150,8 @@ class _DemoState extends State<Demo> {
             value: cache,
             onChanged: (value) => setState(() => cache = value),
           ),
-          SwitchListTile(
-            title: const Text("Dark"),
-            value: widget.dark,
-            onChanged: widget.onDark,
-          ),
-          SwitchListTile(
-            title: const Text("Right to left"),
-            value: widget.rtl,
-            onChanged: widget.onRtl,
-          ),
+          SwitchListTile(title: const Text("Dark"), value: widget.dark, onChanged: widget.onDark),
+          SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
           ListTile(
             title: Text("Text scale: ${widget.textScale.toStringAsFixed(1)}"),
             subtitle: Slider(
@@ -198,21 +175,14 @@ class _Choice<T extends Enum> extends StatelessWidget {
   final List<T> values;
   final ValueChanged<T> onChanged;
 
-  const _Choice({
-    required this.label,
-    required this.value,
-    required this.values,
-    required this.onChanged,
-  });
+  const _Choice({required this.label, required this.value, required this.values, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(label),
       subtitle: SegmentedButton<T>(
-        segments: [
-          for (final v in values) ButtonSegment(value: v, label: Text(v.name)),
-        ],
+        segments: [for (final v in values) ButtonSegment(value: v, label: Text(v.name))],
         selected: {value},
         onSelectionChanged: (selected) => onChanged(selected.first),
       ),
@@ -243,21 +213,14 @@ class _Results extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             item.type == MediaType.video
-                ? const ColoredBox(
-                    color: Colors.black12,
-                    child: Icon(Icons.videocam_outlined),
-                  )
+                ? const ColoredBox(color: Colors.black12, child: Icon(Icons.videocam_outlined))
                 : Image.file(File(item.file.path), fit: BoxFit.cover),
             PositionedDirectional(
               start: 4,
               bottom: 4,
               child: Text(
                 "${index + 1} · ${item.width}x${item.height}${item.edited ? " · edited" : ""}",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  shadows: [Shadow(blurRadius: 4)],
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 10, shadows: [Shadow(blurRadius: 4)]),
               ),
             ),
           ],

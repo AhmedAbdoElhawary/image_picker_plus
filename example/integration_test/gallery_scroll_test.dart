@@ -16,10 +16,8 @@ void main() {
         home: Builder(
           builder: (context) => Center(
             child: TextButton(
-              onPressed: () => ImagePickerPlus.pick(
-                context,
-                settings: const PickerSettings(maxSelection: 10),
-              ),
+              onPressed: () =>
+                  ImagePickerPlus.pick(context, settings: const PickerSettings(maxSelection: 10)),
               child: const Text("open"),
             ),
           ),
@@ -28,8 +26,7 @@ void main() {
     );
     final watch = Stopwatch()..start();
     await tester.tap(find.text("open"));
-    while (!_thumbnailShown(tester) &&
-        watch.elapsed < const Duration(seconds: 10)) {
+    while (!_thumbnailShown(tester) && watch.elapsed < const Duration(seconds: 10)) {
       await tester.pump(const Duration(milliseconds: 5));
     }
     final firstThumbnail = watch.elapsedMilliseconds;
@@ -61,11 +58,6 @@ void main() {
 }
 
 bool _thumbnailShown(WidgetTester tester) {
-  final images = find.descendant(
-    of: find.byType(GalleryCell),
-    matching: find.byType(RawImage),
-  );
-  return images.evaluate().any(
-    (element) => (element.widget as RawImage).image != null,
-  );
+  final images = find.descendant(of: find.byType(GalleryCell), matching: find.byType(RawImage));
+  return images.evaluate().any((element) => (element.widget as RawImage).image != null);
 }

@@ -73,7 +73,8 @@ class FakeGalleryService implements GalleryService {
   }
 
   @override
-  Future<XFile?> file(MediaItem item) async => XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
+  Future<XFile?> file(MediaItem item) async =>
+      XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
 
   @override
   Stream<void> get changes => _changes.stream;

@@ -8,20 +8,13 @@ import 'package:integration_test/integration_test_driver.dart';
 Future<void> main() => integrationDriver(
   responseDataCallback: (data) async {
     if (data == null) return;
-    final timeline = driver.Timeline.fromJson(
-      data["scroll_timeline"] as Map<String, dynamic>,
-    );
+    final timeline = driver.Timeline.fromJson(data["scroll_timeline"] as Map<String, dynamic>);
     final summary = driver.TimelineSummary.summarize(timeline);
-    await summary.writeTimelineToFile(
-      "scroll_timeline",
-      pretty: true,
-      includeSummary: true,
-    );
+    await summary.writeTimelineToFile("scroll_timeline", pretty: true, includeSummary: true);
 
     final frames = summary.countFrames();
     final missed =
-        summary.computeMissedFrameRasterizerBudgetCount() +
-        summary.computeMissedFrameBuildBudgetCount();
+        summary.computeMissedFrameRasterizerBudgetCount() + summary.computeMissedFrameBuildBudgetCount();
     final numbers = {
       "first_thumbnail_ms": data["first_thumbnail_ms"],
       "frames": frames,

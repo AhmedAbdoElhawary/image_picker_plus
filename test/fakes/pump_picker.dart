@@ -20,7 +20,8 @@ class Fakes {
       camera = camera ?? FakeCameraService(),
       image = image ?? FakeImageService();
 
-  PickerServices get services => PickerServices(gallery: gallery, camera: () => camera, image: image, cache: cache);
+  PickerServices get services =>
+      PickerServices(gallery: gallery, camera: () => camera, image: image, cache: cache);
 }
 
 /// pumps [child] inside a route of a [MaterialApp], with a [PickerScope] of fakes.
@@ -45,7 +46,11 @@ Future<void> pumpPicker(
   final services = (fakes ?? Fakes()).services;
   await tester.pumpWidget(
     MediaQuery(
-      data: MediaQueryData(size: size, disableAnimations: disableAnimations, textScaler: TextScaler.linear(textScale)),
+      data: MediaQueryData(
+        size: size,
+        disableAnimations: disableAnimations,
+        textScaler: TextScaler.linear(textScale),
+      ),
       child: MaterialApp(
         theme: ThemeData(brightness: brightness),
         builder: (context, app) => Directionality(textDirection: direction, child: app!),

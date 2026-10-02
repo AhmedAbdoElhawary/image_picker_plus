@@ -16,7 +16,9 @@ void main() {
     final close = tester.getCenter(find.byIcon(Icons.close_rounded));
     expect(close.dx, greaterThan(200));
     final cell = tester.getRect(find.byKey(const ValueKey("0")));
-    final badge = tester.getCenter(find.descendant(of: find.byKey(const ValueKey("0")), matching: find.text("1")));
+    final badge = tester.getCenter(
+      find.descendant(of: find.byKey(const ValueKey("0")), matching: find.text("1")),
+    );
     expect(badge.dx, lessThan(cell.center.dx));
   });
 

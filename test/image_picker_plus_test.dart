@@ -18,8 +18,10 @@ void main() {
         data: const MediaQueryData(disableAnimations: true),
         child: MaterialApp(
           home: Builder(
-            builder: (context) =>
-                TextButton(onPressed: () => result = ImagePickerPlus.pick(context), child: const Text("open")),
+            builder: (context) => TextButton(
+              onPressed: () => result = ImagePickerPlus.pick(context),
+              child: const Text("open"),
+            ),
           ),
         ),
       ),
