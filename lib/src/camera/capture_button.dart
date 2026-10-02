@@ -32,15 +32,15 @@ class CaptureButton extends StatelessWidget {
               duration: durations.medium,
               width: size,
               height: size,
-              padding: EdgeInsetsDirectional.all(recording ? 22 : 6),
+              padding: EdgeInsetsDirectional.all(recording ? 20 : 2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: recording ? theme.accent : theme.onSurface, width: 4),
+                border: Border.all(color: theme.onSurface, width: 4),
               ),
               child: AnimatedContainer(
                 duration: durations.medium,
                 decoration: BoxDecoration(
-                  color: video ? theme.accent : theme.onSurface,
+                  color: theme.onSurface,
                   borderRadius: BorderRadius.circular(recording ? 6 : size),
                 ),
               ),
