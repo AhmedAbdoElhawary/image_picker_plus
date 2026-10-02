@@ -14,8 +14,16 @@ class GalleryCell extends StatelessWidget {
   /// thumbnail size in pixels.
   final int size;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-  const GalleryCell({required this.item, required this.controller, required this.size, required this.onTap, super.key});
+  const GalleryCell({
+    required this.item,
+    required this.controller,
+    required this.size,
+    required this.onTap,
+    required this.onLongPress,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +31,7 @@ class GalleryCell extends StatelessWidget {
     final durations = PickerDurations.of(context);
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Selector<int>(
         listenable: controller.selection,
         select: () => controller.orderOf(item),
@@ -35,22 +44,24 @@ class GalleryCell extends StatelessWidget {
             children: [
               ColoredBox(
                 color: scope.theme.surface,
-                child: AnimatedScale(
-                  scale: order > 0 ? 0.92 : 1,
-                  duration: durations.short,
-                  child: Image(
-                    image: AssetThumbnail(item, size, gallery: scope.services.gallery!, cache: scope.services.cache),
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    frameBuilder: (context, child, frame, sync) => frame == null && !sync ? const LoadingBox() : child,
-                    errorBuilder: (context, error, stack) =>
-                        Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
-                  ),
+                child: Image(
+                  image: AssetThumbnail(item, size, gallery: scope.services.gallery!, cache: scope.services.cache),
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                  frameBuilder: (context, child, frame, sync) => frame == null && !sync ? const LoadingBox() : child,
+                  errorBuilder: (context, error, stack) =>
+                      Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
                 ),
               ),
               _PreviewDim(controller: controller, item: item),
               if (item.isVideo) _Duration(item.duration),
-              if (controller.settings.multi) _OrderBadge(order),
+              if (controller.settings.multi)
+                ValueListenableBuilder<bool>(
+                  valueListenable: controller.multi,
+                  builder: (context, multi, child) =>
+                      AnimatedOpacity(opacity: multi ? 1 : 0, duration: durations.short, child: child),
+                  child: _OrderBadge(order),
+                ),
             ],
           ),
         ),
@@ -96,7 +107,6 @@ class _OrderBadge extends StatelessWidget {
         padding: const EdgeInsetsDirectional.all(6),
         child: AnimatedSwitcher(
           duration: PickerDurations.of(context).short,
-          transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
           child: Container(
             key: ValueKey(order),
             width: 22,
