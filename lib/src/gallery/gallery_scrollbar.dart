@@ -90,8 +90,9 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
             builder: (context, _) {
               if (!controller.hasClients) return const SizedBox.shrink();
               final position = controller.position;
-              if (!position.hasContentDimensions || position.maxScrollExtent <= 0)
+              if (!position.hasContentDimensions || position.maxScrollExtent <= 0) {
                 return const SizedBox.shrink();
+              }
               final top = max(0.0, widget.top - widget.collapse.value);
               final track = position.viewportDimension - top - PickerLayout.minTouch;
               if (track <= 0) return const SizedBox.shrink();
