@@ -11,6 +11,7 @@ class CropRatio {
   static const CropRatio square = CropRatio(1, 1);
   static const CropRatio portrait = CropRatio(4, 5);
   static const CropRatio landscape = CropRatio(16, 9);
+  static const List<CropRatio> all = [original, square, portrait, landscape];
 
   /// null for [original], since it depends on the image.
   double? get ratio => width == 0 ? null : width / height;

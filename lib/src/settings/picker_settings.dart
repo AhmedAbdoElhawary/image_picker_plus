@@ -45,7 +45,7 @@ class PickerSettings {
     this.source = PickerSource.gallery,
     this.mediaType = MediaType.image,
     this.maxSelection = 1,
-    this.cropRatios = const [],
+    this.cropRatios = CropRatio.all,
     this.showPreview = true,
     this.resizePreview = true,
     this.gridColumns,
