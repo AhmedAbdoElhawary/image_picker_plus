@@ -27,9 +27,11 @@ class MediaPreview extends StatelessWidget {
     final scope = PickerScope.of(context);
     final preview = ColoredBox(
       color: scope.theme.scrim,
-      child: ValueListenableBuilder<MediaItem?>(
-        valueListenable: controller.preview,
-        builder: (context, item, _) {
+      // the selection too, a shown item that gets deselected loses its crop
+      child: ListenableBuilder(
+        listenable: Listenable.merge([controller.preview, controller.selection]),
+        builder: (context, _) {
+          final item = controller.preview.value;
           final crop = item == null ? null : controller.crops[item.id];
           return AnimatedSwitcher(
             duration: PickerDurations.of(context).short,
