@@ -20,6 +20,9 @@
 * a tap picks one image. a long press (with a vibration) or the select button starts counting up to `maxSelection`, cancel goes back to the shown image
 * switching album goes back to the top, shows the preview fully with the album's first image
 * a plus after the images on the edit screen goes back to pick more (the system picker on web and desktop). they're added last, never past `maxSelection`, and the plus hides at the max
+* the plus also adds a photo or video from the camera tabs, and shows with one item too, also after a camera photo
+* tap the camera preview to focus and set the exposure there
+* a paused video shows a play icon. on the edit screen videos start paused with sound, and a tap plays or pauses
 * albums are sorted by the date taken, newest first, and images with no size saved show up too
 * a scrollbar with the month and year shows while scrolling the grid, drag it to jump
 * the picker is dark by default, `alwaysDarkTheme: false` follows the app brightness
