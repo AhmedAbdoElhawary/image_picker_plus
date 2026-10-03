@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/widgets/loading_box.dart';
@@ -9,7 +11,10 @@ import 'package:video_player/video_player.dart';
 class VideoPreview extends StatefulWidget {
   final MediaItem item;
 
-  const VideoPreview({required this.item, super.key});
+  /// false on the edit page, it starts paused with sound.
+  final bool autoplay;
+
+  const VideoPreview({required this.item, this.autoplay = true, super.key});
 
   @override
   State<VideoPreview> createState() => _VideoPreviewState();
@@ -37,8 +42,10 @@ class _VideoPreviewState extends State<VideoPreview> {
     try {
       await player.initialize();
       await player.setLooping(true);
-      await player.setVolume(0);
-      await player.play();
+      if (widget.autoplay) {
+        await player.setVolume(0);
+        await player.play();
+      }
     } catch (_) {
       if (mounted) setState(() => _failed = true);
       return;
@@ -56,7 +63,6 @@ class _VideoPreviewState extends State<VideoPreview> {
     final player = _player;
     if (player == null || !player.value.isInitialized) return;
     player.value.isPlaying ? player.pause() : player.play();
-    setState(() {});
   }
 
   @override
@@ -89,7 +95,42 @@ class _VideoPreviewState extends State<VideoPreview> {
     return GestureDetector(
       onTap: _toggle,
       child: Center(
-        child: AspectRatio(aspectRatio: player.value.aspectRatio, child: VideoPlayer(player)),
+        child: AspectRatio(
+          aspectRatio: player.value.aspectRatio,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              VideoPlayer(player),
+              _PlayIcon(player: player),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayIcon extends StatelessWidget {
+  final VideoPlayerController player;
+
+  const _PlayIcon({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = PickerScope.of(context).theme;
+    return Selector<bool>(
+      listenable: player,
+      select: () => player.value.isPlaying,
+      builder: (context, playing, child) =>
+          AnimatedOpacity(opacity: playing ? 0 : 1, duration: PickerDurations.of(context).short, child: child),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: theme.background.withValues(alpha: 0.6), shape: BoxShape.circle),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.all(12),
+            child: Icon(Icons.play_arrow_rounded, color: theme.onSurface, size: 36),
+          ),
+        ),
       ),
     );
   }
