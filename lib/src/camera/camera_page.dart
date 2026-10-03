@@ -19,7 +19,13 @@ class CameraPage extends StatefulWidget {
   final ValueChanged<PickedItem> onTaken;
   final VoidCallback onClose;
 
-  const CameraPage({required this.video, required this.onTaken, required this.onClose, this.adding = false, super.key});
+  const CameraPage({
+    required this.video,
+    required this.onTaken,
+    required this.onClose,
+    this.adding = false,
+    super.key,
+  });
 
   @override
   State<CameraPage> createState() => _CameraPageState();
@@ -99,7 +105,9 @@ class _CameraPageState extends State<CameraPage> {
                       child: ColoredBox(
                         color: scope.theme.background.withValues(alpha: 0.6),
                         child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(vertical: PickerLayout.padding * 2.47),
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            vertical: PickerLayout.padding * 2.47,
+                          ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.end,

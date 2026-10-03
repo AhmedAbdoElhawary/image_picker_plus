@@ -109,16 +109,25 @@ class _GalleryPageState extends State<GalleryPage> {
                 actionText: scope.texts.openSettings,
                 onAction: scope.services.gallery!.openSettings,
               ),
-              GalleryState.empty => MessageView(scope.texts.noImages, key: const ValueKey(GalleryState.empty)),
+              GalleryState.empty => MessageView(
+                scope.texts.noImages,
+                key: const ValueKey(GalleryState.empty),
+              ),
               _ => Column(
                 children: [
                   _LimitedBar(controller: controller),
                   // no preview to hold the button, so it gets its own row
-                  if (!scope.settings.showPreview && scope.settings.multi && state == GalleryState.ready && !adding)
+                  if (!scope.settings.showPreview &&
+                      scope.settings.multi &&
+                      state == GalleryState.ready &&
+                      !adding)
                     Align(
                       alignment: AlignmentDirectional.centerEnd,
                       child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(horizontal: PickerLayout.padding, vertical: 6),
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: PickerLayout.padding,
+                          vertical: 6,
+                        ),
                         child: SelectButton(controller: controller),
                       ),
                     ),
@@ -153,7 +162,12 @@ class _NextButton extends StatelessWidget {
   final bool adding;
   final VoidCallback onPressed;
 
-  const _NextButton({required this.controller, required this.busy, required this.adding, required this.onPressed});
+  const _NextButton({
+    required this.controller,
+    required this.busy,
+    required this.adding,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {

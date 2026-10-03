@@ -26,7 +26,8 @@ void main() {
   const texts = PickerTexts(next: "Weiter", done: "Fertig", noCamera: "Keine Kamera");
   const settings = PickerSettings(theme: custom, texts: texts, filters: true);
 
-  Color? background(WidgetTester tester) => tester.widget<Scaffold>(find.byType(Scaffold).last).backgroundColor;
+  Color? background(WidgetTester tester) =>
+      tester.widget<Scaffold>(find.byType(Scaffold).last).backgroundColor;
 
   testWidgets("custom theme and texts on the gallery", (tester) async {
     await pumpPicker(

@@ -18,7 +18,8 @@ class FilesPick {
 
   void showMessages(ScaffoldMessengerState? messenger, PickerSettings settings) {
     if (messenger == null) return;
-    if (cut) messenger.showSnackBar(SnackBar(content: Text(settings.texts.maxKeptFor(settings.maxSelection))));
+    if (cut)
+      messenger.showSnackBar(SnackBar(content: Text(settings.texts.maxKeptFor(settings.maxSelection))));
     if (skipped) messenger.showSnackBar(SnackBar(content: Text(settings.texts.filesSkipped)));
   }
 }

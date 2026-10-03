@@ -36,7 +36,11 @@ void main() {
     final second = ValueNotifier<int>(10);
     Widget build(ValueNotifier<int> notifier) => Directionality(
       textDirection: TextDirection.ltr,
-      child: Selector<int>(listenable: notifier, select: () => notifier.value, builder: (_, v, _) => Text("$v")),
+      child: Selector<int>(
+        listenable: notifier,
+        select: () => notifier.value,
+        builder: (_, v, _) => Text("$v"),
+      ),
     );
     await tester.pumpWidget(build(first));
     await tester.pumpWidget(build(second));

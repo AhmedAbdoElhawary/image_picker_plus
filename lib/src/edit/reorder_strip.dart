@@ -35,7 +35,9 @@ class ReorderStrip extends StatelessWidget {
         valueListenable: controller.items,
         builder: (context, items, _) => ReorderableListView.builder(
           // a footer can't be dragged, and nothing can be dropped after it
-          footer: onAdd != null && items.length < scope.settings.maxSelection ? _AddTile(onTap: onAdd!) : null,
+          footer: onAdd != null && items.length < scope.settings.maxSelection
+              ? _AddTile(onTap: onAdd!)
+              : null,
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: PickerLayout.padding, vertical: 8),
           buildDefaultDragHandles: false,
@@ -141,7 +143,12 @@ class _ThumbState extends State<_Thumb> {
                 child: item.isVideo && item.path != null
                     ? const VideoTile()
                     : Image(
-                        image: mediaImage(item, pixels, gallery: scope.services.gallery, cache: scope.services.cache),
+                        image: mediaImage(
+                          item,
+                          pixels,
+                          gallery: scope.services.gallery,
+                          cache: scope.services.cache,
+                        ),
                         fit: BoxFit.cover,
                         gaplessPlayback: true,
                         errorBuilder: (context, error, stack) =>

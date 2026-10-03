@@ -31,7 +31,8 @@ class _VideoPreviewState extends State<VideoPreview> {
   }
 
   Future<void> _load() async {
-    final path = widget.item.path ?? (await PickerScope.of(context).services.gallery!.file(widget.item))?.path;
+    final path =
+        widget.item.path ?? (await PickerScope.of(context).services.gallery!.file(widget.item))?.path;
     if (!mounted) return;
     if (path == null) {
       setState(() => _failed = true);
@@ -121,8 +122,11 @@ class _PlayIcon extends StatelessWidget {
     return Selector<bool>(
       listenable: player,
       select: () => player.value.isPlaying,
-      builder: (context, playing, child) =>
-          AnimatedOpacity(opacity: playing ? 0 : 1, duration: PickerDurations.of(context).short, child: child),
+      builder: (context, playing, child) => AnimatedOpacity(
+        opacity: playing ? 0 : 1,
+        duration: PickerDurations.of(context).short,
+        child: child,
+      ),
       child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(color: theme.background.withValues(alpha: 0.6), shape: BoxShape.circle),

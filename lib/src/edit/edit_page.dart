@@ -223,7 +223,8 @@ class _FilteredImage extends StatelessWidget {
     if (filter == null) return image;
     return ValueListenableBuilder<int>(
       valueListenable: filter,
-      builder: (context, index, image) => ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
+      builder: (context, index, image) =>
+          ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
       child: image,
     );
   }

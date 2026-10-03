@@ -57,7 +57,9 @@ class GalleryServiceImpl implements GalleryService {
     final asset = await _asset(item.id);
     if (asset == null) return null;
     // cloud items can fail on the origin file, the edited copy still works
-    final file = editable ? await asset.file ?? await asset.originFile : await asset.originFile ?? await asset.file;
+    final file = editable
+        ? await asset.file ?? await asset.originFile
+        : await asset.originFile ?? await asset.file;
     return file == null ? null : XFile(file.path);
   }
 

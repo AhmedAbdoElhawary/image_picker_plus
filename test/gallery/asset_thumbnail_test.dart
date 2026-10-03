@@ -35,6 +35,9 @@ void main() {
   test("same item, modified time and size are the same image", () {
     final gallery = FakeGalleryService();
     expect(AssetThumbnail(item, 100, gallery: gallery), AssetThumbnail(fakeItem("7"), 100, gallery: gallery));
-    expect(AssetThumbnail(item, 100, gallery: gallery) == AssetThumbnail(item, 200, gallery: gallery), isFalse);
+    expect(
+      AssetThumbnail(item, 100, gallery: gallery) == AssetThumbnail(item, 200, gallery: gallery),
+      isFalse,
+    );
   });
 }

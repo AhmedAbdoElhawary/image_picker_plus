@@ -13,7 +13,8 @@ Future<void> main() => integrationDriver(
     await summary.writeTimelineToFile("scroll_timeline", pretty: true, includeSummary: true);
 
     final frames = summary.countFrames();
-    final missed = summary.computeMissedFrameRasterizerBudgetCount() + summary.computeMissedFrameBuildBudgetCount();
+    final missed =
+        summary.computeMissedFrameRasterizerBudgetCount() + summary.computeMissedFrameBuildBudgetCount();
     final numbers = {
       "first_thumbnail_ms": data["first_thumbnail_ms"],
       "frames": frames,
@@ -21,7 +22,9 @@ Future<void> main() => integrationDriver(
       "rss_before_mb": data["rss_before_mb"],
       "rss_after_mb": data["rss_after_mb"],
     };
-    await File("build/gallery_numbers.json").writeAsString(const JsonEncoder.withIndent("  ").convert(numbers));
+    await File(
+      "build/gallery_numbers.json",
+    ).writeAsString(const JsonEncoder.withIndent("  ").convert(numbers));
     stdout.writeln(numbers);
   },
 );

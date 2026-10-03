@@ -14,7 +14,11 @@ import '../fakes/fake_files_service.dart';
 import '../fakes/pump_picker.dart';
 
 void main() {
-  const settings = PickerSettings(maxSelection: 5, cropRatios: [CropRatio.square, CropRatio.portrait], filters: true);
+  const settings = PickerSettings(
+    maxSelection: 5,
+    cropRatios: [CropRatio.square, CropRatio.portrait],
+    filters: true,
+  );
 
   Future<Fakes> open(
     WidgetTester tester,
@@ -64,7 +68,12 @@ void main() {
   testWidgets("back picks again and the new pick replaces the old one", (tester) async {
     Object? result;
     final service = FakeFilesService(next: [XFile("/picked/new.jpg", name: "new.jpg")]);
-    final fakes = await open(tester, FakeFilesService.files(2), service: service, onResult: (r) => result = r);
+    final fakes = await open(
+      tester,
+      FakeFilesService.files(2),
+      service: service,
+      onResult: (r) => result = r,
+    );
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
     expect(service.opens, 1);
@@ -80,8 +89,15 @@ void main() {
     tester,
   ) async {
     Object? result;
-    final service = FakeFilesService(next: [...FakeFilesService.files(1), ...FakeFilesService.files(6).skip(2)]);
-    final fakes = await open(tester, FakeFilesService.files(2), service: service, onResult: (r) => result = r);
+    final service = FakeFilesService(
+      next: [...FakeFilesService.files(1), ...FakeFilesService.files(6).skip(2)],
+    );
+    final fakes = await open(
+      tester,
+      FakeFilesService.files(2),
+      service: service,
+      onResult: (r) => result = r,
+    );
     await tester.tap(find.byIcon(Icons.add_rounded));
     await tester.pumpAndSettle();
     expect(service.lastMulti, isTrue);
@@ -113,7 +129,12 @@ void main() {
   testWidgets("only the newest re-pick is used", (tester) async {
     Object? result;
     final service = FakeFilesService();
-    final fakes = await open(tester, FakeFilesService.files(1), service: service, onResult: (r) => result = r);
+    final fakes = await open(
+      tester,
+      FakeFilesService.files(1),
+      service: service,
+      onResult: (r) => result = r,
+    );
     final old = service.pending = Completer();
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pump();

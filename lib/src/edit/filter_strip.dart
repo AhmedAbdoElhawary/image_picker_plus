@@ -113,7 +113,9 @@ class _FilterTileState extends State<_FilterTile> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(PickerLayout.radius / 1.5),
                   border: Border.all(
-                    color: selected || _focused ? theme.accent : (_hovered ? theme.onSurfaceMuted : theme.background),
+                    color: selected || _focused
+                        ? theme.accent
+                        : (_hovered ? theme.onSurfaceMuted : theme.background),
                     width: 2,
                   ),
                 ),

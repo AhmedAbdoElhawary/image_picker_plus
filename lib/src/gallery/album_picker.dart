@@ -82,7 +82,9 @@ class _AlbumTile extends StatelessWidget {
 
   /// the first album is all items, its name differs by platform.
   static String nameOf(Album album, GalleryController controller, PickerScope scope) =>
-      controller.albums.value.isNotEmpty && controller.albums.value.first == album ? scope.texts.recent : album.name;
+      controller.albums.value.isNotEmpty && controller.albums.value.first == album
+      ? scope.texts.recent
+      : album.name;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +95,10 @@ class _AlbumTile extends StatelessWidget {
       onTap: () => Navigator.of(context).pop(album),
       title: Text(
         nameOf(album, controller, scope),
-        style: TextStyle(color: selected ? scope.theme.accent : scope.theme.onSurface, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: selected ? scope.theme.accent : scope.theme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       trailing: Text(
         "${album.count}",

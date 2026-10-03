@@ -38,7 +38,8 @@ abstract final class ImagePickerPlus {
       builder: (_) => PickerScope(settings: settings, theme: theme, services: services, child: child),
     );
     if (!_systemPicker) return Navigator.of(context).push(route(const PickerHome()));
-    if (settings.source == PickerSource.camera) return Navigator.of(context).push(route(const _NotSupported()));
+    if (settings.source == PickerSource.camera)
+      return Navigator.of(context).push(route(const _NotSupported()));
     // a second system picker on top of an open one throws on some desktops
     if (_picking) return null;
     _picking = true;
@@ -72,7 +73,8 @@ abstract final class ImagePickerPlus {
 
   /// a phone browser reports android or ios, but web has no photo library.
   static bool get _systemPicker =>
-      kIsWeb || (defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS);
+      kIsWeb ||
+      (defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS);
 
   static Future<void> clearCache() => platform.clearCache();
 }

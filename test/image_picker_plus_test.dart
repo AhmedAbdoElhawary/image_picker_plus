@@ -44,13 +44,24 @@ void main() {
     return result;
   }
 
-  testWidgets("desktop opens the system picker right away", (tester) async {
-    await open(tester, settings: const PickerSettings(maxSelection: 3, mediaType: MediaType.all, cropRatios: []));
-    expect(fakes.files.opens, 1);
-    expect(fakes.files.lastMulti, isTrue);
-    expect(fakes.files.lastType, MediaType.all);
-    expect(find.byType(GalleryPage), findsNothing);
-  }, variant: const TargetPlatformVariant({TargetPlatform.linux, TargetPlatform.macOS, TargetPlatform.windows}));
+  testWidgets(
+    "desktop opens the system picker right away",
+    (tester) async {
+      await open(
+        tester,
+        settings: const PickerSettings(maxSelection: 3, mediaType: MediaType.all, cropRatios: []),
+      );
+      expect(fakes.files.opens, 1);
+      expect(fakes.files.lastMulti, isTrue);
+      expect(fakes.files.lastType, MediaType.all);
+      expect(find.byType(GalleryPage), findsNothing);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.linux,
+      TargetPlatform.macOS,
+      TargetPlatform.windows,
+    }),
+  );
 
   testWidgets("single selection opens a single file picker", (tester) async {
     await open(tester, settings: noEdit);
@@ -90,7 +101,10 @@ void main() {
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets("gallery and camera works like gallery only", (tester) async {
-    await open(tester, settings: const PickerSettings(source: PickerSource.both, cropRatios: []));
+    await open(
+      tester,
+      settings: const PickerSettings(source: PickerSource.both, cropRatios: []),
+    );
     expect(fakes.files.opens, 1);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 

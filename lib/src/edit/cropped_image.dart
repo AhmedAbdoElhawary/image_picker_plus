@@ -17,7 +17,13 @@ class CroppedImage extends StatelessWidget {
         final stack = Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned(left: -rect.left * width, top: -rect.top * height, width: width, height: height, child: child),
+            Positioned(
+              left: -rect.left * width,
+              top: -rect.top * height,
+              width: width,
+              height: height,
+              child: child,
+            ),
           ],
         );
         return clip ? ClipRect(child: stack) : stack;

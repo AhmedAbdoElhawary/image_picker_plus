@@ -26,7 +26,8 @@ class EditState {
   );
 
   // pan math leaves tiny float errors, they're not a real crop
-  static bool _isFull(Rect rect) => rect.left < 0.001 && rect.top < 0.001 && rect.right > 0.999 && rect.bottom > 0.999;
+  static bool _isFull(Rect rect) =>
+      rect.left < 0.001 && rect.top < 0.001 && rect.right > 0.999 && rect.bottom > 0.999;
 }
 
 abstract class ImageService {

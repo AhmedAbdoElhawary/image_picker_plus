@@ -60,7 +60,13 @@ class FakeCameraService implements CameraService {
   @override
   Future<PickedItem> stopVideo() async {
     recording = false;
-    return PickedItem(file: XFile("/fake/video.mp4"), type: MediaType.video, width: 0, height: 0, edited: false);
+    return PickedItem(
+      file: XFile("/fake/video.mp4"),
+      type: MediaType.video,
+      width: 0,
+      height: 0,
+      edited: false,
+    );
   }
 
   @override

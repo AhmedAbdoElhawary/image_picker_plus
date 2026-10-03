@@ -90,7 +90,8 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
             builder: (context, _) {
               if (!controller.hasClients) return const SizedBox.shrink();
               final position = controller.position;
-              if (!position.hasContentDimensions || position.maxScrollExtent <= 0) return const SizedBox.shrink();
+              if (!position.hasContentDimensions || position.maxScrollExtent <= 0)
+                return const SizedBox.shrink();
               final top = max(0.0, widget.top - widget.collapse.value);
               final track = position.viewportDimension - top - PickerLayout.minTouch;
               if (track <= 0) return const SizedBox.shrink();
@@ -174,7 +175,10 @@ class _Thumb extends StatelessWidget {
           Padding(
             padding: const EdgeInsetsDirectional.only(start: 8, end: 4),
             child: DecoratedBox(
-              decoration: ShapeDecoration(color: theme.background.withValues(alpha: 0.6), shape: const StadiumBorder()),
+              decoration: ShapeDecoration(
+                color: theme.background.withValues(alpha: 0.6),
+                shape: const StadiumBorder(),
+              ),
               child: const SizedBox(width: 6, height: 40),
             ),
           ),

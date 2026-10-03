@@ -63,7 +63,9 @@ class EditController {
         final file = path != null ? XFile(path) : await services.gallery!.file(item, editable: edited);
         if (file == null) continue;
         if (state == null || !edited) {
-          picked.add(PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false));
+          picked.add(
+            PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
+          );
           continue;
         }
         picked.add(

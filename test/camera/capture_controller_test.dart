@@ -16,7 +16,10 @@ void main() {
   }
 
   test("no camera and denied states", () async {
-    expect((await start(FakeCameraService(failure: CameraFailure.noCamera))).state.value, CaptureState.noCamera);
+    expect(
+      (await start(FakeCameraService(failure: CameraFailure.noCamera))).state.value,
+      CaptureState.noCamera,
+    );
     expect((await start(FakeCameraService(failure: CameraFailure.denied))).state.value, CaptureState.denied);
   });
 

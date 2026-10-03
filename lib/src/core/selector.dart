@@ -9,7 +9,13 @@ class Selector<R> extends StatefulWidget {
   /// built once and given to [builder], for the part that doesn't depend on the value.
   final Widget? child;
 
-  const Selector({required this.listenable, required this.select, required this.builder, this.child, super.key});
+  const Selector({
+    required this.listenable,
+    required this.select,
+    required this.builder,
+    this.child,
+    super.key,
+  });
 
   @override
   State<Selector<R>> createState() => _SelectorState<R>();

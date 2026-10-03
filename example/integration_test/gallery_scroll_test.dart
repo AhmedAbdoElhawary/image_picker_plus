@@ -16,7 +16,8 @@ void main() {
         home: Builder(
           builder: (context) => Center(
             child: TextButton(
-              onPressed: () => ImagePickerPlus.pick(context, settings: const PickerSettings(maxSelection: 10)),
+              onPressed: () =>
+                  ImagePickerPlus.pick(context, settings: const PickerSettings(maxSelection: 10)),
               child: const Text("open"),
             ),
           ),

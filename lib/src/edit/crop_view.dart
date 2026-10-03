@@ -54,8 +54,10 @@ class _CropViewState extends State<CropView> with SingleTickerProviderStateMixin
         builder: (context, aspect, _) {
           final window = _window(constraints.biggest, aspect);
           return Listener(
-            onPointerSignal: (event) =>
-                GestureBinding.instance.pointerSignalResolver.register(event, (event) => _onSignal(event, window)),
+            onPointerSignal: (event) => GestureBinding.instance.pointerSignalResolver.register(
+              event,
+              (event) => _onSignal(event, window),
+            ),
             child: GestureDetector(
               onScaleStart: (_) {
                 _bounce.stop();
@@ -104,7 +106,10 @@ class _CropViewState extends State<CropView> with SingleTickerProviderStateMixin
                             final overscroll = _overscroll.value;
                             return CroppedImage(
                               rect: rect.shift(
-                                Offset(_rubber(overscroll.dx, rect.width), _rubber(overscroll.dy, rect.height)),
+                                Offset(
+                                  _rubber(overscroll.dx, rect.width),
+                                  _rubber(overscroll.dy, rect.height),
+                                ),
                               ),
                               clip: false,
                               child: image!,

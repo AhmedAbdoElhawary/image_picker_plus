@@ -20,7 +20,8 @@ import 'package:video_player/video_player.dart';
 final Random _random = Random();
 
 PickerServices platformServices(PickerSettings settings) {
-  final mobile = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  final mobile =
+      defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
   final cache = mobile && settings.cache.enabled ? CacheServiceImpl(maxBytes: settings.cache.maxBytes) : null;
   return PickerServices(
     gallery: mobile ? GalleryServiceImpl() : null,

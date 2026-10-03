@@ -87,7 +87,10 @@ class _FilesFlowState extends State<FilesFlow> {
       // the same file again would be two items with one id
       final fresh = files.where((file) => !items.any((item) => item.path == file.path)).toList();
       final room = scope.settings.maxSelection - items.length;
-      final pick = await FilesPicker(services: scope.services, settings: scope.settings).read(fresh, room: room);
+      final pick = await FilesPicker(
+        services: scope.services,
+        settings: scope.settings,
+      ).read(fresh, room: room);
       if (!mounted || generation != _generation) return;
       pick.showMessages(ScaffoldMessenger.maybeOf(context), scope.settings);
       final added = pick.items;

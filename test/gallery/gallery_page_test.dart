@@ -31,16 +31,22 @@ void main() {
   });
 
   double badgeOpacity(WidgetTester tester, String order) => tester
-      .widget<AnimatedOpacity>(find.ancestor(of: find.text(order), matching: find.byType(AnimatedOpacity)).first)
+      .widget<AnimatedOpacity>(
+        find.ancestor(of: find.text(order), matching: find.byType(AnimatedOpacity)).first,
+      )
       .opacity;
 
-  testWidgets("a long press starts counting with a vibration, and past the max shows the message", (tester) async {
+  testWidgets("a long press starts counting with a vibration, and past the max shows the message", (
+    tester,
+  ) async {
     final calls = <MethodCall>[];
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
       calls.add(call);
       return null;
     });
-    addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
     await pumpPicker(
       tester,
       const PickerHome(),
@@ -111,7 +117,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets("the plus goes back to count more, add puts them last and shows the first new one", (tester) async {
+    testWidgets("the plus goes back to count more, add puts them last and shows the first new one", (
+      tester,
+    ) async {
       Object? result;
       await openEdit(tester, onResult: (r) => result = r);
       await tester.tap(find.byIcon(Icons.add_rounded));
@@ -190,7 +198,11 @@ void main() {
 
       await tester.tap(find.text("Done"));
       await tester.pumpAndSettle();
-      expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/0", "/fake/5", "/fake/photo.jpg"]);
+      expect((result! as List<PickedItem>).map((e) => e.file.path), [
+        "/fake/0",
+        "/fake/5",
+        "/fake/photo.jpg",
+      ]);
     });
 
     testWidgets("back on the camera while adding opens the edit page again", (tester) async {
@@ -232,7 +244,9 @@ void main() {
   testWidgets("scrolling shows the date beside the scrollbar, then hides it", (tester) async {
     await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(200)));
     double opacity() => tester
-        .widget<AnimatedOpacity>(find.ancestor(of: find.text("January 2026"), matching: find.byType(AnimatedOpacity)))
+        .widget<AnimatedOpacity>(
+          find.ancestor(of: find.text("January 2026"), matching: find.byType(AnimatedOpacity)),
+        )
         .opacity;
 
     await tester.drag(find.byType(GridView), const Offset(0, -300));
@@ -327,7 +341,10 @@ void main() {
 
   testWidgets("switching album from the sheet", (tester) async {
     final gallery = FakeGalleryService(
-      data: {"all": List.generate(10, (i) => fakeItem("a$i")), "Camera": List.generate(3, (i) => fakeItem("b$i"))},
+      data: {
+        "all": List.generate(10, (i) => fakeItem("a$i")),
+        "Camera": List.generate(3, (i) => fakeItem("b$i")),
+      },
     );
     await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery));
     expect(find.text("Recent"), findsOneWidget);
@@ -341,7 +358,10 @@ void main() {
 
   testWidgets("switching album goes back to the top with the preview fully shown", (tester) async {
     final gallery = FakeGalleryService(
-      data: {"all": List.generate(200, (i) => fakeItem("a$i")), "Camera": List.generate(100, (i) => fakeItem("b$i"))},
+      data: {
+        "all": List.generate(200, (i) => fakeItem("a$i")),
+        "Camera": List.generate(100, (i) => fakeItem("b$i")),
+      },
     );
     await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery));
     final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
@@ -355,7 +375,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(find.byType(MediaPreview)).dy, top);
     expect(tester.widget<GridView>(find.byType(GridView)).controller!.offset, 0);
-    expect(find.descendant(of: find.byType(MediaPreview), matching: find.byType(PreviewImage)), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(MediaPreview), matching: find.byType(PreviewImage)),
+      findsOneWidget,
+    );
   });
 
   testWidgets("crop in the preview, then next opens the edit page and done returns the crop", (tester) async {
@@ -408,10 +431,18 @@ void main() {
 
   testWidgets("the preview is decoded at the size it's shown, also while zoomed", (tester) async {
     int previewSize() =>
-        (tester.widget<Image>(find.descendant(of: find.byType(PreviewImage), matching: find.byType(Image))).image
+        (tester
+                    .widget<Image>(
+                      find.descendant(of: find.byType(PreviewImage), matching: find.byType(Image)),
+                    )
+                    .image
                 as AssetThumbnail)
             .size;
-    await pumpPicker(tester, const PickerHome(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      settings: const PickerSettings(cropRatios: [CropRatio.square]),
+    );
     // a 4:3 image covering the square window, its short side is the window side
     final box = tester.getSize(find.byType(CropView));
     final side = min(box.width, box.height).round();
@@ -428,12 +459,18 @@ void main() {
       const PickerHome(),
       settings: const PickerSettings(cropRatios: [CropRatio.square], resizePreview: false),
     );
-    final image = tester.widget<Image>(find.descendant(of: find.byType(PreviewImage), matching: find.byType(Image)));
+    final image = tester.widget<Image>(
+      find.descendant(of: find.byType(PreviewImage), matching: find.byType(Image)),
+    );
     expect((image.image as AssetThumbnail).size, MediaPreview.imageSize);
   });
 
   testWidgets("dragging the crop moves it", (tester) async {
-    await pumpPicker(tester, const PickerHome(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      settings: const PickerSettings(cropRatios: [CropRatio.square]),
+    );
     final view = tester.widget<CropView>(find.byType(CropView));
     final before = view.controller.value;
     await tester.drag(find.byType(CropView), const Offset(-100, 0));
@@ -472,7 +509,9 @@ void main() {
     expect(find.byType(RatioButton), findsNothing);
   });
 
-  testWidgets("scrolling the grid slides the preview up to a strip, and a tap on it brings it back", (tester) async {
+  testWidgets("scrolling the grid slides the preview up to a strip, and a tap on it brings it back", (
+    tester,
+  ) async {
     await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
     final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
     await tester.drag(find.byType(GridView), const Offset(0, -600));

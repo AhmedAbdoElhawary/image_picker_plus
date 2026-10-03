@@ -45,7 +45,8 @@ class PickerScope extends InheritedWidget {
   PickerTexts get texts => settings.texts;
 
   /// the same scope for a new route or sheet, they're outside this tree.
-  PickerScope wrap(Widget child) => PickerScope(settings: settings, theme: theme, services: services, child: child);
+  PickerScope wrap(Widget child) =>
+      PickerScope(settings: settings, theme: theme, services: services, child: child);
 
   static PickerScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<PickerScope>();

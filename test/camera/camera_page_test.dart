@@ -67,7 +67,10 @@ void main() {
     await pumpPicker(
       tester,
       const PickerHome(),
-      settings: const PickerSettings(source: PickerSource.camera, cropRatios: [CropRatio.square, CropRatio.portrait]),
+      settings: const PickerSettings(
+        source: PickerSource.camera,
+        cropRatios: [CropRatio.square, CropRatio.portrait],
+      ),
     );
     await tester.tap(find.byType(CaptureButton));
     await tester.pumpAndSettle();

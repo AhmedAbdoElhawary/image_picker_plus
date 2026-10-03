@@ -33,7 +33,11 @@ void main() {
     controller.zoomTo(2);
     final before = controller.value;
     await tester.sendEventToBinding(
-      PointerScrollEvent(position: center, kind: PointerDeviceKind.trackpad, scrollDelta: const Offset(40, 0)),
+      PointerScrollEvent(
+        position: center,
+        kind: PointerDeviceKind.trackpad,
+        scrollDelta: const Offset(40, 0),
+      ),
     );
     await tester.pump();
     expect(controller.value.left, greaterThan(before.left));

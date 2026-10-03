@@ -45,10 +45,16 @@ class GalleryCell extends StatelessWidget {
               ColoredBox(
                 color: scope.theme.surface,
                 child: Image(
-                  image: AssetThumbnail(item, size, gallery: scope.services.gallery!, cache: scope.services.cache),
+                  image: AssetThumbnail(
+                    item,
+                    size,
+                    gallery: scope.services.gallery!,
+                    cache: scope.services.cache,
+                  ),
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
-                  frameBuilder: (context, child, frame, sync) => frame == null && !sync ? const LoadingBox() : child,
+                  frameBuilder: (context, child, frame, sync) =>
+                      frame == null && !sync ? const LoadingBox() : child,
                   errorBuilder: (context, error, stack) =>
                       Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
                 ),

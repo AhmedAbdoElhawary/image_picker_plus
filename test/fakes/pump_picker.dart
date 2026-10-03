@@ -54,7 +54,11 @@ Future<void> pumpPicker(
   final services = (fakes ?? Fakes()).services;
   await tester.pumpWidget(
     MediaQuery(
-      data: MediaQueryData(size: size, disableAnimations: disableAnimations, textScaler: TextScaler.linear(textScale)),
+      data: MediaQueryData(
+        size: size,
+        disableAnimations: disableAnimations,
+        textScaler: TextScaler.linear(textScale),
+      ),
       child: MaterialApp(
         theme: ThemeData(brightness: brightness),
         builder: (context, app) => Directionality(textDirection: direction, child: app!),
@@ -62,7 +66,10 @@ Future<void> pumpPicker(
           onResult: onResult,
           page: PickerScope(
             settings: settings,
-            theme: PickerTheme.resolve(settings.theme, settings.alwaysDarkTheme ? Brightness.dark : brightness),
+            theme: PickerTheme.resolve(
+              settings.theme,
+              settings.alwaysDarkTheme ? Brightness.dark : brightness,
+            ),
             services: services,
             child: child,
           ),

@@ -139,7 +139,9 @@ class _DemoState extends State<Demo> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("image_picker_plus"),
-        actions: [IconButton(onPressed: ImagePickerPlus.clearCache, icon: const Icon(Icons.delete_sweep_outlined))],
+        actions: [
+          IconButton(onPressed: ImagePickerPlus.clearCache, icon: const Icon(Icons.delete_sweep_outlined)),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _pick,
@@ -258,7 +260,11 @@ class _DemoState extends State<Demo> {
             values: TextsChoice.values,
             onChanged: (value) => setState(() => texts = value),
           ),
-          SwitchListTile(title: const Text("Cache"), value: cache, onChanged: (value) => setState(() => cache = value)),
+          SwitchListTile(
+            title: const Text("Cache"),
+            value: cache,
+            onChanged: (value) => setState(() => cache = value),
+          ),
           _Choice<int>(
             label: "Cache max size",
             value: cacheMb,
@@ -270,7 +276,13 @@ class _DemoState extends State<Demo> {
           SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
           ListTile(
             title: Text("Text scale: ${widget.textScale.toStringAsFixed(1)}"),
-            subtitle: Slider(value: widget.textScale, min: 0.8, max: 2, divisions: 12, onChanged: widget.onTextScale),
+            subtitle: Slider(
+              value: widget.textScale,
+              min: 0.8,
+              max: 2,
+              divisions: 12,
+              onChanged: widget.onTextScale,
+            ),
           ),
           _Results(items),
         ],
@@ -360,14 +372,22 @@ class _Choice<T> extends StatelessWidget {
   final String Function(T value)? name;
   final ValueChanged<T> onChanged;
 
-  const _Choice({required this.label, required this.value, required this.values, required this.onChanged, this.name});
+  const _Choice({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.onChanged,
+    this.name,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(label),
       subtitle: SegmentedButton<T>(
-        segments: [for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name))],
+        segments: [
+          for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name)),
+        ],
         selected: {value},
         onSelectionChanged: (selected) => onChanged(selected.first),
       ),
@@ -519,7 +539,8 @@ class _VideoViewState extends State<_VideoView> {
             alignment: Alignment.center,
             children: [
               VideoPlayer(_player),
-              if (!_player.value.isPlaying) const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 64),
+              if (!_player.value.isPlaying)
+                const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 64),
             ],
           ),
         ),

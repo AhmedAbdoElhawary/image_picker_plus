@@ -19,7 +19,9 @@ class FakeFilesService implements FilesService {
   bool? lastMulti;
   MediaType? lastType;
 
-  FakeFilesService({List<XFile>? next, Set<String>? unreadable}) : next = next ?? [], unreadable = unreadable ?? {};
+  FakeFilesService({List<XFile>? next, Set<String>? unreadable})
+    : next = next ?? [],
+      unreadable = unreadable ?? {};
 
   static List<XFile> files(int count, {String extension = "jpg"}) =>
       List.generate(count, (index) => XFile("/picked/$index.$extension", name: "$index.$extension"));

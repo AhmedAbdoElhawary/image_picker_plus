@@ -56,7 +56,10 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
 
   @override
   bool operator ==(Object other) =>
-      other is AssetThumbnail && other.item.id == item.id && other.item.modified == item.modified && other.size == size;
+      other is AssetThumbnail &&
+      other.item.id == item.id &&
+      other.item.modified == item.modified &&
+      other.size == size;
 
   @override
   int get hashCode => Object.hash(item.id, item.modified, size);
