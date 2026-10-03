@@ -17,16 +17,18 @@ void main() {
     modified: DateTime(2026),
   );
 
+  const notSupported = "Video preview not available for this device,\nbut it will be exported normally.";
+
   // tests have no video player, like windows and linux
-  testWidgets("no player shows the icon and the file name", (tester) async {
+  testWidgets("no player shows the icon and the message", (tester) async {
     await pumpPicker(tester, VideoPreview(item: video(name: "clip.mp4")));
-    expect(find.byIcon(Icons.videocam_off_outlined), findsOneWidget);
-    expect(find.text("clip.mp4"), findsOneWidget);
+    expect(find.byIcon(Icons.code_off_rounded), findsOneWidget);
+    expect(find.text(notSupported), findsOneWidget);
   });
 
-  testWidgets("no name shows only the icon", (tester) async {
+  testWidgets("no name still shows the message", (tester) async {
     await pumpPicker(tester, VideoPreview(item: video()));
-    expect(find.byIcon(Icons.videocam_off_outlined), findsOneWidget);
-    expect(find.byType(Text), findsNothing);
+    expect(find.byIcon(Icons.code_off_rounded), findsOneWidget);
+    expect(find.text(notSupported), findsOneWidget);
   });
 }
