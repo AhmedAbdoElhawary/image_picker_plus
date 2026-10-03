@@ -1,4 +1,4 @@
-import 'package:cross_file/cross_file.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 

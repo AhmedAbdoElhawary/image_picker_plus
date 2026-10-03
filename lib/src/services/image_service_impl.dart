@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/services/cache_service.dart';

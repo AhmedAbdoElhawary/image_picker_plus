@@ -1,7 +1,6 @@
 library;
 
-export 'package:cross_file/cross_file.dart' show XFile;
-
+export 'src/core/x_file.dart';
 export 'src/image_picker_plus.dart' show ImagePickerPlus;
 export 'src/models/picked_item.dart';
 export 'src/settings/crop_ratio.dart';

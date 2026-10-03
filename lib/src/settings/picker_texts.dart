@@ -16,6 +16,7 @@ class PickerTexts {
   final String noMicrophone;
   final String openSettings;
   final String manageAccess;
+  final String videoPreviewNotSupported;
 
   /// `{max}` is replaced with the max selection.
   final String maxReached;
@@ -52,6 +53,8 @@ class PickerTexts {
     this.recent = "Recent",
     this.noImages = "There are no images",
     this.noCamera = "There is no camera",
+    this.videoPreviewNotSupported =
+        "Video preview not available for this device,\nbut it will be exported normally.",
     this.accessDenied = "Allow access to your photos to continue",
     this.cameraDenied = "Allow camera access to continue",
     this.noMicrophone = "Allow microphone access to record sound",

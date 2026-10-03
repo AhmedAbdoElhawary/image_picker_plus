@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_route.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/files/files_flow.dart';
 import 'package:image_picker_plus/src/files/files_picker.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
