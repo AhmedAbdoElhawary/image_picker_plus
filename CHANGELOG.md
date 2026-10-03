@@ -1,3 +1,8 @@
+## 1.0.1
+* pub.dev lists macOS, Windows and Linux too, the pubspec declares the platforms now
+* wasm ready: `video_player` is out of the web build, so a video on web shows its file name like on Windows and Linux
+* `cross_file` is no longer a direct dependency, `XFile` comes from `file_selector`. the same class, nothing to change
+
 ## 1.0.0
 * new API: `ImagePickerPlus.pick(context, settings: PickerSettings(...))` returns `List<PickedItem>?` (breaking, see "Migrating from 0.6.0" in the README)
 * no native code anymore, the copied image_crop plugin is removed

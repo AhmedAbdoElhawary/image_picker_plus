@@ -4,8 +4,8 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/platform/platform.dart';
+import 'package:image_picker_plus/src/platform/video_handle.dart';
 import 'package:image_picker_plus/src/widgets/loading_box.dart';
-import 'package:video_player/video_player.dart';
 
 /// loops muted, tap to play or pause.
 class VideoPreview extends StatefulWidget {
@@ -21,7 +21,7 @@ class VideoPreview extends StatefulWidget {
 }
 
 class _VideoPreviewState extends State<VideoPreview> {
-  VideoPlayerController? _player;
+  VideoHandle? _player;
   bool _failed = false;
 
   @override
@@ -34,19 +34,15 @@ class _VideoPreviewState extends State<VideoPreview> {
     final path =
         widget.item.path ?? (await PickerScope.of(context).services.gallery!.file(widget.item))?.path;
     if (!mounted) return;
-    if (path == null) {
+    final player = path == null ? null : videoPlayer(path);
+    if (player == null) {
       setState(() => _failed = true);
       return;
     }
-    final player = videoPlayer(path);
     _player = player;
     try {
-      await player.initialize();
-      await player.setLooping(true);
-      if (widget.autoplay) {
-        await player.setVolume(0);
-        await player.play();
-      }
+      await player.initialize(muted: widget.autoplay);
+      if (widget.autoplay) await player.play();
     } catch (_) {
       if (mounted) setState(() => _failed = true);
       return;
@@ -62,46 +58,46 @@ class _VideoPreviewState extends State<VideoPreview> {
 
   void _toggle() {
     final player = _player;
-    if (player == null || !player.value.isInitialized) return;
-    player.value.isPlaying ? player.pause() : player.play();
+    if (player == null || !player.isInitialized) return;
+    player.isPlaying ? player.pause() : player.play();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = PickerScope.of(context).theme;
-    final name = widget.item.name;
+    final texts = PickerScope.of(context).texts;
     if (_failed) {
-      // windows and linux have no player, the name tells the videos apart
+      // web, windows and linux have no player
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.videocam_off_outlined, color: theme.onSurfaceMuted),
-            if (name != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: 8),
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: theme.onSurfaceMuted),
-                ),
+            Icon(Icons.code_off_rounded, color: theme.onSurfaceMuted),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(top: 8),
+              child: Text(
+                texts.videoPreviewNotSupported,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: theme.onSurfaceMuted),
               ),
+            ),
           ],
         ),
       );
     }
     final player = _player;
-    if (player == null || !player.value.isInitialized) return const LoadingBox();
+    if (player == null || !player.isInitialized) return const LoadingBox();
     return GestureDetector(
       onTap: _toggle,
       child: Center(
         child: AspectRatio(
-          aspectRatio: player.value.aspectRatio,
+          aspectRatio: player.aspectRatio,
           child: Stack(
             fit: StackFit.expand,
             children: [
-              VideoPlayer(player),
+              player.view(),
               _PlayIcon(player: player),
             ],
           ),
@@ -112,7 +108,7 @@ class _VideoPreviewState extends State<VideoPreview> {
 }
 
 class _PlayIcon extends StatelessWidget {
-  final VideoPlayerController player;
+  final VideoHandle player;
 
   const _PlayIcon({required this.player});
 
@@ -121,7 +117,7 @@ class _PlayIcon extends StatelessWidget {
     final theme = PickerScope.of(context).theme;
     return Selector<bool>(
       listenable: player,
-      select: () => player.value.isPlaying,
+      select: () => player.isPlaying,
       builder: (context, playing, child) => AnimatedOpacity(
         opacity: playing ? 0 : 1,
         duration: PickerDurations.of(context).short,

@@ -59,13 +59,11 @@ Works on Android, iOS, web, macOS, Windows and Linux.
 | Camera | yes | no, `PickerSource.camera` shows "not supported" | no, same |
 | Crop, filters, reorder | yes | yes | yes |
 | Edit screen | full page | a card on windows 600 px wide or more, full page under that | same as desktop |
-| Videos | play | play on macOS, a placeholder with the file name on Windows and Linux | play |
+| Videos | play | play on macOS, a placeholder with the file name on Windows and Linux | a placeholder with the file name |
 | Cache | when enabled | never | never |
 | Edited images | JPEG in the temp folder | JPEG in the temp folder | JPEG in memory (`XFile.fromData`) |
 
 On web and desktop there's no gallery screen. The system picker opens right away, then the picked files go to the edit screen. Back on the edit screen opens the picker again.
-
-pub.dev lists Android, iOS and web only. The camera, gallery and video plugins don't declare desktop, so pub.dev can't list it, but macOS, Windows and Linux work.
 
 # Installing
 
@@ -120,6 +118,8 @@ Add this to `macos/Runner/DebugProfile.entitlements` and `macos/Runner/Release.e
 ## Web
 
 Call `ImagePickerPlus.pick` straight from the tap, with no `await` before it in that handler. The browser only opens a file picker right after a click.
+
+Videos aren't played here, they show their file name. The player plugin's library imports `dart:io`, which would keep the whole package off wasm.
 
 ## Windows and Linux
 

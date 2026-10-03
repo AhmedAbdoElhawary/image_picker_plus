@@ -1,5 +1,5 @@
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/widgets.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';

@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/filters.dart';
 import 'package:image_picker_plus/src/services/image_service.dart';
 import 'package:image_picker_plus/src/services/image_service_impl.dart';
