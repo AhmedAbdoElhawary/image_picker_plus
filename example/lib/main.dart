@@ -69,13 +69,16 @@ enum ThemeChoice { app, custom }
 enum TextsChoice { english, arabic }
 
 class _DemoState extends State<Demo> {
-  static const List<CropRatio> allRatios = [
+  /* CropRatio.all
+[
     CropRatio.square,
     CropRatio.portrait,
     CropRatio.landscape,
     CropRatio.original,
     CropRatio(3, 4),
-  ];
+]
+*/
+  static const List<CropRatio> allRatios = CropRatio.all;
 
   PickerSource source = PickerSource.both;
   MediaType mediaType = MediaType.all;
