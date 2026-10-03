@@ -28,6 +28,9 @@ abstract class CameraService {
 
   Future<void> setFlash(bool on);
 
+  /// focuses and sets the exposure at [point], 0 to 1 from the preview's top left.
+  Future<void> focus(Offset point);
+
   bool get hasFlash;
 
   Future<PickedItem> takePhoto();
