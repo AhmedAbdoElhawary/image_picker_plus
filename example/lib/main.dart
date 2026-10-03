@@ -526,12 +526,18 @@ class _VideoViewState extends State<_VideoView> {
     super.dispose();
   }
 
+  /// play and pause are async, the value they set is not, so the icon can be drawn right away.
+  void _toggle() {
+    _player.value.isPlaying ? _player.pause() : _player.play();
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_failed) return const Center(child: Icon(Icons.videocam_off_outlined, color: Colors.white));
     if (!_player.value.isInitialized) return const Center(child: CircularProgressIndicator());
     return GestureDetector(
-      onTap: () => setState(() => _player.value.isPlaying ? _player.pause() : _player.play()),
+      onTap: _toggle,
       child: Center(
         child: AspectRatio(
           aspectRatio: _player.value.aspectRatio,
