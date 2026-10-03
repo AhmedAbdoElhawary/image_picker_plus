@@ -200,6 +200,13 @@ class GalleryController {
     selection.value = shown == null ? const [] : [shown];
   }
 
+  /// a photo from the camera page becomes the only selected one, with the edits made on it there.
+  void selectTaken(MediaItem item, {CropController? crop, ValueNotifier<int>? filterIndex}) {
+    if (crop != null) crops[item.id] = crop;
+    if (filterIndex != null) filterIndexes[item.id] = filterIndex;
+    selection.value = [item];
+  }
+
   /// 1 based order in the selection, 0 when not selected.
   int orderOf(MediaItem item) => selection.value.indexOf(item) + 1;
 
