@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
+import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 import '../fakes/fake_gallery_service.dart';
@@ -200,6 +203,17 @@ void main() {
     controller.startMulti(controller.items.value[3]);
     expect(controller.multi.value, isFalse);
     expect(controller.selection.value.map((e) => e.id), ["0"]);
+  });
+
+  test("a taken photo becomes the only selected one and keeps its edits", () async {
+    final controller = await counting(FakeGalleryService.withItems(10), max: 3);
+    final photo = fakeItem("photo");
+    final crop = CropController(imageAspect: 1, ratio: CropRatio.square);
+    final filterIndex = ValueNotifier(2);
+    controller.selectTaken(photo, crop: crop, filterIndex: filterIndex);
+    expect(controller.selection.value, [photo]);
+    expect(controller.crops["photo"], same(crop));
+    expect(controller.filterIndexes["photo"], same(filterIndex));
   });
 
   test("picked items keep the selection order", () async {
