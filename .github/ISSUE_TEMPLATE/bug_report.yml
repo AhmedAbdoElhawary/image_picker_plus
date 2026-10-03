@@ -1,0 +1,73 @@
+name: Bug report
+description: Something doesn't work like it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The more I can reproduce, the faster I can fix it.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - Web
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+      placeholder: Pixel 7, Android 14
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the picker with these settings: ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Your code
+      description: The `ImagePickerPlus.pick` call and the `PickerSettings` you use.
+      render: dart
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Any error or stack trace from the console.
+      render: shell
+  - type: textarea
+    id: doctor
+    attributes:
+      label: flutter doctor -v
+      render: shell
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or video
+      description: Drag them here if they help show the problem.

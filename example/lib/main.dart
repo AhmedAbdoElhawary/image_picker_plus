@@ -1,372 +1,550 @@
+import 'package:flutter/material.dart';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+void main() => runApp(const DemoApp());
+
+class DemoApp extends StatefulWidget {
+  const DemoApp({super.key});
+
+  @override
+  State<DemoApp> createState() => _DemoAppState();
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class _DemoAppState extends State<DemoApp> {
+  bool dark = false;
+  bool rtl = false;
+  double textScale = 1;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Custom gallery display',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MyHomePage(),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            normal1(context),
-            normal2(context),
-            normal3(context),
-            preview1(context),
-            preview2(context),
-            preview3(context),
-            camera1(context),
-            camera2(context),
-          ],
-        ),
+      themeMode: dark ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(colorSchemeSeed: Colors.blue),
+      darkTheme: ThemeData(colorSchemeSeed: Colors.blue, brightness: Brightness.dark),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: Directionality(textDirection: rtl ? TextDirection.rtl : TextDirection.ltr, child: child!),
       ),
-    );
-  }
-
-  ElevatedButton normal1(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-
-        SelectedImagesDetails? details = await picker.pickImage(
-          source: ImageSource.gallery,
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Normal 1"),
-    );
-  }
-
-  ElevatedButton normal2(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickVideo(
-          source: ImageSource.both,
-
-          /// On long tap, it will be available.
-          multiVideos: true,
-          galleryDisplaySettings: GalleryDisplaySettings(
-            gridDelegate: _sliverGrid2Delegate(),
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Normal 2"),
-    );
-  }
-
-  ElevatedButton normal3(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.both,
-
-          /// On long tap, it will be available.
-          multiSelection: true,
-
-          /// When you make ImageSource from the camera these settings will be disabled because they belong to the gallery.
-          galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme: AppTheme(
-              nextArrowIconColor: Colors.white,
-              focusColor: Colors.white,
-              primaryColor: Colors.black,
-            ),
-            gridDelegate: _sliverGrid3Delegate(),
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Normal 3"),
-    );
-  }
-
-  ElevatedButton preview1(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.gallery,
-
-          /// On long tap, it will be available.
-          multiSelection: true,
-          galleryDisplaySettings: GalleryDisplaySettings(
-            tabsTexts: _tabsTexts(),
-            appTheme: AppTheme(
-              focusColor: Colors.white,
-              primaryColor: Colors.black,
-              nextArrowIconColor: Colors.white,
-            ),
-            cropImage: true,
-            showImagePreview: true,
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Preview 1"),
-    );
-  }
-
-  ElevatedButton preview2(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickVideo(
-          source: ImageSource.both,
-
-          /// On long tap, it will be available.
-          multiVideos: true,
-          galleryDisplaySettings: GalleryDisplaySettings(
-            cropImage: true,
-            showImagePreview: true,
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Preview 2"),
-    );
-  }
-
-  SliverGridDelegateWithFixedCrossAxisCount _sliverGrid3Delegate() {
-    return const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 3,
-      crossAxisSpacing: 1.7,
-      mainAxisSpacing: 1.5,
-      childAspectRatio: .5,
-    );
-  }
-
-  SliverGridDelegateWithFixedCrossAxisCount _sliverGrid2Delegate() {
-    return const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      crossAxisSpacing: 17,
-      mainAxisSpacing: 17,
-      childAspectRatio: 1,
-    );
-  }
-
-  TabsTexts _tabsTexts() {
-    return TabsTexts(
-      videoText: "فيديو",
-      galleryText: "المعرض",
-      deletingText: "حذف",
-      clearImagesText: "الغاء الصور المحدده",
-      limitingText: "اقصي حد للصور هو 10",
-    );
-  }
-
-  ElevatedButton preview3(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.both,
-
-          /// On long tap, it will be available.
-          multiSelection: true,
-
-          galleryDisplaySettings: GalleryDisplaySettings(
-            cropImage: true,
-            showImagePreview: true,
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Preview 3"),
-    );
-  }
-
-  ElevatedButton camera1(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickBoth(
-          source: ImageSource.camera,
-
-          /// On long tap, it will be available.
-          multiSelection: true,
-
-          galleryDisplaySettings: GalleryDisplaySettings(cropImage: true),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Camera 1"),
-    );
-  }
-
-  ElevatedButton camera2(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        ImagePickerPlus picker = ImagePickerPlus(context);
-        SelectedImagesDetails? details = await picker.pickVideo(
-          source: ImageSource.camera,
-
-          /// On long tap, it will be available.
-          multiVideos: true,
-
-          galleryDisplaySettings: GalleryDisplaySettings(
-            appTheme: AppTheme(
-              focusColor: Colors.white,
-              primaryColor: Colors.black,
-              nextArrowIconColor: Colors.white,
-            ),
-          ),
-        );
-        if (details != null) await displayDetails(details);
-      },
-      child: const Text("Camera 2"),
-    );
-  }
-
-  Future<void> displayDetails(SelectedImagesDetails details) async {
-    await Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) {
-          return DisplayImages(
-            selectedBytes: details.selectedFiles,
-            details: details,
-            aspectRatio: details.aspectRatio,
-          );
-        },
+      home: Demo(
+        dark: dark,
+        rtl: rtl,
+        textScale: textScale,
+        onDark: (value) => setState(() => dark = value),
+        onRtl: (value) => setState(() => rtl = value),
+        onTextScale: (value) => setState(() => textScale = value),
       ),
     );
   }
 }
 
-class DisplayImages extends StatefulWidget {
-  final List<SelectedByte> selectedBytes;
-  final double aspectRatio;
-  final SelectedImagesDetails details;
-  const DisplayImages({
+class Demo extends StatefulWidget {
+  final bool dark;
+  final bool rtl;
+  final double textScale;
+  final ValueChanged<bool> onDark;
+  final ValueChanged<bool> onRtl;
+  final ValueChanged<double> onTextScale;
+
+  const Demo({
+    required this.dark,
+    required this.rtl,
+    required this.textScale,
+    required this.onDark,
+    required this.onRtl,
+    required this.onTextScale,
     super.key,
-    required this.details,
-    required this.selectedBytes,
-    required this.aspectRatio,
   });
 
   @override
-  State<DisplayImages> createState() => _DisplayImagesState();
+  State<Demo> createState() => _DemoState();
 }
 
-class _DisplayImagesState extends State<DisplayImages> {
+enum ThemeChoice { app, custom }
+
+enum TextsChoice { english, arabic }
+
+class _DemoState extends State<Demo> {
+  /* CropRatio.all
+[
+    CropRatio.square,
+    CropRatio.portrait,
+    CropRatio.landscape,
+    CropRatio.original,
+    CropRatio(3, 4),
+]
+*/
+  static const List<CropRatio> allRatios = CropRatio.all;
+
+  PickerSource source = PickerSource.both;
+  MediaType mediaType = MediaType.all;
+  int maxSelection = 10;
+  Set<CropRatio> ratios = allRatios.toSet();
+  bool showPreview = true;
+  bool resizePreview = true;
+
+  /// 0 follows the screen width.
+  int gridColumns = 0;
+  double gridCellAspectRatio = 1;
+  bool filters = true;
+  int quality = 90;
+
+  /// 0 keeps the image size.
+  int maxWidth = 0;
+  int maxHeight = 0;
+  ThemeChoice theme = ThemeChoice.app;
+  bool alwaysDarkTheme = true;
+  TextsChoice texts = TextsChoice.english;
+  bool cache = false;
+  int cacheMb = 100;
+  List<PickedItem> items = const [];
+
+  Future<void> _pick() async {
+    final picked = await ImagePickerPlus.pick(
+      context,
+      settings: PickerSettings(
+        source: source,
+        mediaType: mediaType,
+        maxSelection: maxSelection,
+        // the first one is where the crop starts, so keep the list order
+        cropRatios: [
+          for (final ratio in allRatios)
+            if (ratios.contains(ratio)) ratio,
+        ],
+        showPreview: showPreview,
+        resizePreview: resizePreview,
+        gridColumns: gridColumns == 0 ? null : gridColumns,
+        gridCellAspectRatio: gridCellAspectRatio,
+        filters: filters,
+        output: OutputOptions(
+          quality: quality,
+          maxWidth: maxWidth == 0 ? null : maxWidth,
+          maxHeight: maxHeight == 0 ? null : maxHeight,
+        ),
+        theme: theme == ThemeChoice.custom ? customTheme : null,
+        alwaysDarkTheme: alwaysDarkTheme,
+        texts: texts == TextsChoice.arabic ? arabicTexts : const PickerTexts(),
+        cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
+      ),
+    );
+    if (picked != null) setState(() => items = picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Selected images/videos')),
-      body: ListView.builder(
-        itemBuilder: (context, index) {
-          SelectedByte selectedByte = widget.selectedBytes[index];
-          if (!selectedByte.isThatImage) {
-            return _DisplayVideo(selectedByte: selectedByte);
-          } else {
-            return SizedBox(
-              width: double.infinity,
-              child: Image.file(selectedByte.selectedFile),
-            );
-          }
-        },
-        itemCount: widget.selectedBytes.length,
+      appBar: AppBar(
+        title: const Text("image_picker_plus"),
+        actions: [
+          IconButton(onPressed: ImagePickerPlus.clearCache, icon: const Icon(Icons.delete_sweep_outlined)),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _pick,
+        icon: const Icon(Icons.photo_library_outlined),
+        label: const Text("Pick"),
+      ),
+      body: ListView(
+        padding: const EdgeInsetsDirectional.only(bottom: 96),
+        children: [
+          _Choice<PickerSource>(
+            label: "Source",
+            value: source,
+            values: PickerSource.values,
+            onChanged: (value) => setState(() => source = value),
+          ),
+          _Choice<MediaType>(
+            label: "Media",
+            value: mediaType,
+            values: MediaType.values,
+            onChanged: (value) => setState(() => mediaType = value),
+          ),
+          ListTile(
+            title: Text("Max selection: $maxSelection"),
+            subtitle: Slider(
+              value: maxSelection.toDouble(),
+              min: 1,
+              max: 20,
+              divisions: 19,
+              onChanged: (value) => setState(() => maxSelection = value.round()),
+            ),
+          ),
+          ListTile(
+            title: Text("Crop ratios${ratios.isEmpty ? ": off" : ""}"),
+            subtitle: Wrap(
+              spacing: 8,
+              children: [
+                for (final ratio in allRatios)
+                  FilterChip(
+                    label: Text("$ratio"),
+                    selected: ratios.contains(ratio),
+                    onSelected: (selected) =>
+                        setState(() => ratios = selected ? {...ratios, ratio} : ({...ratios}..remove(ratio))),
+                  ),
+              ],
+            ),
+          ),
+          SwitchListTile(
+            title: const Text("Show preview"),
+            value: showPreview,
+            onChanged: (value) => setState(() => showPreview = value),
+          ),
+          SwitchListTile(
+            title: const Text("Resize preview"),
+            subtitle: const Text("off decodes the preview at 1080 pixels"),
+            value: resizePreview,
+            onChanged: (value) => setState(() => resizePreview = value),
+          ),
+          _Choice<int>(
+            label: "Grid columns",
+            value: gridColumns,
+            values: const [0, 3, 4, 5],
+            name: (value) => value == 0 ? "auto" : "$value",
+            onChanged: (value) => setState(() => gridColumns = value),
+          ),
+          _Choice<double>(
+            label: "Grid cell aspect ratio",
+            value: gridCellAspectRatio,
+            values: const [0.5, 0.75, 1, 1.5],
+            name: (value) => "$value",
+            onChanged: (value) => setState(() => gridCellAspectRatio = value),
+          ),
+          SwitchListTile(
+            title: const Text("Filters"),
+            value: filters,
+            onChanged: (value) => setState(() => filters = value),
+          ),
+          ListTile(
+            title: Text("Output quality: $quality"),
+            subtitle: Slider(
+              value: quality.toDouble(),
+              min: 1,
+              max: 100,
+              divisions: 99,
+              onChanged: (value) => setState(() => quality = value.round()),
+            ),
+          ),
+          _Choice<int>(
+            label: "Output max width",
+            value: maxWidth,
+            values: const [0, 1080, 2048, OutputOptions.safeMaxSide],
+            name: (value) => value == 0 ? "off" : "$value",
+            onChanged: (value) => setState(() => maxWidth = value),
+          ),
+          _Choice<int>(
+            label: "Output max height",
+            value: maxHeight,
+            values: const [0, 1080, 2048, OutputOptions.safeMaxSide],
+            name: (value) => value == 0 ? "off" : "$value",
+            onChanged: (value) => setState(() => maxHeight = value),
+          ),
+          _Choice<ThemeChoice>(
+            label: "Picker theme",
+            value: theme,
+            values: ThemeChoice.values,
+            onChanged: (value) => setState(() => theme = value),
+          ),
+          SwitchListTile(
+            title: const Text("Always dark theme"),
+            subtitle: const Text("off follows the dark switch below"),
+            value: alwaysDarkTheme,
+            onChanged: (value) => setState(() => alwaysDarkTheme = value),
+          ),
+          _Choice<TextsChoice>(
+            label: "Picker texts",
+            value: texts,
+            values: TextsChoice.values,
+            onChanged: (value) => setState(() => texts = value),
+          ),
+          SwitchListTile(
+            title: const Text("Cache"),
+            value: cache,
+            onChanged: (value) => setState(() => cache = value),
+          ),
+          _Choice<int>(
+            label: "Cache max size",
+            value: cacheMb,
+            values: const [50, 100, 500],
+            name: (value) => "$value MB",
+            onChanged: (value) => setState(() => cacheMb = value),
+          ),
+          SwitchListTile(title: const Text("Dark"), value: widget.dark, onChanged: widget.onDark),
+          SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
+          ListTile(
+            title: Text("Text scale: ${widget.textScale.toStringAsFixed(1)}"),
+            subtitle: Slider(
+              value: widget.textScale,
+              min: 0.8,
+              max: 2,
+              divisions: 12,
+              onChanged: widget.onTextScale,
+            ),
+          ),
+          _Results(items),
+        ],
       ),
     );
   }
 }
 
-class _DisplayVideo extends StatefulWidget {
-  final SelectedByte selectedByte;
-  const _DisplayVideo({required this.selectedByte});
+const PickerTheme customTheme = PickerTheme(
+  background: Color(0xFF1B1530),
+  surface: Color(0xFF2A2245),
+  onSurface: Color(0xFFF3EEFF),
+  onSurfaceMuted: Color(0xFFA79CC7),
+  accent: Color(0xFFFF8A3D),
+  onAccent: Color(0xFF1B1530),
+  scrim: Color(0xFF000000),
+);
+
+const PickerTexts arabicTexts = PickerTexts(
+  gallery: "المعرض",
+  photo: "صورة",
+  video: "فيديو",
+  next: "التالي",
+  add: "إضافة",
+  done: "تم",
+  close: "إغلاق",
+  recent: "الأحدث",
+  noImages: "لا توجد صور",
+  noCamera: "لا توجد كاميرا",
+  accessDenied: "اسمح بالوصول إلى صورك للمتابعة",
+  cameraDenied: "اسمح بالوصول إلى الكاميرا للمتابعة",
+  noMicrophone: "اسمح بالوصول إلى الميكروفون لتسجيل الصوت",
+  openSettings: "فتح الإعدادات",
+  manageAccess: "إدارة الوصول",
+  maxReached: "يمكنك اختيار {max} عناصر كحد أقصى",
+  videoNotEditable: "الفيديوهات يمكن ترتيبها فقط",
+  notSupported: "هذه المنصة غير مدعومة بعد",
+  crop: "قص",
+  original: "الأصلي",
+  select: "تحديد",
+  cancel: "إلغاء",
+  switchCamera: "تبديل الكاميرا",
+  flash: "الفلاش",
+  capture: "التقاط",
+  processing: "جارٍ المعالجة",
+  exportFailed: "تعذر حفظ الصور، حاول مرة أخرى",
+  maxKept: "تم الاحتفاظ بأول {max} فقط",
+  filesSkipped: "تعذر فتح بعض الملفات",
+  filterNames: [
+    "عادي",
+    "دافئ",
+    "بارد",
+    "قديم",
+    "جلامور",
+    "درامي",
+    "ناعم",
+    "بني داكن",
+    "تركوازي",
+    "ساطع",
+    "تباين",
+    "باهت",
+    "أحادي",
+    "أسود",
+  ],
+  months: [
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
+  ],
+);
+
+class _Choice<T> extends StatelessWidget {
+  final String label;
+  final T value;
+  final List<T> values;
+
+  /// null uses the enum name.
+  final String Function(T value)? name;
+  final ValueChanged<T> onChanged;
+
+  const _Choice({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.onChanged,
+    this.name,
+  });
 
   @override
-  State<_DisplayVideo> createState() => _DisplayVideoState();
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(label),
+      subtitle: SegmentedButton<T>(
+        segments: [
+          for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name)),
+        ],
+        selected: {value},
+        onSelectionChanged: (selected) => onChanged(selected.first),
+      ),
+    );
+  }
 }
 
-class _DisplayVideoState extends State<_DisplayVideo> {
-  late VideoPlayerController controller;
-  late Future<void> initializeVideoPlayerFuture;
+class _Results extends StatelessWidget {
+  final List<PickedItem> items;
+
+  const _Results(this.items);
 
   @override
-  void initState() {
-    super.initState();
-    File file = widget.selectedByte.selectedFile;
-    controller = VideoPlayerController.file(file);
-    initializeVideoPlayerFuture = controller.initialize();
-    controller.setLooping(true);
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsetsDirectional.all(16),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
+      ),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => _Viewer(items: items, index: index),
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              item.type == MediaType.video
+                  ? const ColoredBox(color: Colors.black12, child: Icon(Icons.videocam_outlined))
+                  // on web the path is a blob url
+                  : kIsWeb
+                  ? Image.network(item.file.path, fit: BoxFit.cover)
+                  : Image.file(File(item.file.path), fit: BoxFit.cover),
+              PositionedDirectional(
+                start: 4,
+                bottom: 4,
+                child: Text(
+                  "${index + 1} · ${item.width}x${item.height}${item.edited ? " · edited" : ""}",
+                  style: const TextStyle(color: Colors.white, fontSize: 10, shadows: [Shadow(blurRadius: 4)]),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
+}
+
+/// the picked files full screen, swipe between them.
+class _Viewer extends StatefulWidget {
+  final List<PickedItem> items;
+  final int index;
+
+  const _Viewer({required this.items, required this.index});
+
+  @override
+  State<_Viewer> createState() => _ViewerState();
+}
+
+class _ViewerState extends State<_Viewer> {
+  late final PageController _pages = PageController(initialPage: widget.index);
 
   @override
   void dispose() {
-    controller.dispose();
+    _pages.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: initializeVideoPlayerFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Stack(
+    final items = widget.items;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
+      body: PageView.builder(
+        controller: _pages,
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          if (item.type == MediaType.video) return _VideoView(item.file.path);
+          return InteractiveViewer(
+            maxScale: 5,
+            // on web the path is a blob url
+            child: Center(child: kIsWeb ? Image.network(item.file.path) : Image.file(File(item.file.path))),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _VideoView extends StatefulWidget {
+  final String path;
+
+  const _VideoView(this.path);
+
+  @override
+  State<_VideoView> createState() => _VideoViewState();
+}
+
+class _VideoViewState extends State<_VideoView> {
+  late final VideoPlayerController _player = kIsWeb
+      ? VideoPlayerController.networkUrl(Uri.parse(widget.path))
+      : VideoPlayerController.file(File(widget.path));
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.setLooping(true);
+    _player.initialize().then(
+      (_) {
+        if (!mounted) return;
+        setState(() {});
+        _player.play();
+      },
+      onError: (_) {
+        // windows and linux have no video player
+        if (mounted) setState(() => _failed = true);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_failed) return const Center(child: Icon(Icons.videocam_off_outlined, color: Colors.white));
+    if (!_player.value.isInitialized) return const Center(child: CircularProgressIndicator());
+    return GestureDetector(
+      onTap: () => setState(() => _player.value.isPlaying ? _player.pause() : _player.play()),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: _player.value.aspectRatio,
+          child: Stack(
             alignment: Alignment.center,
             children: [
-              AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: VideoPlayer(controller),
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (controller.value.isPlaying) {
-                        controller.pause();
-                      } else {
-                        controller.play();
-                      }
-                    });
-                  },
-                  child: Icon(
-                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 45,
-                  ),
-                ),
-              ),
+              VideoPlayer(_player),
+              if (!_player.value.isPlaying)
+                const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 64),
             ],
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 1));
-        }
-      },
+          ),
+        ),
+      ),
     );
   }
 }

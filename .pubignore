@@ -1,0 +1,45 @@
+# pub stops reading .gitignore once this file exists, so its entries are here too
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+/pubspec.lock
+**/doc/api/
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/.cxx/
+.claude/
+.specify/
+specs/
+coverage/
+test/
+pub_login.sh
+example/build/
+example/.dart_tool/
+example/pubspec.lock
+example/ios/Pods/
+example/ios/.symlinks/
+# pub.dev only shows example/lib, the platform folders are for running it from the repo
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/windows/
+example/web/
+
+# gifs for the README, linked from github so they are not in the package
+snapshots/
