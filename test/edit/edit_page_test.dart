@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/reorder_strip.dart';
 import 'package:image_picker_plus/src/gallery/media_preview.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -87,6 +88,24 @@ void main() {
     );
     await tester.tap(find.byIcon(Icons.add_rounded));
     expect(adds, 1);
+  });
+
+  testWidgets("one item with room shows the plus", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], onAdd: () {}),
+      settings: settings,
+    );
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+  });
+
+  testWidgets("one item at a max of 1 has no strip", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], onAdd: () {}),
+      settings: const PickerSettings(filters: true),
+    );
+    expect(find.byType(ReorderStrip), findsNothing);
   });
 
   testWidgets("no plus at the max", (tester) async {
