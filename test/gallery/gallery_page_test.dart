@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/camera/capture_button.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
@@ -15,6 +16,7 @@ import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/widgets/message_view.dart';
+import 'package:image_picker_plus/src/widgets/picker_home.dart';
 
 import '../fakes/fake_gallery_service.dart';
 import '../fakes/pump_picker.dart';
@@ -23,7 +25,7 @@ void main() {
   Finder cell(String id) => find.byKey(ValueKey(id));
 
   testWidgets("the grid shows the items", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(30)));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(30)));
     expect(find.byType(GalleryCell), findsWidgets);
     expect(cell("0"), findsOneWidget);
   });
@@ -41,7 +43,7 @@ void main() {
     addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
       settings: const PickerSettings(maxSelection: 2),
     );
@@ -68,7 +70,7 @@ void main() {
     Object? result;
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
       settings: const PickerSettings(maxSelection: 3),
       onResult: (r) => result = r,
@@ -96,7 +98,7 @@ void main() {
     Future<void> openEdit(WidgetTester tester, {void Function(Object?)? onResult}) async {
       await pumpPicker(
         tester,
-        const GalleryPage(),
+        const PickerHome(),
         fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
         settings: editing,
         onResult: onResult,
@@ -154,8 +156,60 @@ void main() {
     });
   });
 
+  group("adding from the camera", () {
+    const both = PickerSettings(source: PickerSource.both, maxSelection: 3, filters: true);
+
+    Future<void> openEdit(WidgetTester tester, {void Function(Object?)? onResult}) async {
+      await pumpPicker(
+        tester,
+        const PickerHome(),
+        fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
+        settings: both,
+        onResult: onResult,
+      );
+      await tester.tap(find.text("Next"));
+      await tester.pumpAndSettle();
+      // one item, but there's room, so the plus is there
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets("a tap counts after a single selection, and a photo goes after them", (tester) async {
+      Object? result;
+      await openEdit(tester, onResult: (r) => result = r);
+      await tester.tap(cell("5"));
+      await tester.pump();
+      expect(find.descendant(of: cell("5"), matching: find.text("2")), findsOneWidget);
+
+      await tester.tap(find.text("Photo"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pumpAndSettle();
+      // the first new one
+      expect(tester.widget<EditPage>(find.byType(EditPage)).initial?.id, "5");
+
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/0", "/fake/5", "/fake/photo.jpg"]);
+    });
+
+    testWidgets("back on the camera while adding opens the edit page again", (tester) async {
+      Object? result;
+      await openEdit(tester, onResult: (r) => result = r);
+      await tester.tap(find.text("Photo"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditPage), findsOneWidget);
+
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/0"]);
+    });
+  });
+
   testWidgets("a max of 1 has no select button and a long press does nothing", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(30)));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(30)));
     expect(find.text("Select"), findsNothing);
     await tester.longPress(cell("3"));
     await tester.pumpAndSettle();
@@ -165,7 +219,7 @@ void main() {
   testWidgets("without the preview the select button sits over the grid", (tester) async {
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
       settings: const PickerSettings(maxSelection: 3, showPreview: false),
     );
@@ -176,7 +230,7 @@ void main() {
   });
 
   testWidgets("scrolling shows the date beside the scrollbar, then hides it", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(200)));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(200)));
     double opacity() => tester
         .widget<AnimatedOpacity>(find.ancestor(of: find.text("January 2026"), matching: find.byType(AnimatedOpacity)))
         .opacity;
@@ -190,7 +244,7 @@ void main() {
   });
 
   testWidgets("holding the scrollbar shrinks the date and moves it off the edge", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(200)));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(200)));
     double held() =>
         tester.widget<TweenAnimationBuilder<double>>(find.byType(TweenAnimationBuilder<double>)).tween.end!;
     await tester.drag(find.byType(GridView), const Offset(0, -300));
@@ -210,7 +264,7 @@ void main() {
   testWidgets("denied shows the message with open settings and close", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(5, access: GalleryAccess.denied));
     Object? result = "not closed";
-    await pumpPicker(tester, const GalleryPage(), fakes: fakes, onResult: (r) => result = r);
+    await pumpPicker(tester, const PickerHome(), fakes: fakes, onResult: (r) => result = r);
     expect(find.byType(MessageView), findsOneWidget);
     expect(find.text("Allow access to your photos to continue"), findsOneWidget);
 
@@ -223,14 +277,14 @@ void main() {
   });
 
   testWidgets("empty shows no images with close", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(0)));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(0)));
     expect(find.text("There are no images"), findsOneWidget);
     expect(find.byIcon(Icons.close_rounded), findsOneWidget);
   });
 
   testWidgets("limited shows manage access", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(5, access: GalleryAccess.limited));
-    await pumpPicker(tester, const GalleryPage(), fakes: fakes);
+    await pumpPicker(tester, const PickerHome(), fakes: fakes);
     await tester.tap(find.text("Manage access"));
     await tester.pumpAndSettle();
     expect(fakes.gallery.manageCalls, 1);
@@ -240,7 +294,7 @@ void main() {
     Object? result;
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
       settings: const PickerSettings(maxSelection: 3),
       onResult: (r) => result = r,
@@ -258,7 +312,7 @@ void main() {
 
   testWidgets("close pops null", (tester) async {
     Object? result = "not closed";
-    await pumpPicker(tester, const GalleryPage(), onResult: (r) => result = r);
+    await pumpPicker(tester, const PickerHome(), onResult: (r) => result = r);
     await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
     expect(result, isNull);
@@ -266,7 +320,7 @@ void main() {
 
   testWidgets("the rest of the album loads without scrolling", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(200));
-    await pumpPicker(tester, const GalleryPage(), fakes: fakes);
+    await pumpPicker(tester, const PickerHome(), fakes: fakes);
     // 10 full pages, the 11th comes back empty and ends it
     expect(fakes.gallery.pageCalls.length, 11);
   });
@@ -275,7 +329,7 @@ void main() {
     final gallery = FakeGalleryService(
       data: {"all": List.generate(10, (i) => fakeItem("a$i")), "Camera": List.generate(3, (i) => fakeItem("b$i"))},
     );
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: gallery));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery));
     expect(find.text("Recent"), findsOneWidget);
     await tester.tap(find.text("Recent"));
     await tester.pumpAndSettle();
@@ -289,7 +343,7 @@ void main() {
     final gallery = FakeGalleryService(
       data: {"all": List.generate(200, (i) => fakeItem("a$i")), "Camera": List.generate(100, (i) => fakeItem("b$i"))},
     );
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: gallery));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery));
     final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
     await tester.drag(find.byType(GridView), const Offset(0, -600));
     await tester.pumpAndSettle();
@@ -309,7 +363,7 @@ void main() {
     Object? result;
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       fakes: fakes,
       settings: const PickerSettings(cropRatios: [CropRatio.square, CropRatio.portrait]),
       onResult: (r) => result = r,
@@ -340,7 +394,7 @@ void main() {
     Object? result = "open";
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       settings: const PickerSettings(filters: true),
       onResult: (r) => result = r,
     );
@@ -357,7 +411,7 @@ void main() {
         (tester.widget<Image>(find.descendant(of: find.byType(PreviewImage), matching: find.byType(Image))).image
                 as AssetThumbnail)
             .size;
-    await pumpPicker(tester, const GalleryPage(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
+    await pumpPicker(tester, const PickerHome(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
     // a 4:3 image covering the square window, its short side is the window side
     final box = tester.getSize(find.byType(CropView));
     final side = min(box.width, box.height).round();
@@ -371,7 +425,7 @@ void main() {
   testWidgets("resizePreview off decodes the preview at 1080", (tester) async {
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       settings: const PickerSettings(cropRatios: [CropRatio.square], resizePreview: false),
     );
     final image = tester.widget<Image>(find.descendant(of: find.byType(PreviewImage), matching: find.byType(Image)));
@@ -379,7 +433,7 @@ void main() {
   });
 
   testWidgets("dragging the crop moves it", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
+    await pumpPicker(tester, const PickerHome(), settings: const PickerSettings(cropRatios: [CropRatio.square]));
     final view = tester.widget<CropView>(find.byType(CropView));
     final before = view.controller.value;
     await tester.drag(find.byType(CropView), const Offset(-100, 0));
@@ -390,7 +444,7 @@ void main() {
   testWidgets("a tap outside the ratio menu closes it and keeps the ratio", (tester) async {
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       settings: const PickerSettings(cropRatios: [CropRatio.square, CropRatio.portrait]),
     );
     await tester.tap(find.text("1:1"));
@@ -406,7 +460,7 @@ void main() {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(10));
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       fakes: fakes,
       settings: const PickerSettings(showPreview: false, cropRatios: [CropRatio.square]),
     );
@@ -419,7 +473,7 @@ void main() {
   });
 
   testWidgets("scrolling the grid slides the preview up to a strip, and a tap on it brings it back", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
     final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
     await tester.drag(find.byType(GridView), const Offset(0, -600));
     await tester.pumpAndSettle();
