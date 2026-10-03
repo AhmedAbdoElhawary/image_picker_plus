@@ -65,26 +65,24 @@ class _VideoPreviewState extends State<VideoPreview> {
   @override
   Widget build(BuildContext context) {
     final theme = PickerScope.of(context).theme;
-    final name = widget.item.name;
     final texts = PickerScope.of(context).texts;
     if (_failed) {
-      // web, windows and linux have no player, the name tells the videos apart
+      // web, windows and linux have no player
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.code_off_rounded, color: theme.onSurfaceMuted),
-            if (name != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: 8),
-                child: Text(
-                  texts.videoPreviewNotSupported,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: theme.onSurfaceMuted),
-                ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(top: 8),
+              child: Text(
+                texts.videoPreviewNotSupported,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: theme.onSurfaceMuted),
               ),
+            ),
           ],
         ),
       );
