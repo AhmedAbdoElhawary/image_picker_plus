@@ -10,10 +10,14 @@ class FakeCameraService implements CameraService {
   bool flash;
   bool mic;
 
+  /// change it between photos to tell them apart.
+  String photoPath = "/fake/photo.jpg";
+
   int initCalls = 0;
   int disposeCalls = 0;
   int switchCalls = 0;
   bool? lastFlash;
+  Offset? lastFocus;
   bool recording = false;
 
   FakeCameraService({this.failure, this.cameras = 2, this.flash = true, this.mic = true});
@@ -41,11 +45,14 @@ class FakeCameraService implements CameraService {
   Future<void> setFlash(bool on) async => lastFlash = on;
 
   @override
+  Future<void> focus(Offset point) async => lastFocus = point;
+
+  @override
   bool get hasFlash => flash;
 
   @override
   Future<PickedItem> takePhoto() async =>
-      PickedItem(file: XFile("/fake/photo.jpg"), type: MediaType.image, width: 300, height: 400, edited: false);
+      PickedItem(file: XFile(photoPath), type: MediaType.image, width: 300, height: 400, edited: false);
 
   @override
   Future<void> startVideo() async => recording = true;
