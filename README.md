@@ -15,13 +15,12 @@
   <img src="https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-blue" alt="platforms" />
 </p>
 
-<!-- TODO(ahmed): record these 5 gifs of 1.0.0 into screenshots/ with these exact names (keep each under ~2 MB). until they're pushed to main the README shows broken images, on pub.dev too -->
-| Gallery | Crop | Filters and reorder | Camera |
-|:---:|:---:|:---:|:---:|
-| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/gallery.gif" width="200" alt="gallery" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/crop.gif" width="200" alt="crop" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/edit.gif" width="200" alt="filters and reorder" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/camera.gif" width="200" alt="camera" /> |
+| Pick, crop, filter and reorder | Camera | Video |
+|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/gallery.gif" width="220" alt="pick, crop, filter and reorder" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/camera.gif" width="220" alt="camera" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/video_img.jpeg" width="220" alt="recording a video" /> |
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/screenshots/desktop.gif" width="820" alt="edit screen on desktop" />
+  <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="820" alt="edit screen on web and desktop" />
 </p>
 
 # Why
