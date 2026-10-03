@@ -2,13 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image_picker_plus/src/camera/camera_page.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
-import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
 import 'package:image_picker_plus/src/settings/picker_theme.dart';
+import 'package:image_picker_plus/src/widgets/picker_home.dart';
 
 import '../fakes/fake_camera_service.dart';
 import '../fakes/fake_gallery_service.dart';
@@ -32,7 +31,7 @@ void main() {
   testWidgets("custom theme and texts on the gallery", (tester) async {
     await pumpPicker(
       tester,
-      const GalleryPage(),
+      const PickerHome(),
       settings: const PickerSettings(theme: custom, texts: texts),
     );
     expect(find.text("Weiter"), findsOneWidget);
@@ -42,8 +41,8 @@ void main() {
   testWidgets("custom texts on the camera message", (tester) async {
     await pumpPicker(
       tester,
-      const CameraPage(video: false),
-      settings: settings,
+      const PickerHome(),
+      settings: const PickerSettings(source: PickerSource.camera, theme: custom, texts: texts, filters: true),
       fakes: Fakes(camera: FakeCameraService(failure: CameraFailure.noCamera)),
     );
     expect(find.text("Keine Kamera"), findsOneWidget);
@@ -56,7 +55,7 @@ void main() {
   });
 
   testWidgets("a dark app with no theme uses the dark one", (tester) async {
-    await pumpPicker(tester, const GalleryPage(), brightness: Brightness.dark);
+    await pumpPicker(tester, const PickerHome(), brightness: Brightness.dark);
     expect(background(tester), PickerTheme.dark().background);
   });
 
