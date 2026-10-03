@@ -33,8 +33,8 @@ image_picker_plus shows the gallery inside your app instead, so it follows your 
 # Features
 
 - Gallery with albums newest first, a preview, and a scrollbar with the month while scrolling. A tap picks one, a long press or the select button picks many up to a limit.
-- Crop in the preview with the ratios you allow, then filters and reorder before returning.
-- Camera tabs for photo and video, with front/rear and flash.
+- Crop in the preview with the ratios you allow, then filters and reorder before returning. The plus on the edit screen adds more from the gallery, photo or video tab.
+- Camera tabs for photo and video, with front/rear, flash and tap to focus.
 - Light and dark themes, your own colors and texts, RTL, and layouts for phones and tablets.
 - Optional disk cache for a faster reopen.
 - No native code of its own, so there's nothing to set up besides the permissions.
