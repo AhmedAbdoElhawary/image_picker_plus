@@ -63,6 +63,10 @@ class CaptureController with WidgetsBindingObserver {
     await service.setFlash(flash.value);
   }
 
+  Future<void> focus(Offset point) async {
+    await service?.focus(point);
+  }
+
   Future<PickedItem?> takePhoto() => _once((service) => service.takePhoto());
 
   /// the video when it stops, null when it starts.
