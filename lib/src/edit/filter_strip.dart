@@ -133,7 +133,8 @@ class _FilterTileState extends State<_FilterTile> {
                 maxLines: 1,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: selected ? theme.onSurface : theme.onSurfaceMuted,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  fontSize: selected ? 12 : 11,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
             ],
