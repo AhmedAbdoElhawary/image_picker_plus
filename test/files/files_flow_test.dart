@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/files/files_flow.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
