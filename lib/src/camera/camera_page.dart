@@ -4,22 +4,22 @@ import 'package:image_picker_plus/src/camera/capture_button.dart';
 import 'package:image_picker_plus/src/camera/capture_controller.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
-import 'package:image_picker_plus/src/core/picker_route.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
-import 'package:image_picker_plus/src/edit/crop_controller.dart';
-import 'package:image_picker_plus/src/edit/edit_page.dart';
-import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
-import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/widgets/message_view.dart';
 import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
 
 class CameraPage extends StatefulWidget {
   final bool video;
 
-  const CameraPage({required this.video, super.key});
+  /// while adding from the edit page, close goes back to it.
+  final bool adding;
+  final ValueChanged<PickedItem> onTaken;
+  final VoidCallback onClose;
+
+  const CameraPage({required this.video, required this.onTaken, required this.onClose, this.adding = false, super.key});
 
   @override
   State<CameraPage> createState() => _CameraPageState();
@@ -27,10 +27,6 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   CaptureController? _controller;
-
-  /// the last photo's edits, kept until the next photo since the edit page uses them while it closes.
-  CropController? _crop;
-  ValueNotifier<int>? _filterIndex;
 
   @override
   void didChangeDependencies() {
@@ -42,55 +38,14 @@ class _CameraPageState extends State<CameraPage> {
   @override
   void dispose() {
     _controller?.dispose();
-    _crop?.dispose();
-    _filterIndex?.dispose();
     super.dispose();
   }
 
   Future<void> _capture() async {
     final controller = _controller!;
     final item = widget.video ? await controller.toggleRecording() : await controller.takePhoto();
-    if (item == null || !mounted) return;
-    final scope = PickerScope.of(context);
-    final settings = scope.settings;
-    if (item.type == MediaType.image && settings.editing) {
-      final photo = MediaItem(
-        id: item.file.path,
-        type: MediaType.image,
-        width: item.width,
-        height: item.height,
-        modified: DateTime.now(),
-        path: item.file.path,
-      );
-      _crop?.dispose();
-      _filterIndex?.dispose();
-      final crop = _crop = settings.cropRatios.isEmpty
-          ? null
-          : CropController(
-              imageAspect: item.height == 0 ? 1 : item.width / item.height,
-              ratio: settings.cropRatios.first,
-            );
-      final filterIndex = _filterIndex = settings.filters ? ValueNotifier(0) : null;
-      final items = await Navigator.of(context).push<List<PickedItem>>(
-        PickerRoute(
-          context: context,
-          builder: (_) => scope.wrap(
-            EditPage(
-              items: [photo],
-              crops: {photo.id: ?crop},
-              filterIndexes: {photo.id: ?filterIndex},
-              changeRatio: true,
-            ),
-          ),
-        ),
-      );
-      if (items != null && mounted) Navigator.of(context).pop(items);
-      return;
-    }
-    Navigator.of(context).pop([item]);
+    if (item != null && mounted) widget.onTaken(item);
   }
-
-  void _close() => Navigator.of(context).pop();
 
   @override
   Widget build(BuildContext context) {
@@ -109,12 +64,12 @@ class _CameraPageState extends State<CameraPage> {
           CaptureState.noCamera => MessageView(
             scope.texts.noCamera,
             key: const ValueKey(CaptureState.noCamera),
-            onClose: _close,
+            onClose: widget.onClose,
           ),
           CaptureState.denied => MessageView(
             scope.texts.cameraDenied,
             key: const ValueKey(CaptureState.denied),
-            onClose: _close,
+            onClose: widget.onClose,
             actionText: scope.texts.openSettings,
             onAction: scope.services.gallery!.openSettings,
           ),
@@ -129,7 +84,11 @@ class _CameraPageState extends State<CameraPage> {
                   alignment: Alignment.bottomCenter,
                   children: [
                     _Preview(controller: controller),
-                    PickerAppBar(color: scope.theme.background.withValues(alpha: 0.6), onClose: _close),
+                    PickerAppBar(
+                      color: scope.theme.background.withValues(alpha: 0.6),
+                      closeIcon: widget.adding ? Icons.arrow_back_rounded : Icons.close_rounded,
+                      onClose: widget.onClose,
+                    ),
                     Selector<CameraService?>(
                       listenable: controller.state,
                       select: () => controller.service,
@@ -199,10 +158,100 @@ class _Preview extends StatelessWidget {
           alignment: AlignmentDirectional.topCenter,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(PickerLayout.radius),
-            child: AspectRatio(aspectRatio: service.aspectRatio, child: service.preview()),
+            child: AspectRatio(
+              aspectRatio: service.aspectRatio,
+              child: _FocusArea(controller: controller, child: service.preview()),
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+/// tap to focus there, a ring shows where.
+class _FocusArea extends StatefulWidget {
+  final CaptureController controller;
+  final Widget child;
+
+  const _FocusArea({required this.controller, required this.child});
+
+  @override
+  State<_FocusArea> createState() => _FocusAreaState();
+}
+
+class _FocusAreaState extends State<_FocusArea> {
+  Offset? _point;
+
+  /// a new ring for each tap, so it starts over.
+  int _taps = 0;
+
+  void _focus(TapUpDetails details) {
+    final size = context.size!;
+    final point = details.localPosition;
+    widget.controller.focus(Offset(point.dx / size.width, point.dy / size.height));
+    setState(() {
+      _point = point;
+      _taps++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final point = _point;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapUp: _focus,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          widget.child,
+          // not directional, the tap is from the left in rtl too
+          if (point != null)
+            Positioned(
+              left: point.dx - _FocusRing.size / 2,
+              top: point.dy - _FocusRing.size / 2,
+              child: _FocusRing(key: ValueKey(_taps), onEnd: () => setState(() => _point = null)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// shrinks in, stays a moment, then fades out.
+class _FocusRing extends StatelessWidget {
+  static const double size = 64;
+
+  final VoidCallback onEnd;
+
+  const _FocusRing({required this.onEnd, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = PickerScope.of(context).theme;
+    final grow = MediaQuery.maybeDisableAnimationsOf(context) == true ? 0.0 : 0.25;
+    return IgnorePointer(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(seconds: 1),
+        onEnd: onEnd,
+        builder: (context, t, child) => Opacity(
+          opacity: 1 - const Interval(0.7, 1).transform(t),
+          child: Transform.scale(
+            scale: 1 + grow * (1 - const Interval(0, 0.3, curve: Curves.easeOut).transform(t)),
+            child: child,
+          ),
+        ),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: theme.onSurface, width: 1.5),
+          ),
+        ),
+      ),
     );
   }
 }
