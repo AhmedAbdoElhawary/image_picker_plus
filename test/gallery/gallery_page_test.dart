@@ -72,7 +72,7 @@ void main() {
       tester,
       const PickerHome(),
       fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
-      settings: const PickerSettings(maxSelection: 3),
+      settings: const PickerSettings(maxSelection: 3, cropRatios: []),
       onResult: (r) => result = r,
     );
     await tester.tap(find.text("Select"));
@@ -296,7 +296,7 @@ void main() {
       tester,
       const PickerHome(),
       fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
-      settings: const PickerSettings(maxSelection: 3),
+      settings: const PickerSettings(maxSelection: 3, cropRatios: []),
       onResult: (r) => result = r,
     );
     await tester.tap(find.text("Select"));

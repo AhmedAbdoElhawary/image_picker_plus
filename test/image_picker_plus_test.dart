@@ -13,6 +13,7 @@ import 'fakes/fake_files_service.dart';
 import 'fakes/pump_picker.dart';
 
 void main() {
+  const noEdit = PickerSettings(cropRatios: []);
   late Fakes fakes;
   setUp(() {
     fakes = Fakes(files: FakeFilesService(next: FakeFilesService.files(2)));
@@ -44,7 +45,7 @@ void main() {
   }
 
   testWidgets("desktop opens the system picker right away", (tester) async {
-    await open(tester, settings: const PickerSettings(maxSelection: 3, mediaType: MediaType.all));
+    await open(tester, settings: const PickerSettings(maxSelection: 3, mediaType: MediaType.all, cropRatios: []));
     expect(fakes.files.opens, 1);
     expect(fakes.files.lastMulti, isTrue);
     expect(fakes.files.lastType, MediaType.all);
@@ -52,7 +53,7 @@ void main() {
   }, variant: const TargetPlatformVariant({TargetPlatform.linux, TargetPlatform.macOS, TargetPlatform.windows}));
 
   testWidgets("single selection opens a single file picker", (tester) async {
-    await open(tester);
+    await open(tester, settings: noEdit);
     expect(fakes.files.lastMulti, isFalse);
   }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 
@@ -72,7 +73,7 @@ void main() {
   }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 
   testWidgets("without editing, the picked files come back right away", (tester) async {
-    final result = await open(tester, settings: const PickerSettings(maxSelection: 5));
+    final result = await open(tester, settings: const PickerSettings(maxSelection: 5, cropRatios: []));
     expect(find.byType(FilesFlow), findsNothing);
     final items = (await result)!;
     expect(items.map((item) => item.file.path), ["/picked/0.jpg", "/picked/1.jpg"]);
@@ -89,13 +90,13 @@ void main() {
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets("gallery and camera works like gallery only", (tester) async {
-    await open(tester, settings: const PickerSettings(source: PickerSource.both));
+    await open(tester, settings: const PickerSettings(source: PickerSource.both, cropRatios: []));
     expect(fakes.files.opens, 1);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets("a second pick while the system picker is open returns null", (tester) async {
     final pending = fakes.files.pending = Completer();
-    final first = await open(tester);
+    final first = await open(tester, settings: noEdit);
     await tester.tap(find.text("open"));
     await tester.pump();
     expect(fakes.files.opens, 1);
@@ -104,7 +105,7 @@ void main() {
   }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 
   testWidgets("android opens the gallery", (tester) async {
-    final result = await open(tester);
+    final result = await open(tester, settings: noEdit);
     expect(find.byType(GalleryPage), findsOneWidget);
     await tester.tap(find.text("Next"));
     await tester.pumpAndSettle();

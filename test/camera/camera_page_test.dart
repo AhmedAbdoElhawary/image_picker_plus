@@ -40,7 +40,12 @@ void main() {
 
   testWidgets("a photo with editing off pops the item", (tester) async {
     Object? result;
-    await pumpPicker(tester, const PickerHome(), settings: camera, onResult: (r) => result = r);
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      settings: const PickerSettings(source: PickerSource.camera, cropRatios: []),
+      onResult: (r) => result = r,
+    );
     expect(find.byKey(const Key("fake-preview")), findsOneWidget);
     await tester.tap(find.byType(CaptureButton));
     await tester.pumpAndSettle();

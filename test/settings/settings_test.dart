@@ -10,7 +10,7 @@ void main() {
     expect(settings.source, PickerSource.gallery);
     expect(settings.mediaType, MediaType.image);
     expect(settings.maxSelection, 1);
-    expect(settings.cropRatios, isEmpty);
+    expect(settings.cropRatios, CropRatio.all);
     expect(settings.resizePreview, isTrue);
     expect(settings.filters, isFalse);
     expect(settings.output.quality, 90);
@@ -19,13 +19,14 @@ void main() {
     expect(settings.cache.maxBytes, 100 * 1024 * 1024);
     expect(settings.theme, isNull);
     expect(settings.alwaysDarkTheme, isTrue);
-    expect(settings.editing, isFalse);
+    expect(settings.editing, isTrue);
     expect(settings.multi, isFalse);
   });
 
   test("editing and multi", () {
     expect(const PickerSettings(filters: true).editing, isTrue);
     expect(const PickerSettings(cropRatios: [CropRatio.square]).editing, isTrue);
+    expect(const PickerSettings(cropRatios: []).editing, isFalse);
     expect(const PickerSettings(maxSelection: 3).multi, isTrue);
   });
 
