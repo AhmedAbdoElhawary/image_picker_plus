@@ -59,7 +59,7 @@ Works on Android, iOS, web, macOS, Windows and Linux.
 | Camera | yes | no, `PickerSource.camera` shows "not supported" | no, same |
 | Crop, filters, reorder | yes | yes | yes |
 | Edit screen | full page | a card on windows 600 px wide or more, full page under that | same as desktop |
-| Videos | play | play on macOS, a placeholder with the file name on Windows and Linux | a placeholder with the file name |
+| Videos | play | play on macOS, a placeholder on Windows and Linux | a placeholder |
 | Cache | when enabled | never | never |
 | Edited images | JPEG in the temp folder | JPEG in the temp folder | JPEG in memory (`XFile.fromData`) |
 
@@ -119,7 +119,7 @@ Add this to `macos/Runner/DebugProfile.entitlements` and `macos/Runner/Release.e
 
 Call `ImagePickerPlus.pick` straight from the tap, with no `await` before it in that handler. The browser only opens a file picker right after a click.
 
-Videos aren't played here, they show their file name. The player plugin's library imports `dart:io`, which would keep the whole package off wasm.
+Videos aren't played here, they show a placeholder saying so. They're still exported normally. The player plugin's library imports `dart:io`, which would keep the whole package off wasm.
 
 ## Windows and Linux
 

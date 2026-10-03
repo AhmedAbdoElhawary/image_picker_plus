@@ -1,6 +1,6 @@
 ## 1.0.1
 * pub.dev lists macOS, Windows and Linux too, the pubspec declares the platforms now
-* wasm ready: `video_player` is out of the web build, so a video on web shows its file name like on Windows and Linux
+* wasm ready: `video_player` is out of the web build, so a video on web shows a placeholder like on Windows and Linux. it says the preview isn't available there and the video is still exported, the text is `PickerTexts.videoPreviewNotSupported`
 * `cross_file` is no longer a direct dependency, `XFile` comes from `file_selector`. the same class, nothing to change
 
 ## 1.0.0
