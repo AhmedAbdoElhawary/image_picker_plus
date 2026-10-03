@@ -75,6 +75,16 @@ class CameraServiceImpl implements CameraService {
   @override
   Future<void> setFlash(bool on) => _camera.setFlashMode(on ? cam.FlashMode.always : cam.FlashMode.off);
 
+  @override
+  Future<void> focus(Offset point) async {
+    final value = _camera.value;
+    if (value.focusPointSupported) {
+      await _camera.setFocusMode(cam.FocusMode.auto);
+      await _camera.setFocusPoint(point);
+    }
+    if (value.exposurePointSupported) await _camera.setExposurePoint(point);
+  }
+
   // the camera plugin can't tell, but phones only have a flash on the back
   @override
   bool get hasFlash => _cameras[_index].lensDirection == cam.CameraLensDirection.back;
