@@ -142,7 +142,6 @@ class _FilesFlowState extends State<FilesFlow> {
         initial: _initial,
         crops: _crops,
         filterIndexes: _filterIndexes,
-        changeRatio: true,
         onBack: _repick,
         onAdd: _add,
         onReorder: (items) => _items = items,
