@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
+import 'package:image_picker_plus/src/platform/video_handle.dart';
 import 'package:image_picker_plus/src/services/cache_service_impl.dart';
 import 'package:image_picker_plus/src/services/camera_service_impl.dart';
 import 'package:image_picker_plus/src/services/files_service_impl.dart';
@@ -39,7 +41,7 @@ ImageProvider fileImage(String path) => FileImage(File(path));
 /// read by the engine, the file never gets copied through dart on the main thread.
 Future<ui.ImmutableBuffer> imageBuffer(XFile file) => ui.ImmutableBuffer.fromFilePath(file.path);
 
-VideoPlayerController videoPlayer(String path) => VideoPlayerController.file(File(path));
+VideoHandle? videoPlayer(String path) => _FileVideo(VideoPlayerController.file(File(path)));
 
 Future<Uint8List> encodeJpeg(ByteData rgba, int width, int height, int quality) => Isolate.run(
   () => img.encodeJpg(
@@ -109,4 +111,44 @@ Future<XFile> saveJpeg(Uint8List jpeg, {String? root}) async {
   final name = "${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(1 << 32)}.jpg";
   final file = await File("${dir.path}/$name").writeAsBytes(jpeg, flush: true);
   return XFile(file.path, mimeType: "image/jpeg");
+}
+
+class _FileVideo implements VideoHandle {
+  final VideoPlayerController _player;
+
+  _FileVideo(this._player);
+
+  @override
+  bool get isInitialized => _player.value.isInitialized;
+
+  @override
+  bool get isPlaying => _player.value.isPlaying;
+
+  @override
+  double get aspectRatio => _player.value.aspectRatio;
+
+  @override
+  Future<void> initialize({required bool muted}) async {
+    await _player.initialize();
+    await _player.setLooping(true);
+    if (muted) await _player.setVolume(0);
+  }
+
+  @override
+  Future<void> play() => _player.play();
+
+  @override
+  Future<void> pause() => _player.pause();
+
+  @override
+  Widget view() => VideoPlayer(_player);
+
+  @override
+  void dispose() => unawaited(_player.dispose());
+
+  @override
+  void addListener(VoidCallback listener) => _player.addListener(listener);
+
+  @override
+  void removeListener(VoidCallback listener) => _player.removeListener(listener);
 }

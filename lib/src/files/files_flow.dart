@@ -1,7 +1,7 @@
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/edit_frame.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/files/files_picker.dart';

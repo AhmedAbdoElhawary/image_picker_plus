@@ -1,6 +1,6 @@
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
