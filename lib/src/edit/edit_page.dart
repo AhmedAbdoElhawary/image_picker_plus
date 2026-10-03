@@ -20,9 +20,6 @@ class EditPage extends StatefulWidget {
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
 
-  /// a camera photo has no gallery preview to pick the ratio in, so it's picked here.
-  final bool changeRatio;
-
   /// null pops, the system picker flow picks again instead.
   final VoidCallback? onBack;
 
@@ -39,7 +36,6 @@ class EditPage extends StatefulWidget {
     required this.items,
     this.crops = const {},
     this.filterIndexes = const {},
-    this.changeRatio = false,
     this.onBack,
     this.initial,
     this.onAdd,
@@ -87,7 +83,16 @@ class _EditPageState extends State<EditPage> {
       if (mounted) Navigator.of(context).pop(items);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texts.exportFailed)));
+      final scope = PickerScope.of(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            texts.exportFailed,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface),
+          ),
+        ),
+      );
     }
   }
 
@@ -129,11 +134,11 @@ class _EditPageState extends State<EditPage> {
               top: false,
               child: Column(
                 children: [
-                  Expanded(
-                    child: _CurrentItem(controller: controller, changeRatio: widget.changeRatio),
-                  ),
+                  Expanded(child: _CurrentItem(controller: controller)),
                   if (scope.settings.filters) FilterStrip(controller: controller),
-                  if (widget.items.length > 1) ReorderStrip(controller: controller, onAdd: widget.onAdd),
+                  if (widget.items.length > 1 ||
+                      (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
+                    ReorderStrip(controller: controller, onAdd: widget.onAdd),
                   const SizedBox(height: PickerLayout.padding / 2),
                 ],
               ),
@@ -147,9 +152,8 @@ class _EditPageState extends State<EditPage> {
 
 class _CurrentItem extends StatelessWidget {
   final EditController controller;
-  final bool changeRatio;
 
-  const _CurrentItem({required this.controller, required this.changeRatio});
+  const _CurrentItem({required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -164,13 +168,13 @@ class _CurrentItem extends StatelessWidget {
           child = Column(
             key: ObjectKey(item),
             children: [
-              // a picked file has no gallery thumbnail, so it plays instead
-              Expanded(
-                child: item.path != null ? VideoPreview(item: item) : PreviewImage(item: item),
-              ),
+              Expanded(child: VideoPreview(item: item, autoplay: false)),
               Padding(
                 padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
-                child: Text(scope.texts.videoNotEditable, style: TextStyle(color: scope.theme.onSurfaceMuted)),
+                child: Text(
+                  scope.texts.videoNotEditable,
+                  style: TextStyle(color: scope.theme.onSurfaceMuted, fontWeight: FontWeight.w500),
+                ),
               ),
             ],
           );
@@ -179,7 +183,8 @@ class _CurrentItem extends StatelessWidget {
             key: ObjectKey(item),
             children: [
               CropView(controller: crop, image: image),
-              if (changeRatio && scope.settings.cropRatios.length > 1)
+              // a taken or picked file has no gallery preview to pick the ratio in, so it's picked here
+              if (item.path != null && scope.settings.cropRatios.length > 1)
                 PositionedDirectional(
                   start: PickerLayout.padding,
                   bottom: PickerLayout.ratioButtonBottomPadding,
@@ -299,7 +304,10 @@ class _ProcessingPopup extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(scope.texts.processing, style: TextStyle(color: scope.theme.onSurface)),
+                  Text(
+                    scope.texts.processing,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface),
+                  ),
                 ],
               ),
             ),
