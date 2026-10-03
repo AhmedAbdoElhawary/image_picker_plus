@@ -17,4 +17,4 @@ linter:
     - sort_child_properties_last
 
 formatter:
-  page_width: 120
+  page_width: 110

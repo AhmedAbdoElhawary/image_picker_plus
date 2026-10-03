@@ -27,5 +27,6 @@
     "**/.*/**",
     "**/.vscode",
     "**/.vscode/**"
-  ]
+  ],
+  "dart.lineLength": 110
 }
