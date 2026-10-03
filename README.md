@@ -2,7 +2,7 @@
 
 <p align="center">
   A gallery and camera picker that lives inside your app.<br>
-  Pick images and videos, crop them, add filters, reorder them, and get the files back.<br>
+  Pick images and videos, crop it, add filters them, reorder them, and get the files back.<br>
   In your theme and your language, on mobile, web and desktop.
 </p>
 
@@ -15,13 +15,16 @@
   <img src="https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-blue" alt="platforms" />
 </p>
 
+# SnapShots
+###  [Color glitching from the compression of the GIF, not the app]
+
 | Pick, crop, filter and reorder | Camera | Video |
 |:---:|:---:|:---:|
 | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/gallery.gif" width="220" alt="pick, crop, filter and reorder" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/camera.gif" width="220" alt="camera" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/video_img.jpeg" width="220" alt="recording a video" /> |
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="820" alt="edit screen on web and desktop" />
-</p>
+| MacOS | Web
+|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/macos.gif" width="410" alt="edit screen on macOS" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="410" alt="edit screen on web" /> |
 
 # Why
 
@@ -36,12 +39,12 @@ image_picker_plus shows the gallery inside your app instead, so it follows your 
 - Camera tabs for photo and video, with front/rear, flash and tap to focus.
 - Light and dark themes, your own colors and texts, RTL, and layouts for phones and tablets.
 - Optional disk cache for a faster reopen.
-- No native code of its own, so there's nothing to set up besides the permissions.
+- **No native code** of its own, so there's nothing to set up besides the permissions.
 
 # Quick start
 
 ```dart
-final items = await ImagePickerPlus.pick(context);
+final items = await ImagePickerPlus.pick(context); // by default, it has an elegant design
 ```
 
 That's it. You get a `List<PickedItem>`, or `null` if the user closed the picker. Add the [permissions](#installing) and look at [Settings](#settings) for the rest.
@@ -155,7 +158,7 @@ for (final item in items) {
 | `source` | `PickerSource.gallery` | `gallery`, `camera` or `both`. With `both` there are tabs for gallery, photo and video |
 | `mediaType` | `MediaType.image` | `image`, `video` or `all` |
 | `maxSelection` | `1` | `1` is single selection. above 1, counting starts on a long press or the select button |
-| `cropRatios` | `[]` | empty means no crop. Presets: `CropRatio.original`, `square`, `portrait` (4:5), `landscape` (16:9), or `CropRatio(3, 2)`. Only these show in the ratio menu |
+| `cropRatios` | `CropRatio.all` | the ratios the user can pick, `[]` means no crop. `CropRatio.all` is original, square, portrait (4:5) and landscape (16:9), or pass your own like `CropRatio(3, 2)`. Only these show in the ratio menu |
 | `showPreview` | `true` | `false` hides the preview above the grid. The crop is then only on the edit screen, at the image's own ratio |
 | `resizePreview` | `true` | decodes the preview and edit images at the size they're shown. `false` decodes them at 1080 pixels, more memory but sharper when zooming the crop |
 | `gridColumns` | `null` | images per row, `null` follows the screen width (4, 6 or 8) |

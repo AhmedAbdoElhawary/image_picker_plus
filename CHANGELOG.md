@@ -7,7 +7,7 @@
 * camera photos can be cropped too
 * the preview slides up under the app bar while scrolling the grid, drag it down or scroll to the top to bring it back. it can be hidden with `showPreview: false`
 * the preview and edit images are decoded at the size they're shown, `resizePreview: false` keeps them at 1080 pixels
-* ratio menu under the crop button
+* ratio menu under the crop button, `CropRatio.all` by default. `cropRatios: []` turns the crop off
 * grid columns and cell shape can be set
 * camera tabs for photo and video, front/rear, flash, and clear messages when there's no camera or access
 * light and dark themes, custom colors and texts, RTL, reduced motion, layouts for phones and tablets
