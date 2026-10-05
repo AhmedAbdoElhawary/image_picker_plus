@@ -6,8 +6,14 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
+import 'package:image_picker_plus/src/edit/exporting_overlay.dart';
 import 'package:image_picker_plus/src/edit/filter_strip.dart';
 import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_buttons.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
 import 'package:image_picker_plus/src/gallery/media_preview.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
@@ -19,6 +25,7 @@ class EditPage extends StatefulWidget {
   final List<MediaItem> items;
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
+  final Map<String, MarkupController> markups;
 
   /// null pops, the system picker flow picks again instead.
   final VoidCallback? onBack;
@@ -36,6 +43,7 @@ class EditPage extends StatefulWidget {
     required this.items,
     this.crops = const {},
     this.filterIndexes = const {},
+    this.markups = const {},
     this.onBack,
     this.initial,
     this.onAdd,
@@ -62,6 +70,8 @@ class _EditPageState extends State<EditPage> {
       initial: widget.initial,
       crops: widget.crops,
       filterIndexes: widget.filterIndexes,
+      markups: widget.markups,
+      stickers: scope.settings.markup.stickers,
     );
     final onReorder = widget.onReorder;
     final items = _controller!.items;
@@ -100,47 +110,74 @@ class _EditPageState extends State<EditPage> {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final controller = _controller!;
-    final back = widget.onBack ?? () => Navigator.of(context).pop();
-    return _ExportingOverlay(
+    final leave = widget.onBack ?? () => Navigator.of(context).pop();
+    // back leaves the markup mode first, then the page
+    void back() => controller.tool.value != null ? controller.tool.value = null : leave();
+    return ExportingOverlay(
       controller: controller,
       child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.escape): back,
-          const SingleActivator(LogicalKeyboardKey.enter): _done,
+          const SingleActivator(LogicalKeyboardKey.enter): () {
+            if (controller.tool.value == null) _done();
+          },
         },
         child: Focus(
           autofocus: true,
           child: Scaffold(
             backgroundColor: scope.theme.background,
             appBar: PickerAppBar(
-              title: const SizedBox.shrink(),
+              title: MarkupButtons(controller: controller),
               closeIcon: Icons.arrow_back_rounded,
               onClose: back,
-              action: TextButton(
-                onPressed: _done,
-                style: TextButton.styleFrom(
-                  foregroundColor: scope.theme.accent,
-                  minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
-                ),
-                child: Text(
-                  scope.texts.done,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
+              // the markup mode has its own done, this one would save in the middle of it
+              action: ValueListenableBuilder<MarkupTool?>(
+                valueListenable: controller.tool,
+                builder: (context, tool, done) => tool == null ? done! : const SizedBox.shrink(),
+                child: TextButton(
+                  onPressed: _done,
+                  style: TextButton.styleFrom(
+                    foregroundColor: scope.theme.accent,
+                    minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+                  ),
+                  child: Text(
+                    scope.texts.done,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
             body: SafeArea(
               top: false,
-              child: Column(
-                children: [
-                  Expanded(child: _CurrentItem(controller: controller)),
-                  if (scope.settings.filters) FilterStrip(controller: controller),
-                  if (widget.items.length > 1 ||
-                      (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
-                    ReorderStrip(controller: controller, onAdd: widget.onAdd),
-                  const SizedBox(height: PickerLayout.padding / 2),
-                ],
+              child: ValueListenableBuilder<MarkupTool?>(
+                valueListenable: controller.tool,
+                builder: (context, tool, page) => PopScope(
+                  canPop: tool == null,
+                  onPopInvokedWithResult: (didPop, _) {
+                    if (!didPop) controller.tool.value = null;
+                  },
+                  child: Stack(
+                    children: [
+                      page!,
+                      if (tool != null)
+                        Positioned.fill(
+                          child: MarkupView(key: ValueKey(controller.current.value), controller: controller),
+                        ),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Expanded(child: _CurrentItem(controller: controller)),
+                    if (scope.settings.filters) FilterStrip(controller: controller),
+                    if (widget.items.length > 1 ||
+                        (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
+                      ReorderStrip(controller: controller, onAdd: widget.onAdd),
+                    const SizedBox(height: PickerLayout.padding / 2),
+                  ],
+                ),
               ),
             ),
           ),
@@ -162,7 +199,12 @@ class _CurrentItem extends StatelessWidget {
       valueListenable: controller.current,
       builder: (context, item, _) {
         final crop = controller.crops[item.id];
-        final image = _FilteredImage(item: item, filter: controller.filterIndexes[item.id], crop: crop);
+        final image = FilteredImage(
+          item: item,
+          filter: controller.filterIndexes[item.id],
+          crop: crop,
+          markup: controller.markups[item.id],
+        );
         final Widget child;
         if (item.isVideo) {
           child = Column(
@@ -209,112 +251,41 @@ class _CurrentItem extends StatelessWidget {
 }
 
 /// only this rebuilds when the filter changes, not the crop around it.
-class _FilteredImage extends StatelessWidget {
+class FilteredImage extends StatelessWidget {
   final MediaItem item;
   final ValueNotifier<int>? filter;
   final CropController? crop;
+  final MarkupController? markup;
 
-  const _FilteredImage({required this.item, required this.filter, required this.crop});
+  const FilteredImage({
+    required this.item,
+    required this.filter,
+    required this.crop,
+    required this.markup,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     final image = PreviewImage(item: item, fit: BoxFit.fill, crop: crop);
     final filter = this.filter;
-    if (filter == null) return image;
-    return ValueListenableBuilder<int>(
-      valueListenable: filter,
-      builder: (context, index, image) =>
-          ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
-      child: image,
-    );
-  }
-}
-
-/// over everything in the root overlay, also over the app bar and the wide card,
-/// and the page under it takes no taps, back or keys while saving.
-class _ExportingOverlay extends StatefulWidget {
-  final EditController controller;
-  final Widget child;
-
-  const _ExportingOverlay({required this.controller, required this.child});
-
-  @override
-  State<_ExportingOverlay> createState() => _ExportingOverlayState();
-}
-
-class _ExportingOverlayState extends State<_ExportingOverlay> {
-  final OverlayPortalController _portal = OverlayPortalController();
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.exporting.addListener(_toggle);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.exporting.removeListener(_toggle);
-    super.dispose();
-  }
-
-  void _toggle() => widget.controller.exporting.value ? _portal.show() : _portal.hide();
-
-  @override
-  Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _portal,
-      overlayLocation: OverlayChildLocation.rootOverlay,
-      overlayChildBuilder: (context) => const _ProcessingPopup(),
-      child: ValueListenableBuilder<bool>(
-        valueListenable: widget.controller.exporting,
-        builder: (context, exporting, child) => PopScope(
-          canPop: !exporting,
-          // takes the focus off the page, so esc, enter and the strips do nothing
-          child: ExcludeFocus(excluding: exporting, child: child!),
-        ),
-        child: widget.child,
-      ),
-    );
-  }
-}
-
-class _ProcessingPopup extends StatelessWidget {
-  const _ProcessingPopup();
-
-  @override
-  Widget build(BuildContext context) {
-    final scope = PickerScope.of(context);
-    return Positioned.fill(
-      child: ColoredBox(
-        color: scope.theme.barrier,
-        child: Center(
-          // material for the text style, the overlay is above the page's scaffold
-          child: Material(
-            color: scope.theme.surface,
-            borderRadius: BorderRadius.circular(5),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 30, vertical: 15),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // it spins every frame, alone it doesn't repaint the popup with it
-                  RepaintBoundary(
-                    child: SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.onSurface),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    scope.texts.processing,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    final filtered = filter == null
+        ? image
+        : ValueListenableBuilder<int>(
+            valueListenable: filter,
+            builder: (context, index, image) =>
+                ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
+            child: image,
+          );
+    final markup = this.markup;
+    if (markup == null) return filtered;
+    // beside the filter, not under it, so it keeps its own colors
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        filtered,
+        MarkupLayer(controller: markup),
+      ],
     );
   }
 }
