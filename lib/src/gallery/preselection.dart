@@ -2,10 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/filters.dart' as shipped;
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 /// the items of an earlier pick, found again so the picker can open with them selected.
@@ -61,12 +64,15 @@ class Preselection {
 
   /// the crop and filter of each image from its edits, a ratio or filter these settings don't have falls back.
   /// [ratios] are the ones the picker offers here, the first is the fallback, empty means no crop.
-  (Map<String, CropController>, Map<String, ValueNotifier<int>>) restore({
+  /// markup comes back when it's on, a sticker no longer in [markup] is dropped.
+  (Map<String, CropController>, Map<String, ValueNotifier<int>>, Map<String, MarkupController>) restore({
     required List<CropRatio> ratios,
     required bool filters,
+    MarkupOptions markup = const MarkupOptions(),
   }) {
     final crops = <String, CropController>{};
     final filterIndexes = <String, ValueNotifier<int>>{};
+    final markups = <String, MarkupController>{};
     for (final item in items) {
       final edit = edits[item.id];
       if (edit == null) continue;
@@ -82,8 +88,14 @@ class Preselection {
         final index = edit.filterIndex < shipped.filters.length ? edit.filterIndex : 0;
         filterIndexes[item.id] = ValueNotifier(index);
       }
+      if (markup.enabled) {
+        markups[item.id] = MarkupController([
+          for (final mark in edit.markup)
+            if (mark is! StickerMark || mark.index < markup.stickers.length) mark,
+        ]);
+      }
     }
-    return (crops, filterIndexes);
+    return (crops, filterIndexes, markups);
   }
 
   static bool _allowed(MediaType type, MediaType allowed) => allowed == MediaType.all || type == allowed;
