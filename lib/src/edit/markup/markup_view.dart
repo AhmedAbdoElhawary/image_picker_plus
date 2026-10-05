@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/emoji_sheet.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_buttons.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_canvas.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item_view.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_canvas.dart';
 import 'package:image_picker_plus/src/edit/markup/pen_controls.dart';
-import 'package:image_picker_plus/src/edit/markup/emoji_sheet.dart';
 import 'package:image_picker_plus/src/edit/markup/text_editor.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
@@ -210,7 +210,7 @@ class _MarkupViewState extends State<MarkupView> {
                           : PositionedDirectional(
                               start: 0,
                               end: 0,
-                              bottom: PickerLayout.padding * 2,
+                              bottom: PickerLayout.padding * 3,
                               child: Center(
                                 child: DeleteArea(key: _deleteKey, over: _overDelete(pointer)),
                               ),
