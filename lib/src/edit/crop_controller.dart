@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
-import 'package:image_picker_plus/src/services/image_service.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 
 /// the crop of one image, as a rect normalized to 0..1 of the image.
