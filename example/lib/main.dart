@@ -104,6 +104,9 @@ class _DemoState extends State<Demo> {
   bool alwaysDarkTheme = true;
   TextsChoice texts = TextsChoice.english;
   bool cache = false;
+
+  /// grid on at start and an id card frame over the camera.
+  bool cameraExtras = false;
   int cacheMb = 100;
   List<PickedItem> items = const [];
 
@@ -140,6 +143,7 @@ class _DemoState extends State<Demo> {
         alwaysDarkTheme: alwaysDarkTheme,
         texts: texts == TextsChoice.arabic ? arabicTexts : const PickerTexts(),
         cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
+        camera: cameraExtras ? CameraOptions(gridOn: true, overlay: _cardFrame) : const CameraOptions(),
       ),
     );
     if (picked != null) setState(() => items = picked);
@@ -301,6 +305,11 @@ class _DemoState extends State<Demo> {
             name: (value) => "$value MB",
             onChanged: (value) => setState(() => cacheMb = value),
           ),
+          SwitchListTile(
+            title: const Text("Camera grid and card frame"),
+            value: cameraExtras,
+            onChanged: (value) => setState(() => cameraExtras = value),
+          ),
           SwitchListTile(title: const Text("Dark"), value: widget.dark, onChanged: widget.onDark),
           SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
           ListTile(
@@ -332,6 +341,17 @@ class _DemoState extends State<Demo> {
     );
   }
 }
+
+Widget _cardFrame(BuildContext context, Size size) => Center(
+  child: Container(
+    width: size.width * 0.85,
+    height: size.width * 0.85 / 1.586,
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.white, width: 2),
+      borderRadius: BorderRadius.circular(12),
+    ),
+  ),
+);
 
 const PickerTheme customTheme = PickerTheme(
   background: Color(0xFF1B1530),
