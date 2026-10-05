@@ -1,3 +1,10 @@
+## 2.0.0
+* `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
+* new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. on web and desktop it skips the system picker
+* `PickedItem` has `id`, `original`, `edit` and `overLimit`, and `toMap()` / `PickedItem.fromMap()` to keep a pick between launches
+* `EditState` is public
+* new `OutputOptions.maxBytes`, the quality goes down to 50 first, then the size. what still can't fit comes back with `overLimit: true`
+
 ## 1.1.0
 * Improve export performance by 80%
 * new `PickerSettings.useRootNavigator`, false by default, so the picker opens on the nearest navigator and a tab bar or nested shell stays visible over it
