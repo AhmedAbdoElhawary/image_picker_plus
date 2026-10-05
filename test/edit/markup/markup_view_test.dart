@@ -59,6 +59,22 @@ void main() {
       );
     });
 
+    testWidgets("a tap outside the field closes the editor only while it's empty", (tester) async {
+      final markup = await open(tester);
+      await tester.tap(find.byTooltip("Text"));
+      await tester.pumpAndSettle();
+      final outside = tester.getTopLeft(find.byType(TextField)) - const Offset(0, 40);
+      await tester.enterText(find.byType(TextField), "Hi");
+      await tester.tapAt(outside);
+      await tester.pumpAndSettle();
+      expect(find.byType(TextEditor), findsOneWidget);
+      await tester.enterText(find.byType(TextField), "  ");
+      await tester.tapAt(outside);
+      await tester.pumpAndSettle();
+      expect(find.byType(TextEditor), findsNothing);
+      expect(markup.value, isEmpty);
+    });
+
     testWidgets("a tap reopens it, emptying it removes it", (tester) async {
       const hi = TextMark(text: "Hi", color: Color(0xFFE53935), center: Offset(0.5, 0.5), size: 0.2);
       final markup = await open(tester, items: [hi]);
