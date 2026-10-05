@@ -44,6 +44,18 @@ class PickerTexts {
 
   /// `{zoom}` is replaced with the zoom level.
   final String zoomLevel;
+  final String text;
+  final String draw;
+  final String stickers;
+  final String undo;
+  final String redo;
+  final String eraser;
+  final String delete;
+  final String font;
+  final String textBackground;
+  final String color;
+  final String size;
+  final String doneEditing;
 
   /// one name per filter, in the same order.
   final List<String> filterNames;
@@ -88,6 +100,18 @@ class PickerTexts {
     this.timerSeconds = "Timer {seconds} seconds",
     this.grid = "Grid",
     this.zoomLevel = "Zoom {zoom}x",
+    this.text = "Text",
+    this.draw = "Draw",
+    this.stickers = "Stickers",
+    this.undo = "Undo",
+    this.redo = "Redo",
+    this.eraser = "Eraser",
+    this.delete = "Drag here to delete",
+    this.font = "Font",
+    this.textBackground = "Background",
+    this.color = "Color",
+    this.size = "Size",
+    this.doneEditing = "Done",
     this.filterNames = const [
       "Normal",
       "Warm",
