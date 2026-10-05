@@ -6,6 +6,7 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
@@ -37,6 +38,7 @@ class _PickerHomeState extends State<PickerHome> {
   /// the last photo's edits, kept until the next photo since the edit page uses them while it closes.
   CropController? _crop;
   ValueNotifier<int>? _filterIndex;
+  MarkupController? _markup;
 
   @override
   void didChangeDependencies() {
@@ -69,6 +71,7 @@ class _PickerHomeState extends State<PickerHome> {
     _gallery?.dispose();
     _crop?.dispose();
     _filterIndex?.dispose();
+    _markup?.dispose();
     super.dispose();
   }
 
@@ -93,6 +96,7 @@ class _PickerHomeState extends State<PickerHome> {
         initial: selection.firstWhere((item) => !before.contains(item), orElse: () => selection.first),
         crops: gallery.crops,
         filterIndexes: gallery.filterIndexes,
+        markups: gallery.markups,
         onAdd: _add,
         onReorder: (items) => gallery.selection.value = items,
       ),
@@ -146,6 +150,7 @@ class _PickerHomeState extends State<PickerHome> {
     }
     _crop?.dispose();
     _filterIndex?.dispose();
+    _markup?.dispose();
     final crop = _crop = settings.cropRatios.isEmpty
         ? null
         : CropController(
@@ -153,16 +158,19 @@ class _PickerHomeState extends State<PickerHome> {
             ratio: settings.cropRatios.first,
           );
     final filterIndex = _filterIndex = settings.filters ? ValueNotifier(0) : null;
+    final markup = _markup = settings.markup.enabled ? MarkupController() : null;
     return _open(
       EditPage(
         items: [item],
         crops: {item.id: ?crop},
         filterIndexes: {item.id: ?filterIndex},
+        markups: {item.id: ?markup},
         onAdd: () {
           // the gallery owns them from here
           _crop = null;
           _filterIndex = null;
-          gallery.selectTaken(item, crop: crop, filterIndex: filterIndex);
+          _markup = null;
+          gallery.selectTaken(item, crop: crop, filterIndex: filterIndex, markup: markup);
           _add();
         },
       ),
