@@ -41,7 +41,11 @@ class PickerSettings {
   final PickerTexts texts;
   final PickerCache cache;
 
+  /// false pushes on the nearest navigator, which keeps a tab bar or a nested
+  /// shell visible over the picker.
+  final bool useRootNavigator;
   const PickerSettings({
+    this.useRootNavigator = false,
     this.source = PickerSource.gallery,
     this.mediaType = MediaType.image,
     this.maxSelection = 1,

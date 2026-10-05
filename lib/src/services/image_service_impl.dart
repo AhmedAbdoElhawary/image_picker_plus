@@ -33,15 +33,15 @@ class ImageServiceImpl implements ImageService {
   }) async {
     final cached = cacheKey == null ? null : await cache?.read(cacheKey);
     if (cached != null) return _save(cached);
-    final (jpeg, width, height) =
-        await editJpeg(source, state.cropRect, colorMatrix, output) ??
-        await _editOnEngine(source, state.cropRect, colorMatrix, output);
+    final (jpeg, width, height) = await _edit(source, state.cropRect, colorMatrix, output);
+    final saving = _save(jpeg, width: width, height: height);
     if (cacheKey != null) await cache?.write(cacheKey, jpeg);
-    return _save(jpeg, width: width, height: height);
+    return saving;
   }
 
-  /// for what the image package can't read, like heic. it runs on the main side, so it can drop frames.
-  Future<(Uint8List, int, int)> _editOnEngine(
+  /// the engine decodes natively and only at the needed size, way faster than the image package,
+  /// and it reads heic too. only the jpeg encode is left for an isolate.
+  Future<(Uint8List, int, int)> _edit(
     XFile source,
     Rect rect,
     List<double> colorMatrix,

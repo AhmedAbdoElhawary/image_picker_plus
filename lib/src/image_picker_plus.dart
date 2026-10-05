@@ -37,10 +37,12 @@ abstract final class ImagePickerPlus {
       barrier: barrier,
       builder: (_) => PickerScope(settings: settings, theme: theme, services: services, child: child),
     );
-    if (!_systemPicker) return Navigator.of(context).push(route(const PickerHome()));
-    if (settings.source == PickerSource.camera) {
-      return Navigator.of(context).push(route(const _NotSupported()));
-    }
+
+    final navigator = Navigator.of(context, rootNavigator: settings.useRootNavigator).push;
+
+    if (!_systemPicker) return navigator(route(const PickerHome()));
+    if (settings.source == PickerSource.camera) return navigator(route(_NotSupported(settings)));
+
     // a second system picker on top of an open one throws on some desktops
     if (_picking) return null;
     _picking = true;
@@ -49,7 +51,7 @@ abstract final class ImagePickerPlus {
       final files = await services.files.open(multi: settings.multi, type: settings.mediaType);
       if (files.isEmpty || !context.mounted) return null;
       if (settings.editing) {
-        return await Navigator.of(context).push(route(FilesFlow(files: files), barrier: theme.barrier));
+        return await navigator(route(FilesFlow(files: files), barrier: theme.barrier));
       }
       final pick = await FilesPicker(services: services, settings: settings).read(files);
       // the caller may have no scaffold, and a snackbar without one asserts
@@ -81,9 +83,11 @@ abstract final class ImagePickerPlus {
 }
 
 class _NotSupported extends StatelessWidget {
-  const _NotSupported();
-
+  const _NotSupported(this.settings);
+  final PickerSettings settings;
   @override
-  Widget build(BuildContext context) =>
-      MessageView(PickerScope.of(context).texts.notSupported, onClose: () => Navigator.of(context).pop());
+  Widget build(BuildContext context) => MessageView(
+    PickerScope.of(context).texts.notSupported,
+    onClose: () => Navigator.of(context, rootNavigator: settings.useRootNavigator).pop(),
+  );
 }

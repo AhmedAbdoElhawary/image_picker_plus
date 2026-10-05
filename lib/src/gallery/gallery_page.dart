@@ -10,7 +10,6 @@ import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_grid.dart';
 import 'package:image_picker_plus/src/gallery/gallery_layout.dart';
 import 'package:image_picker_plus/src/gallery/media_preview.dart';
-import 'package:image_picker_plus/src/gallery/select_button.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/widgets/loading_box.dart';
@@ -116,21 +115,6 @@ class _GalleryPageState extends State<GalleryPage> {
               _ => Column(
                 children: [
                   _LimitedBar(controller: controller),
-                  // no preview to hold the button, so it gets its own row
-                  if (!scope.settings.showPreview &&
-                      scope.settings.multi &&
-                      state == GalleryState.ready &&
-                      !adding)
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: PickerLayout.padding,
-                          vertical: 6,
-                        ),
-                        child: SelectButton(controller: controller),
-                      ),
-                    ),
                   Expanded(
                     child: state == GalleryState.loading
                         ? const LoadingBox()
