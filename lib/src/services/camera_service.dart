@@ -33,6 +33,14 @@ abstract class CameraService {
 
   bool get hasFlash;
 
+  double get minZoom;
+
+  /// capped at 10, past that a phone's digital zoom is mostly noise.
+  double get maxZoom;
+
+  /// clamped to the range, never throws for a level outside it.
+  Future<void> setZoom(double level);
+
   Future<PickedItem> takePhoto();
 
   Future<void> startVideo();
