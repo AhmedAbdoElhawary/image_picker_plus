@@ -6,6 +6,7 @@ export 'src/models/edit_state.dart';
 export 'src/models/picked_item.dart';
 export 'src/settings/camera_options.dart';
 export 'src/settings/crop_ratio.dart';
+export 'src/settings/markup_options.dart';
 export 'src/settings/output_options.dart';
 export 'src/settings/picker_cache.dart';
 export 'src/settings/picker_settings.dart';
