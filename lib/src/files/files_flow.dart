@@ -4,6 +4,7 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/files/files_picker.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
@@ -31,6 +32,7 @@ class _FilesFlowState extends State<FilesFlow> {
   MediaItem? _initial;
   final Map<String, CropController> _crops = {};
   final Map<String, ValueNotifier<int>> _filterIndexes = {};
+  final Map<String, MarkupController> _markups = {};
 
   /// goes up on each back, an older pick that comes back late is dropped.
   int _generation = 0;
@@ -47,9 +49,14 @@ class _FilesFlowState extends State<FilesFlow> {
       return;
     }
     final settings = PickerScope.of(context).settings;
-    final (crops, filters) = preselection.restore(ratios: settings.cropRatios, filters: settings.filters);
+    final (crops, filters, markups) = preselection.restore(
+      ratios: settings.cropRatios,
+      filters: settings.filters,
+      markup: settings.markup,
+    );
     _crops.addAll(crops);
     _filterIndexes.addAll(filters);
+    _markups.addAll(markups);
     _prepare(preselection.items);
     _items = preselection.items;
   }
@@ -91,6 +98,7 @@ class _FilesFlowState extends State<FilesFlow> {
         );
       }
       if (settings.filters) _filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
+      if (settings.markup.enabled) _markups.putIfAbsent(item.id, MarkupController.new);
     }
   }
 
@@ -144,8 +152,12 @@ class _FilesFlowState extends State<FilesFlow> {
     for (final filter in _filterIndexes.values) {
       filter.dispose();
     }
+    for (final markup in _markups.values) {
+      markup.dispose();
+    }
     _crops.clear();
     _filterIndexes.clear();
+    _markups.clear();
   }
 
   @override
@@ -163,6 +175,7 @@ class _FilesFlowState extends State<FilesFlow> {
         initial: _initial,
         crops: _crops,
         filterIndexes: _filterIndexes,
+        markups: _markups,
         onBack: _repick,
         onAdd: _add,
         onReorder: (items) => _items = items,
