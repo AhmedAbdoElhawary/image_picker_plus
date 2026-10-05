@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker_plus/src/core/haptic_feedback.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
@@ -173,7 +174,7 @@ class _MarkupItemViewState extends State<MarkupItemView> {
 }
 
 /// shows while something is dragged, dropping on it removes it.
-class DeleteArea extends StatelessWidget {
+class DeleteArea extends StatefulWidget {
   final bool over;
 
   const DeleteArea({required this.over, super.key});
@@ -181,19 +182,31 @@ class DeleteArea extends StatelessWidget {
   static const double size = 56;
 
   @override
+  State<DeleteArea> createState() => _DeleteAreaState();
+}
+
+class _DeleteAreaState extends State<DeleteArea> {
+  @override
+  void didUpdateWidget(covariant DeleteArea oldWidget) {
+    if (oldWidget.over != widget.over) customHapticFeedback();
+
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     return Semantics(
       label: scope.texts.delete,
       child: AnimatedScale(
-        scale: over ? 1.25 : 1,
+        scale: widget.over ? 1.25 : 1,
         duration: MediaQuery.maybeDisableAnimationsOf(context) == true
             ? Duration.zero
             : const Duration(milliseconds: 150),
         child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: scope.theme.scrim),
+          width: DeleteArea.size,
+          height: DeleteArea.size,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: scope.theme.surface),
           child: Icon(Icons.delete_outline_rounded, color: scope.theme.onSurface),
         ),
       ),
