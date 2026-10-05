@@ -8,7 +8,7 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_painter.dart';
 
-/// a text or sticker the user can move, pinch, twist or tap. it's drawn by the layer under it, this only takes the touches.
+/// a text or emoji the user can move, pinch, twist or tap. it's drawn by the layer under it, this only takes the touches.
 class MarkupItemView extends StatefulWidget {
   final MarkupItem item;
 
@@ -34,7 +34,6 @@ class MarkupItemView extends StatefulWidget {
   /// small enough to still grab, big enough to stay on the photo.
   static MarkupItem clamp(MarkupItem item, Size size) => switch (item) {
     TextMark() => item.copyWith(size: item.size.clamp(_minSide / 1.2 / size.width, 1.0)),
-    StickerMark() => item.copyWith(width: item.width.clamp(_minSide / size.width, 3.0)),
     StrokeMark() => item,
   };
 
@@ -45,10 +44,83 @@ class MarkupItemView extends StatefulWidget {
 }
 
 class _MarkupItemViewState extends State<MarkupItemView> {
+  /// the item a finger is on, a second item can't be grabbed until it's let go.
+  static _MarkupItemViewState? _holder;
+
+  /// every finger on screen while this is held, in the order they went down.
+  final Map<int, Offset> _pointers = {};
   MarkupItem? _start;
   MarkupItem? _now;
-  Offset _from = Offset.zero;
-  Offset _pointer = Offset.zero;
+  (Offset, double, double) _from = (Offset.zero, 1, 0);
+  Offset _down = Offset.zero;
+  bool _pinched = false;
+
+  @override
+  void dispose() {
+    _release();
+    super.dispose();
+  }
+
+  void _grab(PointerDownEvent event) {
+    if (_holder != null) return;
+    _holder = this;
+    _down = event.position;
+    _pinched = false;
+    _start = _now = null;
+    // a global route sees the second finger wherever it lands, not only on the item
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_route);
+  }
+
+  void _release() {
+    if (_holder != this) return;
+    _holder = null;
+    _pointers.clear();
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_route);
+  }
+
+  /// the middle of the first two fingers, how far apart they are and their angle.
+  (Offset, double, double) _span() {
+    final points = _pointers.values.take(2).toList();
+    if (points.length < 2) return (points.first, 1, 0);
+    final between = points[1] - points[0];
+    return ((points[0] + points[1]) / 2, max(between.distance, 1), between.direction);
+  }
+
+  /// a finger went down or up, so the next move starts from where things are now.
+  void _restart() {
+    _start = _now ?? widget.item;
+    if (_pointers.isNotEmpty) _from = _span();
+  }
+
+  void _route(PointerEvent event) {
+    switch (event) {
+      case PointerDownEvent():
+        _pointers[event.pointer] = event.position;
+        if (_pointers.length > 1) _pinched = true;
+        _restart();
+      case PointerMoveEvent() when _pointers.containsKey(event.pointer):
+        _pointers[event.pointer] = event.position;
+        final start = _start;
+        if (start == null) return;
+        if (_now == null && !_pinched && (event.position - _down).distance < kTouchSlop) return;
+        final (focal, distance, angle) = _span();
+        final (fromFocal, fromDistance, fromAngle) = _from;
+        final now = _now = _moved(start, focal - fromFocal, distance / fromDistance, angle - fromAngle);
+        widget.onMove(now, _pointers.values.first);
+      case PointerUpEvent() || PointerCancelEvent() when _pointers.containsKey(event.pointer):
+        final last = _pointers.remove(event.pointer)!;
+        if (_pointers.isNotEmpty) return _restart();
+        final now = _now;
+        _release();
+        if (now != null) {
+          widget.onEnd(now, last);
+        } else if (event is PointerUpEvent && !_pinched) {
+          widget.onTap?.call();
+        }
+      default:
+        break;
+    }
+  }
 
   MarkupItem _moved(MarkupItem start, Offset delta, double scale, double rotation) {
     final shift = Offset(delta.dx / widget.size.width, delta.dy / widget.size.height);
@@ -56,11 +128,6 @@ class _MarkupItemViewState extends State<MarkupItemView> {
       TextMark() => start.copyWith(
         center: start.center + shift,
         size: start.size * scale,
-        angle: start.angle + rotation,
-      ),
-      StickerMark() => start.copyWith(
-        center: start.center + shift,
-        width: start.width * scale,
         angle: start.angle + rotation,
       ),
       StrokeMark() => start,
@@ -82,10 +149,9 @@ class _MarkupItemViewState extends State<MarkupItemView> {
     final item = widget.item;
     final (center, angle) = switch (item) {
       TextMark() => (item.center, item.angle),
-      StickerMark() => (item.center, item.angle),
       StrokeMark() => (Offset.zero, 0.0),
     };
-    final box = MarkupPainter.measure(item, widget.size, const {});
+    final box = MarkupPainter.measure(item, widget.size);
     final width = max(box.width, PickerLayout.minTouch);
     final height = max(box.height, PickerLayout.minTouch);
     return Positioned(
@@ -95,28 +161,11 @@ class _MarkupItemViewState extends State<MarkupItemView> {
       height: height,
       child: Transform.rotate(
         angle: angle,
+        // raw pointers, the second finger is often outside the item so a gesture detector never sees it
         child: Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: _grab,
           onPointerSignal: (event) => GestureBinding.instance.pointerSignalResolver.register(event, _signal),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onTap,
-            onScaleStart: (details) {
-              _start = _now = item;
-              _from = _pointer = details.focalPoint;
-            },
-            onScaleUpdate: (details) {
-              final start = _start;
-              if (start == null) return;
-              _pointer = details.focalPoint;
-              final now = _now = _moved(start, details.focalPoint - _from, details.scale, details.rotation);
-              widget.onMove(now, _pointer);
-            },
-            onScaleEnd: (_) {
-              final now = _now;
-              _start = _now = null;
-              if (now != null) widget.onEnd(now, _pointer);
-            },
-          ),
         ),
       ),
     );
