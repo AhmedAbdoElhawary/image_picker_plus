@@ -8,6 +8,7 @@ import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 import '../fakes/fake_gallery_service.dart';
@@ -295,5 +296,33 @@ void main() {
       expect(controller.selection.value.map((e) => e.id), ["0"]);
       controller.dispose();
     });
+  });
+
+  test("markups follow the selection and go when an item leaves it", () async {
+    final gallery = FakeGalleryService.withItems(10);
+    final controller = GalleryController(
+      service: gallery,
+      settings: const PickerSettings(maxSelection: 3, markup: MarkupOptions(drawing: true)),
+    );
+    await controller.init();
+    controller.startMulti(controller.preview.value);
+    controller.toggle(controller.items.value[4]);
+    expect(controller.markups.keys, ["0", "4"]);
+    final markup = controller.markups["4"]!;
+    // a second tap on the shown one unselects it
+    controller.toggle(controller.items.value[4]);
+    expect(controller.markups.keys, ["0"]);
+    expect(() => markup.addListener(() {}), throwsFlutterError);
+    controller.dispose();
+  });
+
+  test("no markups when markup is off", () async {
+    final controller = GalleryController(
+      service: FakeGalleryService.withItems(3),
+      settings: const PickerSettings(),
+    );
+    await controller.init();
+    expect(controller.markups, isEmpty);
+    controller.dispose();
   });
 }
