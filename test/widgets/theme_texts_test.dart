@@ -64,6 +64,8 @@ void main() {
     final hits = <String>[];
     for (final file in Directory("lib/src").listSync(recursive: true).whereType<File>()) {
       if (file.path.endsWith("picker_theme.dart")) continue;
+      // the colors people draw with, not the picker's look
+      if (file.path.endsWith("markup_options.dart")) continue;
       final lines = file.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         if (RegExp(r'\bColors\.(?!transparent\b)|Color\(0x').hasMatch(lines[i])) {
