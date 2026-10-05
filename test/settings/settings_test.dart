@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_cache.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
@@ -67,5 +68,15 @@ void main() {
       (true, true, true, false, null),
     );
     expect(const PickerSettings().camera.zoomButtons, isTrue);
+  });
+
+  test("markup is off by default, any tool turns editing on", () {
+    const off = MarkupOptions();
+    expect((off.text, off.drawing, off.enabled), (false, false, false));
+    expect(off.stickers, isEmpty);
+    expect(off.fonts, isEmpty);
+    expect(off.colors, MarkupOptions.defaultColors);
+    expect(const PickerSettings(cropRatios: [], markup: MarkupOptions(text: true)).editing, isTrue);
+    expect(const PickerSettings(cropRatios: [], markup: MarkupOptions()).editing, isFalse);
   });
 }
