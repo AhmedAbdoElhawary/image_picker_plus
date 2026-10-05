@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/cropped_image.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
@@ -88,6 +89,22 @@ class MarkupCanvas extends StatelessWidget {
           },
         ),
       ),
+    );
+    canvas = Hero(
+      tag: markup,
+      // both ways, the edit page's window would show the image past the crop
+      flightShuttleBuilder: (_, _, _, _, _) => PickerScope.of(context).wrap(
+        CroppedImage(
+          rect: crop,
+          child: FilteredImage(
+            item: item,
+            filter: controller.filterIndexes[item.id],
+            crop: null,
+            markup: markup,
+          ),
+        ),
+      ),
+      child: canvas,
     );
     // two fingers zoom while drawing, one finger draws
     if (drawing) canvas = InteractiveViewer(panEnabled: false, maxScale: 5, child: canvas);
