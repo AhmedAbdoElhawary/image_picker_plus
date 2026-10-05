@@ -6,6 +6,8 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
     <string>your usage description here</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>your usage description here</string>
     <key>NSCameraUsageDescription</key>
     <string>your usage description here</string>
     <key>NSMicrophoneUsageDescription</key>
