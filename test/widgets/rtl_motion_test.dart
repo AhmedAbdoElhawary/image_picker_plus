@@ -48,4 +48,16 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(tester.hasRunningAnimations, isTrue);
   });
+
+  testWidgets("rtl puts the timer and grid at the top left and keeps the zoom row centred", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(source: PickerSource.camera, cropRatios: []),
+    );
+    expect(tester.getCenter(find.byTooltip("Timer")).dx, lessThan(200));
+    expect(tester.getCenter(find.byTooltip("Grid")).dx, lessThan(200));
+    expect(tester.getCenter(find.text("2x")).dx, closeTo(200, 30));
+  });
 }
