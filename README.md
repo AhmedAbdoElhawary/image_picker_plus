@@ -169,6 +169,7 @@ for (final item in items) {
 | `alwaysDarkTheme` | `true` | `false` follows the app brightness. A custom `theme` wins over it |
 | `texts` | `PickerTexts()` | every text the picker shows, English by default |
 | `cache` | `PickerCache()` | off by default, see below |
+| `camera` | `CameraOptions()` | zoom buttons, timer, grid and an overlay for the camera tabs, see below |
 
 When there's no crop and no filters, next returns the picked items right away. Otherwise next opens the edit screen.
 
@@ -223,6 +224,28 @@ PickerSettings(
   texts: const PickerTexts(next: "Weiter", done: "Fertig"),
 )
 ```
+
+## Camera
+
+The camera tabs have pinch zoom, quick zoom buttons, a 3 and 10 second timer and a rule of thirds grid, all on by default. `CameraOptions` turns each one off, starts with the grid on, or draws your own overlay over the preview, like a frame for an ID card. The overlay gets the preview's size, never ends up in the photo or video, and doesn't take taps, so focus and zoom still work through it.
+
+```dart
+PickerSettings(
+  source: PickerSource.camera,
+  camera: CameraOptions(
+    gridOn: true,
+    overlay: (context, size) => Center(
+      child: Container(
+        width: size.width * 0.85,
+        height: size.width * 0.85 / 1.586, // id card
+        decoration: BoxDecoration(border: Border.all(color: Colors.white, width: 2)),
+      ),
+    ),
+  ),
+)
+```
+
+Zoom goes up to 10x. The 0.5x button only shows where the phone gives the ultra wide as a zoom level, which most Android phones with one do. iPhones list it as its own camera, so there it's reached with the switch camera button.
 
 ## Caching
 
