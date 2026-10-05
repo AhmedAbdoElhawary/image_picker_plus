@@ -5,6 +5,7 @@ import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/files/files_picker.dart';
+import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/widgets/loading_box.dart';
 
@@ -12,7 +13,11 @@ import 'package:image_picker_plus/src/widgets/loading_box.dart';
 class FilesFlow extends StatefulWidget {
   final List<XFile> files;
 
-  const FilesFlow({required this.files, super.key});
+  /// an earlier pick, opened as is without reading [files].
+  final Preselection? preselection;
+
+  const FilesFlow({this.files = const [], this.preselection, super.key})
+    : assert(files.length > 0 || preselection != null);
 
   @override
   State<FilesFlow> createState() => _FilesFlowState();
@@ -36,7 +41,17 @@ class _FilesFlowState extends State<FilesFlow> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    _read(widget.files, _generation);
+    final preselection = widget.preselection;
+    if (preselection == null) {
+      _read(widget.files, _generation);
+      return;
+    }
+    final settings = PickerScope.of(context).settings;
+    final (crops, filters) = preselection.restore(ratios: settings.cropRatios, filters: settings.filters);
+    _crops.addAll(crops);
+    _filterIndexes.addAll(filters);
+    _prepare(preselection.items);
+    _items = preselection.items;
   }
 
   @override
@@ -70,9 +85,12 @@ class _FilesFlowState extends State<FilesFlow> {
       if (item.isVideo) continue;
       if (settings.cropRatios.isNotEmpty) {
         final aspect = item.height == 0 ? 1.0 : item.width / item.height;
-        _crops[item.id] = CropController(imageAspect: aspect, ratio: settings.cropRatios.first);
+        _crops.putIfAbsent(
+          item.id,
+          () => CropController(imageAspect: aspect, ratio: settings.cropRatios.first),
+        );
       }
-      if (settings.filters) _filterIndexes[item.id] = ValueNotifier(0);
+      if (settings.filters) _filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
     }
   }
 
