@@ -38,6 +38,13 @@ class FakeGalleryService implements GalleryService {
   int thumbnailCalls = 0;
   int openSettingsCalls = 0;
   int manageCalls = 0;
+  int itemCalls = 0;
+
+  /// ids [item] returns null for, like a deleted photo.
+  final Set<String> gone = {};
+
+  /// every [file] call, with its editable flag.
+  final List<(String, bool)> fileCalls = [];
   Completer<void>? itemsGate;
 
   FakeGalleryService({this.access = GalleryAccess.full, Map<String, List<MediaItem>>? data})
@@ -74,8 +81,22 @@ class FakeGalleryService implements GalleryService {
   }
 
   @override
-  Future<XFile?> file(MediaItem item, {bool editable = false}) async =>
-      XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
+  Future<MediaItem?> item(String id) async {
+    itemCalls++;
+    if (gone.contains(id)) return null;
+    for (final items in data.values) {
+      for (final item in items) {
+        if (item.id == id) return item;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<XFile?> file(MediaItem item, {bool editable = false}) async {
+    fileCalls.add((item.id, editable));
+    return XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
+  }
 
   @override
   Stream<void> get changes => _changes.stream;
