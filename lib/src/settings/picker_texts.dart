@@ -91,7 +91,7 @@ class PickerTexts {
     this.switchCamera = "Switch camera",
     this.flash = "Flash",
     this.capture = "Capture",
-    this.processing = "Processing",
+    this.processing = "Processing...",
     this.exportFailed = "Couldn't save the images, try again",
     this.maxKept = "Only the first {max} were kept",
     this.filesSkipped = "Some files couldn't be opened",
