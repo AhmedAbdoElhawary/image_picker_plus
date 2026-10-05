@@ -66,22 +66,9 @@ class ProcessingPopup extends StatelessWidget {
             borderRadius: BorderRadius.circular(5),
             child: Padding(
               padding: const EdgeInsetsDirectional.symmetric(horizontal: 30, vertical: 15),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // it spins every frame, alone it doesn't repaint the popup with it
-                  RepaintBoundary(
-                    child: SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.onSurface),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    scope.texts.processing,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface),
-                  ),
-                ],
+              child: Text(
+                scope.texts.processing,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface),
               ),
             ),
           ),
