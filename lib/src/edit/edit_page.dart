@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
+import 'package:image_picker_plus/src/core/edit_frame.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
@@ -11,7 +12,6 @@ import 'package:image_picker_plus/src/edit/filter_strip.dart';
 import 'package:image_picker_plus/src/edit/filters.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_buttons.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
@@ -58,6 +58,9 @@ class EditPage extends StatefulWidget {
 class _EditPageState extends State<EditPage> {
   EditController? _controller;
 
+  /// the tools switch inside the markup page, only the first one opens it.
+  bool _markupOpen = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -71,8 +74,8 @@ class _EditPageState extends State<EditPage> {
       crops: widget.crops,
       filterIndexes: widget.filterIndexes,
       markups: widget.markups,
-      stickers: scope.settings.markup.stickers,
     );
+    _controller!.tool.addListener(_onTool);
     final onReorder = widget.onReorder;
     final items = _controller!.items;
     if (onReorder != null) items.addListener(() => onReorder(items.value));
@@ -82,6 +85,32 @@ class _EditPageState extends State<EditPage> {
   void dispose() {
     _controller?.dispose();
     super.dispose();
+  }
+
+  void _onTool() {
+    if (_controller!.tool.value != null && !_markupOpen) _openMarkup();
+  }
+
+  /// a page of its own, so the image flies to it as a hero.
+  Future<void> _openMarkup() async {
+    final controller = _controller!;
+    final scope = PickerScope.of(context);
+    final duration = PickerDurations.of(context).medium;
+    // in a card the markup is a card too, over this one
+    final card = context.findAncestorWidgetOfExactType<EditFrame>() != null;
+    final page = MarkupView(controller: controller);
+    _markupOpen = true;
+    await Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        opaque: !card,
+        pageBuilder: (_, _, _) => scope.wrap(card ? EditFrame(child: page) : page),
+        transitionDuration: duration,
+        reverseTransitionDuration: duration,
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(opacity: animation, child: child),
+      ),
+    );
+    _markupOpen = false;
+    if (mounted) controller.tool.value = null;
   }
 
   Future<void> _done() async {
@@ -110,17 +139,13 @@ class _EditPageState extends State<EditPage> {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final controller = _controller!;
-    final leave = widget.onBack ?? () => Navigator.of(context).pop();
-    // back leaves the markup mode first, then the page
-    void back() => controller.tool.value != null ? controller.tool.value = null : leave();
+    final back = widget.onBack ?? () => Navigator.of(context).pop();
     return ExportingOverlay(
       controller: controller,
       child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.escape): back,
-          const SingleActivator(LogicalKeyboardKey.enter): () {
-            if (controller.tool.value == null) _done();
-          },
+          const SingleActivator(LogicalKeyboardKey.enter): _done,
         },
         child: Focus(
           autofocus: true,
@@ -130,54 +155,31 @@ class _EditPageState extends State<EditPage> {
               title: MarkupButtons(controller: controller),
               closeIcon: Icons.arrow_back_rounded,
               onClose: back,
-              // the markup mode has its own done, this one would save in the middle of it
-              action: ValueListenableBuilder<MarkupTool?>(
-                valueListenable: controller.tool,
-                builder: (context, tool, done) => tool == null ? done! : const SizedBox.shrink(),
-                child: TextButton(
-                  onPressed: _done,
-                  style: TextButton.styleFrom(
-                    foregroundColor: scope.theme.accent,
-                    minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
-                  ),
-                  child: Text(
-                    scope.texts.done,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
-                  ),
+              action: TextButton(
+                onPressed: _done,
+                style: TextButton.styleFrom(
+                  foregroundColor: scope.theme.accent,
+                  minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+                ),
+                child: Text(
+                  scope.texts.done,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
             body: SafeArea(
               top: false,
-              child: ValueListenableBuilder<MarkupTool?>(
-                valueListenable: controller.tool,
-                builder: (context, tool, page) => PopScope(
-                  canPop: tool == null,
-                  onPopInvokedWithResult: (didPop, _) {
-                    if (!didPop) controller.tool.value = null;
-                  },
-                  child: Stack(
-                    children: [
-                      page!,
-                      if (tool != null)
-                        Positioned.fill(
-                          child: MarkupView(key: ValueKey(controller.current.value), controller: controller),
-                        ),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Expanded(child: _CurrentItem(controller: controller)),
-                    if (scope.settings.filters) FilterStrip(controller: controller),
-                    if (widget.items.length > 1 ||
-                        (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
-                      ReorderStrip(controller: controller, onAdd: widget.onAdd),
-                    const SizedBox(height: PickerLayout.padding / 2),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  Expanded(child: _CurrentItem(controller: controller)),
+                  if (scope.settings.filters) FilterStrip(controller: controller),
+                  if (widget.items.length > 1 ||
+                      (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
+                    ReorderStrip(controller: controller, onAdd: widget.onAdd),
+                  const SizedBox(height: PickerLayout.padding / 2),
+                ],
               ),
             ),
           ),
@@ -199,11 +201,12 @@ class _CurrentItem extends StatelessWidget {
       valueListenable: controller.current,
       builder: (context, item, _) {
         final crop = controller.crops[item.id];
+        final markup = controller.markups[item.id];
         final image = FilteredImage(
           item: item,
           filter: controller.filterIndexes[item.id],
           crop: crop,
-          markup: controller.markups[item.id],
+          markup: markup,
         );
         final Widget child;
         if (item.isVideo) {
@@ -224,7 +227,7 @@ class _CurrentItem extends StatelessWidget {
           child = Stack(
             key: ObjectKey(item),
             children: [
-              CropView(controller: crop, image: image),
+              CropView(controller: crop, image: image, heroTag: markup),
               // a taken or picked file has no gallery preview to pick the ratio in, so it's picked here
               if (item.path != null && scope.settings.cropRatios.length > 1)
                 PositionedDirectional(
@@ -238,7 +241,10 @@ class _CurrentItem extends StatelessWidget {
           final aspect = item.width / item.height;
           child = Center(
             key: ObjectKey(item),
-            child: AspectRatio(aspectRatio: aspect.isFinite && aspect > 0 ? aspect : 1, child: image),
+            child: AspectRatio(
+              aspectRatio: aspect.isFinite && aspect > 0 ? aspect : 1,
+              child: markup == null ? image : Hero(tag: markup, child: image),
+            ),
           );
         }
         return Padding(
