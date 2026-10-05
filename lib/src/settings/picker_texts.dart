@@ -35,6 +35,15 @@ class PickerTexts {
   /// `{max}` is replaced with the max selection.
   final String maxKept;
   final String filesSkipped;
+  final String timer;
+  final String timerOff;
+
+  /// `{seconds}` is replaced with the timer seconds.
+  final String timerSeconds;
+  final String grid;
+
+  /// `{zoom}` is replaced with the zoom level.
+  final String zoomLevel;
 
   /// one name per filter, in the same order.
   final List<String> filterNames;
@@ -74,6 +83,11 @@ class PickerTexts {
     this.exportFailed = "Couldn't save the images, try again",
     this.maxKept = "Only the first {max} were kept",
     this.filesSkipped = "Some files couldn't be opened",
+    this.timer = "Timer",
+    this.timerOff = "Timer off",
+    this.timerSeconds = "Timer {seconds} seconds",
+    this.grid = "Grid",
+    this.zoomLevel = "Zoom {zoom}x",
     this.filterNames = const [
       "Normal",
       "Warm",
@@ -109,6 +123,10 @@ class PickerTexts {
   String maxReachedFor(int max) => maxReached.replaceAll("{max}", "$max");
 
   String maxKeptFor(int max) => maxKept.replaceAll("{max}", "$max");
+
+  String timerSecondsFor(int seconds) => timerSeconds.replaceAll("{seconds}", "$seconds");
+
+  String zoomLevelFor(String zoom) => zoomLevel.replaceAll("{zoom}", zoom);
 
   String monthOf(DateTime date) => "${months[date.month - 1]} ${date.year}";
 }
