@@ -42,6 +42,16 @@ class GalleryServiceImpl implements GalleryService {
   }
 
   @override
+  Future<MediaItem?> item(String id) async {
+    try {
+      final asset = await _asset(id);
+      return asset == null ? null : _toItem(asset);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
   Future<Uint8List?> thumbnail(MediaItem item, int size) async {
     final asset = await _asset(item.id);
     if (asset == null) return null;
