@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/src/core/x_file.dart';
+import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/services/image_service_impl.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
@@ -259,6 +260,135 @@ void main() {
         );
         expect(item.overLimit, isTrue);
         expect(item.width, lessThan(400));
+      });
+    });
+  });
+
+  group("markup", () {
+    const red = Color(0xFFFF0000);
+    // across the middle, on the grid's four colors
+    const stroke = StrokeMark(points: [Offset(0, 0.5), Offset(1, 0.5)], color: red, width: 0.1);
+
+    testWidgets("a stroke lands where it was drawn and leaves the rest", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(markup: [stroke]),
+          filters.first,
+          const OutputOptions(),
+        );
+        final out = await decode(item.file);
+        expectColor(out.getPixel(150, 50), 255, 0, 0);
+        expectColor(out.getPixel(150, 10), 0, 255, 0);
+        expect((item.width, item.height), (200, 100));
+      });
+    });
+
+    testWidgets("the filter is only on the photo, never on the markup", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(filterIndex: 12, markup: [stroke]),
+          filters[12],
+          const OutputOptions(),
+        );
+        final out = await decode(item.file);
+        expectColor(out.getPixel(150, 50), 255, 0, 0);
+      });
+    });
+
+    testWidgets("markup outside the crop isn't in the file, inside it moves with the crop", (tester) async {
+      await tester.runAsync(() async {
+        const top = StrokeMark(points: [Offset(0, 0.1), Offset(1, 0.1)], color: red, width: 0.05);
+        const bottom = StrokeMark(points: [Offset(0, 0.9), Offset(1, 0.9)], color: red, width: 0.05);
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(cropRect: Rect.fromLTWH(0, 0.5, 1, 0.5), markup: [top, bottom]),
+          filters.first,
+          const OutputOptions(),
+        );
+        final out = await decode(item.file);
+        // 0.9 of the whole is 0.8 of the bottom half
+        expectColor(out.getPixel(150, 40), 255, 0, 0);
+        expectColor(out.getPixel(150, 5), 255, 255, 255);
+      });
+    });
+
+    testWidgets("text changes the pixels where it is", (tester) async {
+      await tester.runAsync(() async {
+        const text = TextMark(
+          text: "WWW",
+          color: Color(0xFF000000),
+          center: Offset(0.75, 0.75),
+          size: 0.1,
+          background: TextBackground.solid,
+        );
+        final plain = await decode(
+          (await service.export(
+            grid(200, 100),
+            const EditState(),
+            filters.first,
+            const OutputOptions(),
+          )).file,
+        );
+        final marked = await decode(
+          (await service.export(
+            grid(200, 100),
+            const EditState(markup: [text]),
+            filters.first,
+            const OutputOptions(),
+          )).file,
+        );
+        var changed = 0;
+        for (var y = 60; y < 90; y++) {
+          for (var x = 120; x < 180; x++) {
+            if ((plain.getPixel(x, y).r - marked.getPixel(x, y).r).abs() > 40) changed++;
+          }
+        }
+        expect(changed, greaterThan(50));
+        expectColor(marked.getPixel(10, 10), 255, 0, 0);
+      });
+    });
+
+    testWidgets("a sticker keeps its transparency", (tester) async {
+      await tester.runAsync(() async {
+        // red in the middle, a clear border around it
+        final sticker = img.Image(width: 40, height: 40, numChannels: 4);
+        for (final pixel in sticker) {
+          final inside = pixel.x >= 10 && pixel.x < 30 && pixel.y >= 10 && pixel.y < 30;
+          pixel
+            ..r = 255
+            ..g = 0
+            ..b = 0
+            ..a = inside ? 255 : 0;
+        }
+        final provider = MemoryImage(img.encodePng(sticker));
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(markup: [StickerMark(index: 0, center: Offset(0.75, 0.75), width: 0.2)]),
+          filters.first,
+          const OutputOptions(),
+          stickers: [provider],
+        );
+        final out = await decode(item.file);
+        expectColor(out.getPixel(150, 75), 255, 0, 0);
+        // the clear border shows the white quarter under it
+        expectColor(out.getPixel(133, 75), 255, 255, 255);
+      });
+    });
+
+    testWidgets("markup skips the cache", (tester) async {
+      await tester.runAsync(() async {
+        final cache = FakeCacheService();
+        final cached = ImageServiceImpl(root: dir.path, cache: cache);
+        await cached.export(
+          grid(20, 10),
+          const EditState(markup: [stroke]),
+          filters.first,
+          const OutputOptions(),
+          cacheKey: "k",
+        );
+        expect(cache.writes, 0);
       });
     });
   });
