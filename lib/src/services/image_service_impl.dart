@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/services/cache_service.dart';
@@ -32,9 +33,9 @@ class ImageServiceImpl implements ImageService {
     String? cacheKey,
   }) async {
     final cached = cacheKey == null ? null : await cache?.read(cacheKey);
-    if (cached != null) return _save(cached);
+    if (cached != null) return _save(cached, output);
     final (jpeg, width, height) = await _edit(source, state.cropRect, colorMatrix, output);
-    final saving = _save(jpeg, width: width, height: height);
+    final saving = _save(jpeg, output, width: width, height: height);
     if (cacheKey != null) await cache?.write(cacheKey, jpeg);
     return saving;
   }
@@ -67,8 +68,35 @@ class ImageServiceImpl implements ImageService {
     final decoded = (await codec.getNextFrame()).image;
     codec.dispose();
 
-    final width = max(1, (cropWidth * scale).round());
-    final height = max(1, (cropHeight * scale).round());
+    var width = max(1, (cropWidth * scale).round());
+    var height = max(1, (cropHeight * scale).round());
+    var pixels = await _draw(decoded, rect, colorMatrix, width, height);
+    // raw pixels carry no exif, so the output has no location or camera data
+    var best = (await encodeJpeg(pixels, width, height, output.quality), width, height);
+    final maxBytes = output.maxBytes;
+    if (maxBytes != null) {
+      // a lower quality first, it keeps more detail than a smaller size
+      for (final quality in [80, 65, OutputOptions.qualityFloor]) {
+        if (best.$1.length <= maxBytes) break;
+        if (quality >= output.quality) continue;
+        final jpeg = await encodeJpeg(pixels, width, height, quality);
+        if (jpeg.length < best.$1.length) best = (jpeg, width, height);
+      }
+      final quality = min(output.quality, OutputOptions.qualityFloor);
+      for (var i = 0; i < 3 && best.$1.length > maxBytes; i++) {
+        final shrink = sqrt(maxBytes / best.$1.length) * 0.9;
+        width = max(1, (best.$2 * shrink).round());
+        height = max(1, (best.$3 * shrink).round());
+        pixels = await _draw(decoded, rect, colorMatrix, width, height);
+        final jpeg = await encodeJpeg(pixels, width, height, quality);
+        if (jpeg.length < best.$1.length) best = (jpeg, width, height);
+      }
+    }
+    decoded.dispose();
+    return best;
+  }
+
+  Future<ByteData> _draw(ui.Image decoded, Rect rect, List<double> colorMatrix, int width, int height) async {
     final recorder = ui.PictureRecorder();
     Canvas(recorder).drawImageRect(
       decoded,
@@ -86,18 +114,13 @@ class ImageServiceImpl implements ImageService {
     final picture = recorder.endRecording();
     final drawn = await picture.toImage(width, height);
     picture.dispose();
-    decoded.dispose();
     final pixels = await drawn.toByteData(format: ui.ImageByteFormat.rawRgba);
     drawn.dispose();
     if (pixels == null) throw StateError("couldn't read the edited pixels");
-
-    // raw pixels carry no exif, so the output has no location or camera data
-    final jpeg = await encodeJpeg(pixels, width, height, output.quality);
-
-    return (jpeg, width, height);
+    return pixels;
   }
 
-  Future<PickedItem> _save(Uint8List jpeg, {int? width, int? height}) async {
+  Future<PickedItem> _save(Uint8List jpeg, OutputOptions output, {int? width, int? height}) async {
     if (width == null || height == null) {
       final codec = await ui.instantiateImageCodecWithSize(await ui.ImmutableBuffer.fromUint8List(jpeg));
       final image = (await codec.getNextFrame()).image;
@@ -112,6 +135,7 @@ class ImageServiceImpl implements ImageService {
       width: width,
       height: height,
       edited: true,
+      overLimit: output.maxBytes != null && jpeg.length > output.maxBytes!,
     );
   }
 
