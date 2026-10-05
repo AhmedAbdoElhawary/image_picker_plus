@@ -105,6 +105,8 @@ class _DemoState extends State<Demo> {
   TextsChoice texts = TextsChoice.english;
   bool cache = false;
 
+  bool markup = true;
+
   /// grid on at start and an id card frame over the camera.
   bool cameraExtras = false;
   int cacheMb = 100;
@@ -143,6 +145,17 @@ class _DemoState extends State<Demo> {
         alwaysDarkTheme: alwaysDarkTheme,
         texts: texts == TextsChoice.arabic ? arabicTexts : const PickerTexts(),
         cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
+        markup: markup
+            ? const MarkupOptions(
+                text: true,
+                drawing: true,
+                stickers: [
+                  AssetImage("assets/stickers/heart.png"),
+                  AssetImage("assets/stickers/star.png"),
+                  AssetImage("assets/stickers/circle.png"),
+                ],
+              )
+            : const MarkupOptions(),
         camera: cameraExtras ? CameraOptions(gridOn: true, overlay: _cardFrame) : const CameraOptions(),
       ),
     );
@@ -304,6 +317,11 @@ class _DemoState extends State<Demo> {
             values: const [50, 100, 500],
             name: (value) => "$value MB",
             onChanged: (value) => setState(() => cacheMb = value),
+          ),
+          SwitchListTile(
+            title: const Text("Text, drawing and stickers"),
+            value: markup,
+            onChanged: (value) => setState(() => markup = value),
           ),
           SwitchListTile(
             title: const Text("Camera grid and card frame"),
