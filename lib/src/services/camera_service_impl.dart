@@ -89,11 +89,14 @@ class CameraServiceImpl implements CameraService {
   @override
   Future<void> focus(Offset point) async {
     final value = _camera.value;
-    if (value.focusPointSupported) {
-      await _camera.setFocusMode(cam.FocusMode.auto);
-      await _camera.setFocusPoint(point);
-    }
-    if (value.exposurePointSupported) await _camera.setExposurePoint(point);
+    // some android cameras say they support focus points then reject every one
+    try {
+      if (value.focusPointSupported) {
+        await _camera.setFocusMode(cam.FocusMode.auto);
+        await _camera.setFocusPoint(point);
+      }
+      if (value.exposurePointSupported) await _camera.setExposurePoint(point);
+    } on cam.CameraException catch (_) {}
   }
 
   // the camera plugin can't tell, but phones only have a flash on the back
