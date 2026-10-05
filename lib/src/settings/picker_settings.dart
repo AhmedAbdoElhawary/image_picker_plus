@@ -1,3 +1,4 @@
+import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_cache.dart';
@@ -10,6 +11,7 @@ enum MediaType { image, video, all }
 
 class PickerSettings {
   final PickerSource source;
+  final CameraOptions camera;
   final MediaType mediaType;
 
   /// 1 means single selection.
@@ -47,6 +49,7 @@ class PickerSettings {
   const PickerSettings({
     this.useRootNavigator = false,
     this.source = PickerSource.gallery,
+    this.camera = const CameraOptions(),
     this.mediaType = MediaType.image,
     this.maxSelection = 1,
     this.cropRatios = CropRatio.all,
