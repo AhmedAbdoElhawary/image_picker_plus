@@ -164,7 +164,7 @@ for (final item in items) {
 | `gridColumns` | `null` | images per row, `null` follows the screen width (4, 6 or 8) |
 | `gridCellAspectRatio` | `1` | width / height of a grid cell, `0.5` is twice as tall as wide |
 | `filters` | `false` | shows the filters on the edit screen |
-| `output` | `OutputOptions()` | JPEG quality (90) and optional max width and height for edited images |
+| `output` | `OutputOptions()` | JPEG quality (90), and optional `maxWidth`, `maxHeight` and `maxBytes` for every returned image |
 | `theme` | `null` | `null` uses `PickerTheme.dark()`, or follows the app brightness with `PickerTheme.light()` / `PickerTheme.dark()` when `alwaysDarkTheme` is `false` |
 | `alwaysDarkTheme` | `true` | `false` follows the app brightness. A custom `theme` wins over it |
 | `texts` | `PickerTexts()` | every text the picker shows, English by default |
@@ -173,6 +173,37 @@ for (final item in items) {
 When there's no crop and no filters, next returns the picked items right away. Otherwise next opens the edit screen.
 
 Edited images are returned as new JPEG files with no metadata. Items that weren't edited, and all videos, are returned as the original file.
+
+The output limits hold for every image, edited or not. An image over `maxWidth`, `maxHeight` or `maxBytes` comes back as a smaller JPEG, with `edited` still `false` and the untouched file in `original`. For `maxBytes` the quality goes down first, to 50 at the lowest, then the size. If it still can't fit, the smallest try comes back with `overLimit: true`. Videos are never re-encoded.
+
+## What comes back
+
+| Field | |
+|-------|---|
+| `file` | the file to use, the original or the new JPEG |
+| `original` | the untouched source, the same as `file` when nothing was re-encoded |
+| `type`, `width`, `height` | of `file` |
+| `edited` | the user cropped or filtered it |
+| `id` | the gallery id, `null` for camera photos and files from the system picker |
+| `edit` | the crop, ratio and filter, `null` for videos |
+| `overLimit` | still over `maxBytes` after every try |
+
+## Change photos
+
+Pass an earlier result back as `selected` and the picker opens with those items selected, in the same order, with their crops and filters. On web and desktop it skips the system picker and opens the edit screen with them.
+
+```dart
+final items = await ImagePickerPlus.pick(context, settings: settings, selected: lastPick);
+```
+
+To keep it between app launches, save the maps and read them back:
+
+```dart
+final json = jsonEncode([for (final item in items) item.toMap()]);
+final lastPick = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)];
+```
+
+Items that are gone by then are skipped with a message. On web, picked files only live as long as the page, so after a reload they're skipped too.
 
 ## Theme and texts
 
