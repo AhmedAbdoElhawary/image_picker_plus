@@ -21,9 +21,19 @@ class _TextEditorState extends State<TextEditor> {
   late final TextEditingController _text = TextEditingController(text: widget.initial.text);
   late TextMark _mark = widget.initial;
 
+  /// autofocus does nothing here, the markup view already holds the focus.
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
+  }
+
   @override
   void dispose() {
     _text.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -39,7 +49,8 @@ class _TextEditorState extends State<TextEditor> {
     final fonts = markup.fonts;
     final background = MarkupPainter.backgroundOf(_mark);
     return Material(
-      color: scope.theme.scrim,
+      // the photo stays a little visible behind the text
+      color: scope.theme.scrim.withValues(alpha: 0.6),
       child: SafeArea(
         child: Padding(
           padding: EdgeInsetsDirectional.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -76,7 +87,7 @@ class _TextEditorState extends State<TextEditor> {
                       ),
                       child: TextField(
                         controller: _text,
-                        autofocus: true,
+                        focusNode: _focus,
                         maxLines: null,
                         textAlign: TextAlign.center,
                         textDirection: _mark.direction,
