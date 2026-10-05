@@ -228,7 +228,7 @@ void main() {
     expect(find.text("1"), findsNothing);
   });
 
-  testWidgets("without the preview the select button sits over the grid", (tester) async {
+  testWidgets("without the preview there's no select button, a long press still counts", (tester) async {
     await pumpPicker(
       tester,
       const PickerHome(),
@@ -236,9 +236,11 @@ void main() {
       settings: const PickerSettings(maxSelection: 3, showPreview: false),
     );
     expect(find.byType(MediaPreview), findsNothing);
-    await tester.tap(find.text("Select"));
+    expect(find.text("Select"), findsNothing);
+    await tester.longPress(cell("1"));
     await tester.pumpAndSettle();
-    expect(find.text("Cancel"), findsOneWidget);
+    expect(find.descendant(of: cell("1"), matching: find.text("1")), findsOneWidget);
+    expect(badgeOpacity(tester, "1"), 1);
   });
 
   testWidgets("scrolling shows the date beside the scrollbar, then hides it", (tester) async {
