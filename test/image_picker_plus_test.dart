@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/files/files_flow.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/image_picker_plus.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
+import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/settings/picker_theme.dart';
 
@@ -24,6 +28,7 @@ void main() {
   Future<Future<List<PickedItem>?>> open(
     WidgetTester tester, {
     PickerSettings settings = const PickerSettings(),
+    List<PickedItem>? selected,
   }) async {
     late Future<List<PickedItem>?> result;
     await tester.pumpWidget(
@@ -32,7 +37,7 @@ void main() {
         child: MaterialApp(
           home: Builder(
             builder: (context) => TextButton(
-              onPressed: () => result = ImagePickerPlus.pick(context, settings: settings),
+              onPressed: () => result = ImagePickerPlus.pick(context, settings: settings, selected: selected),
               child: const Text("open"),
             ),
           ),
@@ -138,4 +143,71 @@ void main() {
     await open(tester, settings: const PickerSettings(alwaysDarkTheme: false));
     expect(background(), PickerTheme.light().background);
   }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+  group("selected", () {
+    PickedItem picked(String id) => PickedItem(
+      file: XFile("/fake/$id"),
+      type: MediaType.image,
+      width: 400,
+      height: 300,
+      edited: false,
+      id: id,
+    );
+    const multi = PickerSettings(maxSelection: 5, cropRatios: []);
+
+    testWidgets("opens with an earlier pick and done gives it back in order", (tester) async {
+      final result = await open(tester, settings: multi, selected: [picked("3"), picked("1"), picked("7")]);
+      await tester.tap(find.text("Next"));
+      await tester.pumpAndSettle();
+      expect((await result)!.map((e) => e.id), ["3", "1", "7"]);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets("a gone item shows the skipped message once", (tester) async {
+      fakes.gallery.gone.add("1");
+      await open(tester, settings: multi, selected: [picked("3"), picked("1")]);
+      expect(find.text("Some files couldn't be opened"), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets("desktop skips the system picker and opens the edit page with them", (tester) async {
+      final files = [
+        for (final path in ["/picked/a.jpg", "/picked/b.jpg"])
+          PickedItem(file: XFile(path), type: MediaType.image, width: 400, height: 300, edited: false),
+      ];
+      final result = await open(tester, settings: multi, selected: files);
+      expect(fakes.files.opens, 0);
+      expect(find.byType(FilesFlow), findsOneWidget);
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect((await result)!.map((e) => e.file.path), ["/picked/a.jpg", "/picked/b.jpg"]);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
+    testWidgets("edits come back, also through a json round trip", (tester) async {
+      const settings = PickerSettings(maxSelection: 5, filters: true);
+      const edit = EditState(
+        cropRect: Rect.fromLTWH(0.1, 0, 0.75, 1),
+        ratio: CropRatio.square,
+        filterIndex: 3,
+      );
+      final first = PickedItem(
+        file: XFile("/fake/2.edited.jpg"),
+        type: MediaType.image,
+        width: 300,
+        height: 300,
+        edited: true,
+        id: "2",
+        original: XFile("/fake/2"),
+        edit: edit,
+      );
+      final saved = PickedItem.fromMap(
+        (jsonDecode(jsonEncode(first.toMap())) as Map).cast<String, Object?>(),
+      );
+      final result = await open(tester, settings: settings, selected: [saved]);
+      await tester.tap(find.text("Next"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect(fakes.image.calls.single.$2, edit);
+      expect((await result)!.single.edit, edit);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+  });
 }
