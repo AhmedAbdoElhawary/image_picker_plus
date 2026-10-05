@@ -70,7 +70,7 @@ class _GalleryPageState extends State<GalleryPage> {
       return;
     }
     _finishing.value = true;
-    final items = await controller.pickedItems();
+    final items = await controller.pickedItems(PickerScope.of(context).services);
     if (!mounted) return;
     _finishing.value = false;
     Navigator.of(context).pop(items);
