@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
+import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 import '../fakes/fake_gallery_service.dart';
+import '../fakes/pump_picker.dart';
 
 void main() {
   GalleryController controllerFor(FakeGalleryService gallery, {int max = 1}) => GalleryController(
@@ -230,9 +232,68 @@ void main() {
     final controller = await counting(gallery, max: 3);
     controller.toggle(controller.items.value[7]);
     controller.toggle(controller.items.value[3]);
-    final picked = await controller.pickedItems();
+    final picked = await controller.pickedItems(Fakes(gallery: gallery).services);
     expect(picked.map((e) => e.file.path), ["/fake/0", "/fake/7", "/fake/3"]);
     expect(picked.every((e) => !e.edited), isTrue);
     controller.dispose();
+  });
+
+  group("preselection", () {
+    GalleryController preselected(FakeGalleryService gallery, List<String> ids, {int max = 5}) {
+      final items = gallery.data["all"]!;
+      return GalleryController(
+        service: gallery,
+        settings: PickerSettings(maxSelection: max),
+        preselect: () async =>
+            Preselection(items: [for (final id in ids) items.firstWhere((e) => e.id == id)]),
+      );
+    }
+
+    test("opens with the items selected and the first one shown, counting more", () async {
+      final gallery = FakeGalleryService.withItems(30);
+      final controller = preselected(gallery, ["7", "2"]);
+      await controller.init();
+      expect(controller.selection.value.map((e) => e.id), ["7", "2"]);
+      expect(controller.preview.value?.id, "7");
+      expect(controller.multi.value, isTrue);
+      controller.toggle(controller.items.value[4]);
+      expect(controller.selection.value.map((e) => e.id), ["7", "2", "4"]);
+      controller.dispose();
+    });
+
+    test("one item with single selection is the one shown, not the album's first", () async {
+      final gallery = FakeGalleryService.withItems(30);
+      final controller = preselected(gallery, ["9"], max: 1);
+      await controller.init();
+      expect(controller.preview.value?.id, "9");
+      expect(controller.selection.value.map((e) => e.id), ["9"]);
+      expect(controller.multi.value, isFalse);
+      controller.dispose();
+    });
+
+    test("isn't looked up when access is denied", () async {
+      final gallery = FakeGalleryService.withItems(3, access: GalleryAccess.denied);
+      var calls = 0;
+      final controller = GalleryController(
+        service: gallery,
+        settings: const PickerSettings(),
+        preselect: () async {
+          calls++;
+          return const Preselection();
+        },
+      );
+      await controller.init();
+      expect(calls, 0);
+      expect(controller.state.value, GalleryState.denied);
+      controller.dispose();
+    });
+
+    test("an empty preselection opens like new", () async {
+      final gallery = FakeGalleryService.withItems(5);
+      final controller = preselected(gallery, []);
+      await controller.init();
+      expect(controller.selection.value.map((e) => e.id), ["0"]);
+      controller.dispose();
+    });
   });
 }
