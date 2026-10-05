@@ -1,14 +1,11 @@
 import 'package:flutter/painting.dart';
 
 class MarkupOptions {
-  /// add, edit, move and delete text, emoji included.
+  /// add, edit, move and delete text, and emojis from their own button.
   final bool text;
 
   /// freehand pen with undo, redo and an eraser.
   final bool drawing;
-
-  /// the sticker button shows only when this isn't empty.
-  final List<ImageProvider> stickers;
 
   /// font families the app registers, the user can switch a text between the app's font and these.
   /// empty shows no font control.
@@ -20,7 +17,6 @@ class MarkupOptions {
   const MarkupOptions({
     this.text = false,
     this.drawing = false,
-    this.stickers = const [],
     this.fonts = const [],
     this.colors = defaultColors,
   });
@@ -37,5 +33,5 @@ class MarkupOptions {
     Color(0xFF8E24AA),
   ];
 
-  bool get enabled => text || drawing || stickers.isNotEmpty;
+  bool get enabled => text || drawing;
 }
