@@ -21,7 +21,6 @@ void main() {
     color: Color(0xFFE53935),
     width: 0.012,
   );
-  const sticker = StickerMark(index: 0, center: Offset(0.85, 0.9), width: 0.2);
 
   MarkupItem? roundTrip(MarkupItem item) =>
       MarkupItem.fromMap((jsonDecode(jsonEncode(item.toMap())) as Map).cast<String, Object?>());
@@ -36,14 +35,13 @@ void main() {
         width: 0.012,
       ),
     );
-    expect(sticker.copyWith(width: 0.3), isNot(sticker));
+    expect(text.copyWith(size: 0.3), isNot(text));
     expect(text.copyWith(font: () => null).font, isNull);
   });
 
   test("every kind survives a json round trip", () {
     expect(roundTrip(text), text);
     expect(roundTrip(stroke), stroke);
-    expect(roundTrip(sticker), sticker);
     expect(stroke.toMap()["points"], [0.21, 0.4, 0.22, 0.41]);
   });
 
@@ -53,7 +51,7 @@ void main() {
   });
 
   test("markup is part of the edit state map and makes it edited", () {
-    const state = EditState(markup: [text, stroke, sticker]);
+    const state = EditState(markup: [text, stroke]);
     expect(state.edited, isTrue);
     final back = EditState.fromMap((jsonDecode(jsonEncode(state.toMap())) as Map).cast<String, Object?>());
     expect(back, state);
@@ -62,10 +60,17 @@ void main() {
       EditState.fromMap(const {
         "markup": [
           {"k": "arrow"},
-          {"k": "sticker", "i": 1, "x": 0, "y": 0, "w": 0.1},
+          {
+            "k": "stroke",
+            "points": [0, 0],
+            "color": 0,
+            "width": 0.1,
+          },
         ],
       }).markup,
-      [const StickerMark(index: 1, center: Offset.zero, width: 0.1)],
+      [
+        const StrokeMark(points: [Offset.zero], color: Color(0x00000000), width: 0.1),
+      ],
     );
   });
 }
