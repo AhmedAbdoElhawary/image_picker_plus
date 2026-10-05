@@ -1,4 +1,3 @@
-import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/filters.dart';
@@ -15,7 +14,6 @@ Future<PickedItem?> exportItem({
   required MediaItem item,
   EditState? state,
   String? cacheKey,
-  List<ImageProvider> stickers = const [],
 }) async {
   final path = item.path;
   final id = path == null ? item.id : null;
@@ -57,7 +55,6 @@ Future<PickedItem?> exportItem({
     filters[edit.filterIndex],
     output,
     cacheKey: edited ? cacheKey : null,
-    stickers: stickers,
   );
   return picked.copyWith(edited: edited, id: id, original: original, edit: edit);
 }
