@@ -4,6 +4,9 @@
 * `PickedItem` has `id`, `original`, `edit` and `overLimit`, and `toMap()` / `PickedItem.fromMap()` to keep a pick between launches
 * `EditState` is public
 * new `OutputOptions.maxBytes`, the quality goes down to 50 first, then the size. what still can't fit comes back with `overLimit: true`
+* camera: pinch zoom and quick zoom buttons (0.5x where the phone has it, 1x, 2x and the max, up to 10x), a 3 and 10 second timer, and a rule of thirds grid
+* new `PickerSettings.camera` with `CameraOptions`: turn each of them off, start with the grid on, or draw an overlay over the preview
+* new texts `timer`, `timerOff`, `timerSeconds`, `grid` and `zoomLevel`
 
 ## 1.1.0
 * Improve export performance by 80%
