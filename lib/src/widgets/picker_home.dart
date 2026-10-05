@@ -5,8 +5,10 @@ import 'package:image_picker_plus/src/core/picker_route.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/export_item.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
+import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/widgets/picker_tabs.dart';
@@ -14,7 +16,10 @@ import 'package:image_picker_plus/src/widgets/picker_tabs.dart';
 /// the root of the picker: one page, or the pages with tabs under them.
 /// it opens the edit page, so the plus there can add from any tab.
 class PickerHome extends StatefulWidget {
-  const PickerHome({super.key});
+  /// an earlier pick to open with, empty opens like new.
+  final List<PickedItem> selected;
+
+  const PickerHome({this.selected = const [], super.key});
 
   @override
   State<PickerHome> createState() => _PickerHomeState();
@@ -38,7 +43,25 @@ class _PickerHomeState extends State<PickerHome> {
     super.didChangeDependencies();
     if (_gallery != null) return;
     final scope = PickerScope.of(context);
-    _gallery = GalleryController(service: scope.services.gallery!, settings: scope.settings);
+    _gallery = GalleryController(
+      service: scope.services.gallery!,
+      settings: scope.settings,
+      preselect: widget.selected.isEmpty ? null : _preselect,
+    );
+  }
+
+  Future<Preselection> _preselect() async {
+    final scope = PickerScope.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final preselection = await Preselection.resolve(
+      services: scope.services,
+      settings: scope.settings,
+      selected: widget.selected,
+    );
+    if (preselection.skipped && mounted) {
+      messenger?.showSnackBar(SnackBar(content: Text(scope.texts.filesSkipped)));
+    }
+    return preselection;
   }
 
   @override
@@ -117,7 +140,8 @@ class _PickerHomeState extends State<PickerHome> {
       return _edit();
     }
     if (item.isVideo || !settings.editing) {
-      Navigator.of(context).pop([picked]);
+      final done = await exportItem(services: scope.services, output: settings.output, item: item);
+      if (mounted) Navigator.of(context).pop([?done]);
       return;
     }
     _crop?.dispose();
