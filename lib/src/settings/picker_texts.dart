@@ -46,7 +46,7 @@ class PickerTexts {
   final String zoomLevel;
   final String text;
   final String draw;
-  final String stickers;
+  final String emojis;
   final String undo;
   final String redo;
   final String eraser;
@@ -102,7 +102,7 @@ class PickerTexts {
     this.zoomLevel = "Zoom {zoom}x",
     this.text = "Text",
     this.draw = "Draw",
-    this.stickers = "Stickers",
+    this.emojis = "Emojis",
     this.undo = "Undo",
     this.redo = "Redo",
     this.eraser = "Eraser",
