@@ -15,6 +15,9 @@ abstract class GalleryService {
 
   Future<List<MediaItem>> items(Album album, {required int page, required int size});
 
+  /// null when it's gone, outside a limited selection, or not an image or video.
+  Future<MediaItem?> item(String id);
+
   Future<Uint8List?> thumbnail(MediaItem item, int size);
 
   /// [editable] asks for one the image package can read, ios gives a jpeg of a heic photo then.
