@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
@@ -46,6 +47,7 @@ class GalleryController {
   /// the edit page shares them, so going back shows what was changed there.
   final Map<String, CropController> crops = {};
   final Map<String, ValueNotifier<int>> filterIndexes = {};
+  final Map<String, MarkupController> markups = {};
 
   /// finds an earlier pick again, run only after access is given since lookups fail without it.
   final Future<Preselection> Function()? preselect;
@@ -69,6 +71,11 @@ class GalleryController {
       filter.dispose();
       return true;
     });
+    markups.removeWhere((id, markup) {
+      if (ids.contains(id)) return false;
+      markup.dispose();
+      return true;
+    });
     for (final item in selection.value) {
       if (item.isVideo) continue;
       if (settings.cropRatios.isNotEmpty && !crops.containsKey(item.id)) {
@@ -78,6 +85,7 @@ class GalleryController {
         crops[item.id] = CropController(imageAspect: aspect, ratio: ratio);
       }
       if (settings.filters) filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
+      if (settings.markup.enabled) markups.putIfAbsent(item.id, MarkupController.new);
     }
   }
 
@@ -185,14 +193,16 @@ class GalleryController {
     if (items.isEmpty) return;
     _preselected = true;
     // no preview means no ratio picker, so only the image's own ratio is there
-    final (restored, filters) = preselection.restore(
+    final (restored, filters, marked) = preselection.restore(
       ratios: settings.cropRatios.isEmpty || settings.showPreview
           ? settings.cropRatios
           : const [CropRatio.original],
       filters: settings.filters,
+      markup: settings.markup,
     );
     crops.addAll(restored);
     filterIndexes.addAll(filters);
+    markups.addAll(marked);
     multi.value = settings.multi;
     selection.value = items;
     preview.value = items.first;
@@ -240,9 +250,15 @@ class GalleryController {
   }
 
   /// a photo from the camera page becomes the only selected one, with the edits made on it there.
-  void selectTaken(MediaItem item, {CropController? crop, ValueNotifier<int>? filterIndex}) {
+  void selectTaken(
+    MediaItem item, {
+    CropController? crop,
+    ValueNotifier<int>? filterIndex,
+    MarkupController? markup,
+  }) {
     if (crop != null) crops[item.id] = crop;
     if (filterIndex != null) filterIndexes[item.id] = filterIndex;
+    if (markup != null) markups[item.id] = markup;
     selection.value = [item];
   }
 
@@ -262,7 +278,7 @@ class GalleryController {
   void dispose() {
     _disposed = true;
     _changes?.cancel();
-    for (final notifier in [...crops.values, ...filterIndexes.values]) {
+    for (final notifier in [...crops.values, ...filterIndexes.values, ...markups.values]) {
       notifier.dispose();
     }
     for (final notifier in [state, access, albums, album, items, selection, preview, ended, multi, adding]) {
