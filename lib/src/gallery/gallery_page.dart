@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
+import 'package:image_picker_plus/src/core/haptic_feedback.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
@@ -58,7 +57,8 @@ class _GalleryPageState extends State<GalleryPage> {
     if (!controller.settings.multi) return;
     if (controller.multi.value) return _onTap(item);
     // the strongest built in ones, vibrate on ios is a long buzz not a tap
-    defaultTargetPlatform == TargetPlatform.iOS ? HapticFeedback.heavyImpact() : HapticFeedback.vibrate();
+    customHapticFeedback();
+
     controller.startMulti(item);
   }
 
