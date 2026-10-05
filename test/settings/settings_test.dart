@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_cache.dart';
@@ -57,5 +58,14 @@ void main() {
     expect(const OutputOptions(maxBytes: 1000).hasLimits, isTrue);
     expect(() => OutputOptions(maxBytes: 0), throwsAssertionError);
     expect(OutputOptions.qualityFloor, 50);
+  });
+
+  test("camera options are all on by default, grid off at start", () {
+    const camera = CameraOptions();
+    expect(
+      (camera.zoomButtons, camera.timer, camera.grid, camera.gridOn, camera.overlay),
+      (true, true, true, false, null),
+    );
+    expect(const PickerSettings().camera.zoomButtons, isTrue);
   });
 }
