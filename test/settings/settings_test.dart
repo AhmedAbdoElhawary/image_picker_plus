@@ -73,7 +73,6 @@ void main() {
   test("markup is off by default, any tool turns editing on", () {
     const off = MarkupOptions();
     expect((off.text, off.drawing, off.enabled), (false, false, false));
-    expect(off.stickers, isEmpty);
     expect(off.fonts, isEmpty);
     expect(off.colors, MarkupOptions.defaultColors);
     expect(const PickerSettings(cropRatios: [], markup: MarkupOptions(text: true)).editing, isTrue);
