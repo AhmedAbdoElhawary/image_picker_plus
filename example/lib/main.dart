@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:video_player/video_player.dart';
 
