@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/filters.dart';
-import 'package:image_picker_plus/src/services/image_service.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/services/image_service_impl.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 
@@ -174,5 +175,91 @@ void main() {
     expect(ImageServiceImpl.outputScale(100, 100, const OutputOptions()), 1);
     expect(ImageServiceImpl.outputScale(8192, 100, const OutputOptions()), 0.5);
     expect(ImageServiceImpl.outputScale(200, 100, const OutputOptions(maxWidth: 100, maxHeight: 10)), 0.1);
+  });
+
+  group("max bytes", () {
+    /// random pixels, so a lower quality can't shrink it much and the size steps are needed.
+    XFile noise(int width, int height) {
+      final random = Random(1);
+      final image = img.Image(width: width, height: height);
+      for (final pixel in image) {
+        pixel
+          ..r = random.nextInt(256)
+          ..g = random.nextInt(256)
+          ..b = random.nextInt(256);
+      }
+      final file = File("${dir.path}/noise.png")..writeAsBytesSync(img.encodePng(image));
+      return XFile(file.path);
+    }
+
+    Future<int> sizeAt(XFile source, int quality) async {
+      final item = await service.export(
+        source,
+        const EditState(),
+        filters.first,
+        OutputOptions(quality: quality),
+      );
+      return item.file.length();
+    }
+
+    testWidgets("a limit above the size changes nothing", (tester) async {
+      await tester.runAsync(() async {
+        final source = noise(400, 300);
+        final item = await service.export(
+          source,
+          const EditState(),
+          filters.first,
+          const OutputOptions(maxBytes: 100 * 1024 * 1024),
+        );
+        expect((item.width, item.overLimit), (400, false));
+        expect(await item.file.length(), await sizeAt(source, 90));
+      });
+    });
+
+    testWidgets("a lower quality is tried before a smaller size", (tester) async {
+      await tester.runAsync(() async {
+        final source = noise(400, 300);
+        final limit = (await sizeAt(source, 90) + await sizeAt(source, OutputOptions.qualityFloor)) ~/ 2;
+        final item = await service.export(
+          source,
+          const EditState(),
+          filters.first,
+          OutputOptions(maxBytes: limit),
+        );
+        expect(item.width, 400);
+        expect(await item.file.length(), lessThanOrEqualTo(limit));
+        expect(item.overLimit, isFalse);
+      });
+    });
+
+    testWidgets("scales down when the lowest quality is still over", (tester) async {
+      await tester.runAsync(() async {
+        final source = noise(400, 300);
+        final limit = await sizeAt(source, OutputOptions.qualityFloor) ~/ 3;
+        final item = await service.export(
+          source,
+          const EditState(),
+          filters.first,
+          OutputOptions(maxBytes: limit),
+        );
+        expect(item.width, lessThan(400));
+        expect(item.width / item.height, closeTo(4 / 3, 0.05));
+        expect(await item.file.length(), lessThanOrEqualTo(limit));
+        expect(item.overLimit, isFalse);
+      });
+    });
+
+    testWidgets("a limit nothing can meet gives the smallest attempt, flagged", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          noise(400, 300),
+          const EditState(),
+          filters.first,
+          const OutputOptions(maxBytes: 100),
+        );
+        expect(item.overLimit, isTrue);
+        expect(item.width, lessThan(400));
+      });
+    });
   });
 }
