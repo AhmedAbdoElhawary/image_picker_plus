@@ -16,6 +16,10 @@ class CameraServiceImpl implements CameraService {
   cam.CameraController? _controller;
   int _index = 0;
   bool _microphone = true;
+  double _minZoom = 1;
+  double _maxZoom = 1;
+
+  static const double maxZoomCap = 10;
 
   cam.CameraController get _camera => _controller!;
 
@@ -40,7 +44,13 @@ class CameraServiceImpl implements CameraService {
         throw _failure(error);
       }
     }
+    await _readZoom();
     return _cameras.length;
+  }
+
+  Future<void> _readZoom() async {
+    _minZoom = await _camera.getMinZoomLevel();
+    _maxZoom = max(_minZoom, min(await _camera.getMaxZoomLevel(), maxZoomCap));
   }
 
   Future<cam.CameraController> _open({required bool audio}) async {
@@ -70,6 +80,7 @@ class CameraServiceImpl implements CameraService {
   Future<void> switchCamera() async {
     _index = (_index + 1) % _cameras.length;
     await _camera.setDescription(_cameras[_index]);
+    await _readZoom();
   }
 
   @override
@@ -88,6 +99,15 @@ class CameraServiceImpl implements CameraService {
   // the camera plugin can't tell, but phones only have a flash on the back
   @override
   bool get hasFlash => _cameras[_index].lensDirection == cam.CameraLensDirection.back;
+
+  @override
+  double get minZoom => _minZoom;
+
+  @override
+  double get maxZoom => _maxZoom;
+
+  @override
+  Future<void> setZoom(double level) => _camera.setZoomLevel(level.clamp(_minZoom, _maxZoom));
 
   @override
   Future<PickedItem> takePhoto() async {
