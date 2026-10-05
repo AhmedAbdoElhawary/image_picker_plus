@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:video_player/video_player.dart';
 
@@ -145,17 +146,7 @@ class _DemoState extends State<Demo> {
         alwaysDarkTheme: alwaysDarkTheme,
         texts: texts == TextsChoice.arabic ? arabicTexts : const PickerTexts(),
         cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
-        markup: markup
-            ? const MarkupOptions(
-                text: true,
-                drawing: true,
-                stickers: [
-                  AssetImage("assets/stickers/heart.png"),
-                  AssetImage("assets/stickers/star.png"),
-                  AssetImage("assets/stickers/circle.png"),
-                ],
-              )
-            : const MarkupOptions(),
+        markup: markup ? const MarkupOptions(text: true, drawing: true) : const MarkupOptions(),
         camera: cameraExtras ? CameraOptions(gridOn: true, overlay: _cardFrame) : const CameraOptions(),
       ),
     );
@@ -163,14 +154,40 @@ class _DemoState extends State<Demo> {
   }
 
   Future<void> _save() async {
-    final json = jsonEncode([for (final item in items) item.toMap()]);
-    kIsWeb ? _savedOnWeb = json : await _savedFile.writeAsString(json);
+    try {
+      final json = jsonEncode([for (final item in items) item.toMap()]);
+      kIsWeb ? _savedOnWeb = json : await _savedFile.writeAsString(json);
+      if (kIsWeb) return _tell("Saved ${items.length} items for load, web has no gallery");
+      final allowed = await Gal.hasAccess() || await Gal.requestAccess();
+      if (!allowed) return _tell("Allow adding to photos to save");
+      for (final item in items) {
+        item.type == MediaType.video
+            ? await Gal.putVideo(item.file.path)
+            : await Gal.putImage(item.file.path);
+      }
+      _tell("Saved ${items.length} items to the gallery");
+    } catch (error) {
+      _tell("Couldn't save: $error");
+    }
   }
 
   Future<void> _load() async {
-    final json = kIsWeb ? _savedOnWeb : (_savedFile.existsSync() ? await _savedFile.readAsString() : null);
-    if (json == null) return;
-    setState(() => items = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)]);
+    try {
+      final json = kIsWeb ? _savedOnWeb : (_savedFile.existsSync() ? await _savedFile.readAsString() : null);
+      if (json == null) return _tell("Nothing saved yet");
+      setState(() => items = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)]);
+      _tell("Loaded ${items.length} items, change photos opens them with their edits");
+    } catch (error) {
+      _tell("Couldn't load: $error");
+    }
+  }
+
+  // without it both buttons look like they did nothing
+  void _tell(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -319,7 +336,7 @@ class _DemoState extends State<Demo> {
             onChanged: (value) => setState(() => cacheMb = value),
           ),
           SwitchListTile(
-            title: const Text("Text, drawing and stickers"),
+            title: const Text("Text, emojis and drawing"),
             value: markup,
             onChanged: (value) => setState(() => markup = value),
           ),
