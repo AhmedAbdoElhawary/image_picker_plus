@@ -6,6 +6,7 @@ import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
@@ -33,6 +34,7 @@ class MediaPreview extends StatelessWidget {
         builder: (context, _) {
           final item = controller.preview.value;
           final crop = item == null ? null : controller.crops[item.id];
+          final markup = item == null ? null : controller.markups[item.id];
           return AnimatedSwitcher(
             duration: PickerDurations.of(context).short,
             child: item == null
@@ -45,7 +47,15 @@ class MediaPreview extends StatelessWidget {
                     children: [
                       CropView(
                         controller: crop,
-                        image: PreviewImage(item: item, fit: BoxFit.fill, crop: crop),
+                        image: markup == null
+                            ? PreviewImage(item: item, fit: BoxFit.fill, crop: crop)
+                            : Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  PreviewImage(item: item, fit: BoxFit.fill, crop: crop),
+                                  MarkupLayer(controller: markup),
+                                ],
+                              ),
                       ),
                       if (scope.settings.cropRatios.length > 1)
                         PositionedDirectional(
