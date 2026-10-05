@@ -55,33 +55,31 @@ class EditController {
   Future<List<PickedItem>> export() async {
     exporting.value = true;
     try {
-      final picked = <PickedItem>[];
-      for (final item in items.value) {
-        final path = item.path;
-        final state = stateOf(item);
-        final edited = state != null && state.edited;
-        final file = path != null ? XFile(path) : await services.gallery!.file(item, editable: edited);
-        if (file == null) continue;
-        if (state == null || !edited) {
-          picked.add(
-            PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
-          );
-          continue;
-        }
-        picked.add(
-          await services.image.export(
-            file,
-            state,
-            filters[state.filterIndex],
-            output,
-            cacheKey: _cacheKey(item, state),
-          ),
-        );
-      }
-      return picked;
+      // the gallery file fetch can be slow too (icloud), so each item runs fully in parallel
+      final picked = await Future.wait(items.value.map(_export));
+      return picked.nonNulls.toList();
     } finally {
       exporting.value = false;
     }
+  }
+
+  /// null when the gallery has no file for it anymore.
+  Future<PickedItem?> _export(MediaItem item) async {
+    final path = item.path;
+    final state = stateOf(item);
+    final edited = state != null && state.edited;
+    final file = path != null ? XFile(path) : await services.gallery!.file(item, editable: edited);
+    if (file == null) return null;
+    if (state == null || !edited) {
+      return PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false);
+    }
+    return services.image.export(
+      file,
+      state,
+      filters[state.filterIndex],
+      output,
+      cacheKey: _cacheKey(item, state),
+    );
   }
 
   String _cacheKey(MediaItem item, EditState state) {
