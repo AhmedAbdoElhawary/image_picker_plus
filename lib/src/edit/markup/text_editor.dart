@@ -42,6 +42,11 @@ class _TextEditorState extends State<TextEditor> {
     widget.onDone(text.isEmpty ? null : _mark.copyWith(text: text));
   }
 
+  /// a tap beside a typed text is likely a slip, so only an empty one closes.
+  void _tapOutside() {
+    if (_text.text.trim().isEmpty) widget.onDone(null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
@@ -56,49 +61,68 @@ class _TextEditorState extends State<TextEditor> {
           padding: EdgeInsetsDirectional.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
           child: Column(
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => setState(
-                      () => _mark = _mark.copyWith(
-                        background: TextBackground
-                            .values[(_mark.background.index + 1) % TextBackground.values.length],
+              ColoredBox(
+                color: scope.theme.scrim,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => setState(
+                        () => _mark = _mark.copyWith(
+                          background: TextBackground
+                              .values[(_mark.background.index + 1) % TextBackground.values.length],
+                        ),
+                      ),
+                      tooltip: scope.texts.textBackground,
+                      icon: Icon(Icons.format_color_fill_rounded, color: scope.theme.onSurface),
+                    ),
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: TextButton(
+                        onPressed: _done,
+                        style: TextButton.styleFrom(
+                          foregroundColor: scope.theme.accent,
+                          minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+                        ),
+                        child: Text(
+                          scope.texts.doneEditing,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: scope.theme.accent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
-                    tooltip: scope.texts.textBackground,
-                    icon: Icon(Icons.format_color_fill_rounded, color: scope.theme.onSurface),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: _done,
-                    style: TextButton.styleFrom(foregroundColor: scope.theme.accent),
-                    child: Text(scope.texts.doneEditing),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(PickerLayout.padding),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: background,
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
-                      ),
-                      child: TextField(
-                        controller: _text,
-                        focusNode: _focus,
-                        maxLines: null,
-                        textAlign: TextAlign.center,
-                        textDirection: _mark.direction,
-                        cursorColor: scope.theme.accent,
-                        style: TextStyle(
-                          color: _mark.color,
-                          fontSize: 32,
-                          fontFamily: _mark.font,
-                          height: 1.2,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _tapOutside,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(PickerLayout.padding),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: background,
+                          borderRadius: const BorderRadius.all(Radius.circular(8)),
                         ),
-                        decoration: const InputDecoration(border: InputBorder.none, isCollapsed: true),
+                        child: TextField(
+                          controller: _text,
+                          focusNode: _focus,
+                          maxLines: null,
+                          textAlign: TextAlign.center,
+                          textDirection: _mark.direction,
+                          cursorColor: scope.theme.accent,
+                          style: TextStyle(
+                            color: _mark.color,
+                            fontSize: 32,
+                            fontFamily: _mark.font,
+                            height: 1.2,
+                          ),
+                          decoration: const InputDecoration(border: InputBorder.none, isCollapsed: true),
+                        ),
                       ),
                     ),
                   ),
