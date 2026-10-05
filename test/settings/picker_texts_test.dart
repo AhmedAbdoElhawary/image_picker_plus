@@ -20,4 +20,14 @@ void main() {
       expect(matrix.length, 20);
     }
   });
+
+  test("camera texts put the number in", () {
+    expect(const PickerTexts().timerSecondsFor(3), "Timer 3 seconds");
+    expect(const PickerTexts().zoomLevelFor("2"), "Zoom 2x");
+    expect(const PickerTexts(timerSeconds: "{seconds}s").timerSecondsFor(10), "10s");
+    expect(
+      (const PickerTexts().timer, const PickerTexts().timerOff, const PickerTexts().grid),
+      ("Timer", "Timer off", "Grid"),
+    );
+  });
 }
