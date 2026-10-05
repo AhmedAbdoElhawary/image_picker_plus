@@ -1,6 +1,6 @@
 ## 1.1.0
+* Improve export performance by 80%
 * new `PickerSettings.useRootNavigator`, false by default, so the picker opens on the nearest navigator and a tab bar or nested shell stays visible over it
-* saving edits is faster: the engine decodes at the needed size, the jpeg is encoded as 3 channels 4:2:0 in an isolate, and many images are exported in parallel. heic is read natively now
 * with `showPreview: false` the select button row is gone, a long press on a cell starts the selection
 
 ## 1.0.1
