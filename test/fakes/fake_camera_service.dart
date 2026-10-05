@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -19,6 +21,14 @@ class FakeCameraService implements CameraService {
   bool? lastFlash;
   Offset? lastFocus;
   bool recording = false;
+  @override
+  double minZoom = 1;
+  @override
+  double maxZoom = 8;
+  final List<double> zoomCalls = [];
+
+  /// when set, [setZoom] waits for it, like a slow camera.
+  Completer<void>? zoomGate;
 
   FakeCameraService({this.failure, this.cameras = 2, this.flash = true, this.mic = true});
 
@@ -67,6 +77,12 @@ class FakeCameraService implements CameraService {
       height: 0,
       edited: false,
     );
+  }
+
+  @override
+  Future<void> setZoom(double level) async {
+    zoomCalls.add(level);
+    await zoomGate?.future;
   }
 
   @override
