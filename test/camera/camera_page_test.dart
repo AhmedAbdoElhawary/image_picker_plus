@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/camera/camera_tools.dart';
 import 'package:image_picker_plus/src/camera/capture_button.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
+import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
@@ -146,5 +148,176 @@ void main() {
     await tester.tap(find.byType(CaptureButton));
     await tester.pumpAndSettle();
     expect((result! as List<PickedItem>).single.type, MediaType.video);
+  });
+
+  group("extras", () {
+    Future<Fakes> openCamera(
+      WidgetTester tester, {
+      CameraOptions options = const CameraOptions(),
+      Fakes? fakes,
+    }) async {
+      final used = fakes ?? Fakes();
+      await pumpPicker(
+        tester,
+        const PickerHome(),
+        settings: PickerSettings(source: PickerSource.camera, cropRatios: const [], camera: options),
+        fakes: used,
+      );
+      return used;
+    }
+
+    Finder preview() => find.byKey(const Key("fake-preview"));
+
+    testWidgets("zoom buttons from the range, a tap zooms", (tester) async {
+      final fakes = await openCamera(tester);
+      expect(find.text("1x"), findsOneWidget);
+      expect(find.text("2x"), findsOneWidget);
+      expect(find.text("8x"), findsOneWidget);
+      expect(find.bySemanticsLabel("Zoom 2x"), findsOneWidget);
+      await tester.tap(find.text("2x"));
+      await tester.pump();
+      expect(fakes.camera.zoomCalls, [2]);
+    });
+
+    testWidgets("a pinch zooms and a tap still focuses", (tester) async {
+      final fakes = await openCamera(tester);
+      final center = tester.getCenter(preview());
+      final one = await tester.startGesture(center - const Offset(20, 0));
+      final two = await tester.startGesture(center + const Offset(20, 0));
+      await tester.pump();
+      await one.moveBy(const Offset(-40, 0));
+      await two.moveBy(const Offset(40, 0));
+      await tester.pump();
+      await one.up();
+      await two.up();
+      await tester.pump();
+      expect(fakes.camera.zoomCalls, isNotEmpty);
+      expect(fakes.camera.zoomCalls.last, greaterThan(1));
+      await tester.tapAt(center);
+      await tester.pump();
+      expect(fakes.camera.lastFocus, isNotNull);
+    });
+
+    testWidgets("no zoom row when turned off or the camera can't zoom", (tester) async {
+      await openCamera(tester, options: const CameraOptions(zoomButtons: false));
+      expect(find.text("1x"), findsNothing);
+    });
+
+    testWidgets("no zoom row for a fixed camera", (tester) async {
+      await openCamera(tester, fakes: Fakes(camera: FakeCameraService()..maxZoom = 1));
+      expect(find.text("1x"), findsNothing);
+    });
+
+    testWidgets("timer counts down then takes the photo, a second tap cancels", (tester) async {
+      Object? result;
+      await pumpPicker(
+        tester,
+        const PickerHome(),
+        settings: const PickerSettings(source: PickerSource.camera, cropRatios: []),
+        onResult: (r) => result = r,
+      );
+      Finder timerValue(String value) =>
+          find.byWidgetPredicate((widget) => widget is Semantics && widget.properties.value == value);
+      expect(timerValue("Timer off"), findsOneWidget);
+      await tester.tap(find.byTooltip("Timer"));
+      await tester.pump();
+      expect(timerValue("Timer 3 seconds"), findsOneWidget);
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pump();
+      expect(find.descendant(of: find.byType(Countdown), matching: find.text("3")), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pump(const Duration(seconds: 5));
+      expect(result, isNull);
+
+      await tester.tap(find.byType(CaptureButton));
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      await tester.pumpAndSettle();
+      expect((result! as List<PickedItem>).single.file.path, "/fake/photo.jpg");
+    });
+
+    testWidgets("on video the timer starts the recording, and stopping never waits", (tester) async {
+      final fakes = Fakes();
+      await pumpPicker(
+        tester,
+        const PickerHome(),
+        settings: const PickerSettings(source: PickerSource.camera, mediaType: MediaType.video),
+        fakes: fakes,
+      );
+      await tester.tap(find.byTooltip("Timer"));
+      await tester.pump();
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pump();
+      expect(fakes.camera.recording, isFalse);
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      expect(fakes.camera.recording, isTrue);
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pump();
+      expect(fakes.camera.recording, isFalse);
+    });
+
+    testWidgets("reduced motion shows the countdown with no animation", (tester) async {
+      await openCamera(tester);
+      await tester.tap(find.byTooltip("Timer"));
+      await tester.pump();
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pump();
+      final switcher = find.descendant(of: find.byType(Countdown), matching: find.byType(AnimatedSwitcher));
+      expect(tester.widget<AnimatedSwitcher>(switcher).duration, Duration.zero);
+      expect(find.descendant(of: find.byType(Countdown), matching: find.text("3")), findsOneWidget);
+      await tester.tap(find.byType(CaptureButton));
+      await tester.pump();
+    });
+
+    testWidgets("no timer or grid buttons when turned off", (tester) async {
+      await openCamera(tester, options: const CameraOptions(timer: false, grid: false));
+      expect(find.byTooltip("Timer"), findsNothing);
+      expect(find.byTooltip("Grid"), findsNothing);
+    });
+
+    testWidgets("the grid button toggles the grid, sized like the preview", (tester) async {
+      await openCamera(tester);
+      expect(find.byType(GridLines), findsNothing);
+      await tester.tap(find.byTooltip("Grid"));
+      await tester.pump();
+      expect(find.byType(GridLines), findsOneWidget);
+      expect(tester.getSize(find.byType(GridLines)), tester.getSize(preview()));
+      await tester.tap(find.byTooltip("Grid"));
+      await tester.pump();
+      expect(find.byType(GridLines), findsNothing);
+    });
+
+    testWidgets("gridOn starts with it, also with no button", (tester) async {
+      await openCamera(tester, options: const CameraOptions(grid: false, gridOn: true));
+      expect(find.byType(GridLines), findsOneWidget);
+      expect(find.byTooltip("Grid"), findsNothing);
+    });
+
+    testWidgets("the overlay gets the preview size and doesn't block focus or zoom", (tester) async {
+      Size? size;
+      final fakes = await openCamera(
+        tester,
+        options: CameraOptions(
+          gridOn: true,
+          overlay: (context, previewSize) {
+            size = previewSize;
+            return const ColoredBox(key: Key("card"), color: Color(0x33000000));
+          },
+        ),
+      );
+      expect(size, tester.getSize(preview()));
+      expect(find.byKey(const Key("card")), findsOneWidget);
+      expect(find.byType(GridLines), findsOneWidget);
+      await tester.tapAt(tester.getCenter(find.byKey(const Key("card"))));
+      await tester.pump();
+      expect(fakes.camera.lastFocus, isNotNull);
+      await tester.tap(find.byIcon(Icons.flip_camera_android_rounded));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key("card")), findsOneWidget);
+    });
   });
 }
