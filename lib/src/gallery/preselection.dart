@@ -3,7 +3,6 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/filters.dart' as shipped;
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -64,7 +63,7 @@ class Preselection {
 
   /// the crop and filter of each image from its edits, a ratio or filter these settings don't have falls back.
   /// [ratios] are the ones the picker offers here, the first is the fallback, empty means no crop.
-  /// markup comes back when it's on, a sticker no longer in [markup] is dropped.
+  /// markup comes back when it's on.
   (Map<String, CropController>, Map<String, ValueNotifier<int>>, Map<String, MarkupController>) restore({
     required List<CropRatio> ratios,
     required bool filters,
@@ -89,10 +88,7 @@ class Preselection {
         filterIndexes[item.id] = ValueNotifier(index);
       }
       if (markup.enabled) {
-        markups[item.id] = MarkupController([
-          for (final mark in edit.markup)
-            if (mark is! StickerMark || mark.index < markup.stickers.length) mark,
-        ]);
+        markups[item.id] = MarkupController(edit.markup);
       }
     }
     return (crops, filterIndexes, markups);
