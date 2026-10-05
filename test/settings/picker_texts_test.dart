@@ -30,4 +30,16 @@ void main() {
       ("Timer", "Timer off", "Grid"),
     );
   });
+
+  test("markup texts", () {
+    const texts = PickerTexts();
+    expect(
+      [texts.text, texts.draw, texts.stickers, texts.undo, texts.redo, texts.eraser],
+      ["Text", "Draw", "Stickers", "Undo", "Redo", "Eraser"],
+    );
+    expect(
+      [texts.delete, texts.font, texts.textBackground, texts.color, texts.size, texts.doneEditing],
+      ["Drag here to delete", "Font", "Background", "Color", "Size", "Done"],
+    );
+  });
 }
