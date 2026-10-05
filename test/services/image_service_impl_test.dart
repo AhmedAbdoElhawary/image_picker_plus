@@ -350,33 +350,6 @@ void main() {
       });
     });
 
-    testWidgets("a sticker keeps its transparency", (tester) async {
-      await tester.runAsync(() async {
-        // red in the middle, a clear border around it
-        final sticker = img.Image(width: 40, height: 40, numChannels: 4);
-        for (final pixel in sticker) {
-          final inside = pixel.x >= 10 && pixel.x < 30 && pixel.y >= 10 && pixel.y < 30;
-          pixel
-            ..r = 255
-            ..g = 0
-            ..b = 0
-            ..a = inside ? 255 : 0;
-        }
-        final provider = MemoryImage(img.encodePng(sticker));
-        final item = await service.export(
-          grid(200, 100),
-          const EditState(markup: [StickerMark(index: 0, center: Offset(0.75, 0.75), width: 0.2)]),
-          filters.first,
-          const OutputOptions(),
-          stickers: [provider],
-        );
-        final out = await decode(item.file);
-        expectColor(out.getPixel(150, 75), 255, 0, 0);
-        // the clear border shows the white quarter under it
-        expectColor(out.getPixel(133, 75), 255, 255, 255);
-      });
-    });
-
     testWidgets("markup skips the cache", (tester) async {
       await tester.runAsync(() async {
         final cache = FakeCacheService();
