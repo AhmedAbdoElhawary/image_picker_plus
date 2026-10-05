@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
-enum MarkupTool { text, draw, sticker }
+enum MarkupTool { text, draw, emoji }
 
 enum TextBackground { none, solid, clear }
 
@@ -30,12 +30,6 @@ sealed class MarkupItem {
           points: [for (final pair in _pairs(map["points"]! as List)) Offset(pair.$1, pair.$2)],
           color: Color((map["color"]! as num).toInt()),
           width: (map["width"]! as num).toDouble(),
-        ),
-        "sticker" => StickerMark(
-          index: (map["i"]! as num).toInt(),
-          center: _offset(map),
-          width: (map["w"]! as num).toDouble(),
-          angle: (map["angle"] as num? ?? 0).toDouble(),
         ),
         _ => null,
       };
@@ -155,46 +149,4 @@ class StrokeMark extends MarkupItem {
 
   @override
   int get hashCode => Object.hash(color, width, Object.hashAll(points));
-}
-
-class StickerMark extends MarkupItem {
-  /// in `MarkupOptions.stickers`.
-  final int index;
-  final Offset center;
-
-  /// a part of the image width.
-  final double width;
-
-  /// radians.
-  final double angle;
-
-  const StickerMark({required this.index, required this.center, required this.width, this.angle = 0});
-
-  StickerMark copyWith({Offset? center, double? width, double? angle}) => StickerMark(
-    index: index,
-    center: center ?? this.center,
-    width: width ?? this.width,
-    angle: angle ?? this.angle,
-  );
-
-  @override
-  Map<String, Object?> toMap() => {
-    "k": "sticker",
-    "i": index,
-    "x": center.dx,
-    "y": center.dy,
-    "w": width,
-    "angle": angle,
-  };
-
-  @override
-  bool operator ==(Object other) =>
-      other is StickerMark &&
-      other.index == index &&
-      other.center == center &&
-      other.width == width &&
-      other.angle == angle;
-
-  @override
-  int get hashCode => Object.hash(index, center, width, angle);
 }
