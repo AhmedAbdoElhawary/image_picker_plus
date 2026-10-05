@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
 
+import '../fakes/fake_gallery_service.dart';
 import '../fakes/pump_picker.dart';
 
 void main() {
@@ -59,5 +63,19 @@ void main() {
     expect(tester.getCenter(find.byTooltip("Timer")).dx, lessThan(200));
     expect(tester.getCenter(find.byTooltip("Grid")).dx, lessThan(200));
     expect(tester.getCenter(find.text("2x")).dx, closeTo(200, 30));
+  });
+
+  testWidgets("markup buttons follow rtl", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [fakeItem("a")], markups: {"a": MarkupController()}),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(markup: MarkupOptions(text: true, drawing: true)),
+    );
+    // the bar's back is on the right in rtl, the tools sit left of it
+    expect(
+      tester.getCenter(find.byTooltip("Text")).dx,
+      lessThan(tester.getCenter(find.byIcon(Icons.arrow_back_rounded)).dx),
+    );
   });
 }
