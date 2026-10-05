@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,10 +9,11 @@ import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item_view.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
-import 'package:image_picker_plus/src/edit/markup/sticker_sheet.dart';
+import 'package:image_picker_plus/src/edit/markup/emoji_sheet.dart';
 import 'package:image_picker_plus/src/edit/markup/text_editor.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
 
 import '../../fakes/fake_gallery_service.dart';
 import '../../fakes/pump_picker.dart';
@@ -45,7 +48,7 @@ void main() {
       await tester.tap(find.byTooltip("Text"));
       await tester.pumpAndSettle();
       expect(find.byType(TextEditor), findsOneWidget);
-      expect(tester.widget<TextField>(find.byType(TextField)).autofocus, isTrue);
+      expect(tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus, isTrue);
       await tester.enterText(find.byType(TextField), "Hi");
       await tester.tap(find.descendant(of: find.byType(TextEditor), matching: find.text("Done")));
       await tester.pumpAndSettle();
@@ -98,6 +101,26 @@ void main() {
       expect(markup.value.single, hi);
     });
 
+    testWidgets("a second finger anywhere on screen scales and turns it", (tester) async {
+      const hi = TextMark(text: "Hi", color: Color(0xFFE53935), center: Offset(0.5, 0.5), size: 0.1);
+      final markup = await open(tester, items: [hi]);
+      await tester.tap(find.byTooltip("Text"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.descendant(of: find.byType(TextEditor), matching: find.text("Done")));
+      await tester.pumpAndSettle();
+      final center = tester.getCenter(find.byType(MarkupItemView));
+      final one = await tester.startGesture(center);
+      final two = await tester.startGesture(center + const Offset(100, 0));
+      await two.moveTo(center + const Offset(0, 200));
+      await tester.pump();
+      await one.up();
+      await two.up();
+      await tester.pump();
+      final turned = markup.value.single as TextMark;
+      expect(turned.size, closeTo(0.2, 0.001));
+      expect(turned.angle, closeTo(pi / 2, 0.001));
+    });
+
     testWidgets("dropping on the delete area removes it", (tester) async {
       const hi = TextMark(text: "Hi", color: Color(0xFFE53935), center: Offset(0.5, 0.3), size: 0.2);
       final markup = await open(tester, items: [hi]);
@@ -141,13 +164,13 @@ void main() {
       expect(find.text("Aa"), findsNothing);
     });
 
-    testWidgets("size stays grabbable and under three image widths", (tester) async {
+    testWidgets("size stays grabbable and under one image width", (tester) async {
       const size = Size(300, 300);
       const tiny = TextMark(text: "x", color: Color(0xFF000000), center: Offset.zero, size: 0.0001);
       final clamped = MarkupItemView.clamp(tiny, size) as TextMark;
       expect(clamped.size * size.width * 1.2, closeTo(24, 0.01));
-      const huge = StickerMark(index: 0, center: Offset.zero, width: 99);
-      expect((MarkupItemView.clamp(huge, size) as StickerMark).width, 3);
+      const huge = TextMark(text: "x", color: Color(0xFF000000), center: Offset.zero, size: 99);
+      expect((MarkupItemView.clamp(huge, size) as TextMark).size, 1);
     });
   });
 
@@ -235,24 +258,20 @@ void main() {
     });
   });
 
-  group("stickers", () {
-    final stickers = [MemoryImage(tinyPng), MemoryImage(tinyPng)];
-
-    testWidgets("the button shows only with stickers", (tester) async {
-      await open(tester);
-      expect(find.byTooltip("Stickers"), findsNothing);
+  group("emojis", () {
+    testWidgets("the button shows only with text", (tester) async {
+      await open(tester, markup: const MarkupOptions(drawing: true));
+      expect(find.byTooltip("Emojis"), findsNothing);
     });
 
-    testWidgets("a tap in the sheet adds it in the middle, it moves like a text", (tester) async {
-      final markup = await open(tester, markup: MarkupOptions(stickers: stickers));
-      await tester.tap(find.byTooltip("Stickers"));
+    testWidgets("a tap in the sheet adds it as a text in the middle, it moves like one", (tester) async {
+      final markup = await open(tester);
+      await tester.tap(find.byTooltip("Emojis"));
       await tester.pumpAndSettle();
-      final tiles = find.descendant(of: find.byType(StickerSheet), matching: find.byType(InkWell));
-      expect(tiles, findsNWidgets(2));
-      await tester.tap(tiles.last);
+      await tester.tap(find.text(EmojiSheet.emojis.first));
       await tester.pumpAndSettle();
-      final sticker = markup.value.single as StickerMark;
-      expect((sticker.index, sticker.center, sticker.width), (1, const Offset(0.5, 0.5), 0.3));
+      final emoji = markup.value.single as TextMark;
+      expect((emoji.text, emoji.center), (EmojiSheet.emojis.first, const Offset(0.5, 0.5)));
       final gesture = await tester.startGesture(tester.getCenter(find.byType(MarkupItemView)));
       for (var i = 0; i < 3; i++) {
         await gesture.moveBy(const Offset(10, 0));
@@ -260,8 +279,57 @@ void main() {
       }
       await gesture.up();
       await tester.pump();
-      expect((markup.value.single as StickerMark).center.dx, greaterThan(0.5));
+      expect((markup.value.single as TextMark).center.dx, greaterThan(0.5));
     });
+
+    test("no rainbows", () {
+      expect(EmojiSheet.emojis.where((emoji) => emoji.contains("🌈")), isEmpty);
+    });
+  });
+
+  testWidgets("the app bar has undo, redo and done, done goes back to the edit page", (tester) async {
+    const hi = TextMark(text: "Hi", color: Color(0xFFE53935), center: Offset(0.5, 0.5), size: 0.2);
+    final markup = await open(tester, items: [hi]);
+    await tester.tap(find.byTooltip("Draw"));
+    await tester.pumpAndSettle();
+    final bar = find.byType(PickerAppBar);
+    expect(find.descendant(of: bar, matching: find.byTooltip("Undo")), findsOneWidget);
+    markup.remove(hi);
+    await tester.pump();
+    await tester.tap(find.descendant(of: bar, matching: find.byTooltip("Undo")));
+    await tester.pump();
+    expect(markup.value, [hi]);
+    await tester.tap(find.descendant(of: bar, matching: find.byTooltip("Redo")));
+    await tester.pump();
+    expect(markup.value, isEmpty);
+    await tester.tap(find.descendant(of: bar, matching: find.text("Done")));
+    await tester.pumpAndSettle();
+    expect(find.byType(MarkupView), findsNothing);
+    expect(find.byType(EditPage), findsOneWidget);
+  });
+
+  testWidgets("the image flies to the markup page as a hero", (tester) async {
+    final markup = MarkupController();
+    addTearDown(markup.dispose);
+    // with animations on, reduced motion skips the flight
+    await pumpPicker(
+      tester,
+      EditPage(items: [a], markups: {"a": markup}),
+      settings: const PickerSettings(cropRatios: [], markup: MarkupOptions(drawing: true)),
+      disableAnimations: false,
+      settle: false,
+    );
+    await tester.tap(find.byTooltip("Draw"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    // the shuttle sits in the overlay, outside both pages
+    final images = find.byType(FilteredImage);
+    final onPages =
+        find.descendant(of: find.byType(EditPage), matching: images).evaluate().length +
+        find.descendant(of: find.byType(MarkupView), matching: images).evaluate().length;
+    expect(images.evaluate().length, greaterThan(onPages));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(MarkupView), findsOneWidget);
   });
 
   testWidgets("esc leaves the mode, then the page", (tester) async {
