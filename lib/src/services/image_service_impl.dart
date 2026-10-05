@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_painter.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -33,22 +32,12 @@ class ImageServiceImpl implements ImageService {
     List<double> colorMatrix,
     OutputOptions output, {
     String? cacheKey,
-    List<ImageProvider> stickers = const [],
   }) async {
     // the key would have to hold every stroke point, for a hit that almost never comes
     if (state.markup.isNotEmpty) cacheKey = null;
     final cached = cacheKey == null ? null : await cache?.read(cacheKey);
     if (cached != null) return _save(cached, output);
-    final images = await _stickerImages(state.markup, stickers);
-    final (Uint8List, int, int) edited;
-    try {
-      edited = await _edit(source, state, colorMatrix, output, images);
-    } finally {
-      for (final image in images.values) {
-        image.dispose();
-      }
-    }
-    final (jpeg, width, height) = edited;
+    final (jpeg, width, height) = await _edit(source, state, colorMatrix, output);
     final saving = _save(jpeg, output, width: width, height: height);
     if (cacheKey != null) await cache?.write(cacheKey, jpeg);
     return saving;
@@ -61,7 +50,6 @@ class ImageServiceImpl implements ImageService {
     EditState state,
     List<double> colorMatrix,
     OutputOptions output,
-    Map<int, ui.Image> stickers,
   ) async {
     final rect = state.cropRect;
     late double scale;
@@ -86,7 +74,7 @@ class ImageServiceImpl implements ImageService {
 
     var width = max(1, (cropWidth * scale).round());
     var height = max(1, (cropHeight * scale).round());
-    var pixels = await _draw(decoded, state, colorMatrix, width, height, stickers);
+    var pixels = await _draw(decoded, state, colorMatrix, width, height);
     // raw pixels carry no exif, so the output has no location or camera data
     var best = (await encodeJpeg(pixels, width, height, output.quality), width, height);
     final maxBytes = output.maxBytes;
@@ -103,7 +91,7 @@ class ImageServiceImpl implements ImageService {
         final shrink = sqrt(maxBytes / best.$1.length) * 0.9;
         width = max(1, (best.$2 * shrink).round());
         height = max(1, (best.$3 * shrink).round());
-        pixels = await _draw(decoded, state, colorMatrix, width, height, stickers);
+        pixels = await _draw(decoded, state, colorMatrix, width, height);
         final jpeg = await encodeJpeg(pixels, width, height, quality);
         if (jpeg.length < best.$1.length) best = (jpeg, width, height);
       }
@@ -119,7 +107,6 @@ class ImageServiceImpl implements ImageService {
     List<double> colorMatrix,
     int width,
     int height,
-    Map<int, ui.Image> stickers,
   ) async {
     final rect = state.cropRect;
     final recorder = ui.PictureRecorder();
@@ -144,7 +131,7 @@ class ImageServiceImpl implements ImageService {
         ..save()
         ..clipRect(Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()))
         ..translate(-rect.left * whole.width, -rect.top * whole.height);
-      MarkupPainter(items: state.markup, stickers: stickers).paint(canvas, whole);
+      MarkupPainter(items: state.markup).paint(canvas, whole);
       canvas.restore();
     }
     final picture = recorder.endRecording();
@@ -154,20 +141,6 @@ class ImageServiceImpl implements ImageService {
     drawn.dispose();
     if (pixels == null) throw StateError("couldn't read the edited pixels");
     return pixels;
-  }
-
-  /// only the ones the markup uses, at the biggest asset variant.
-  static Future<Map<int, ui.Image>> _stickerImages(
-    List<MarkupItem> markup,
-    List<ImageProvider> stickers,
-  ) async {
-    final images = <int, ui.Image>{};
-    for (final item in markup) {
-      if (item is! StickerMark || images.containsKey(item.index) || item.index >= stickers.length) continue;
-      final image = await resolveImage(stickers[item.index], const ImageConfiguration(devicePixelRatio: 3));
-      if (image != null) images[item.index] = image;
-    }
-    return images;
   }
 
   Future<PickedItem> _save(Uint8List jpeg, OutputOptions output, {int? width, int? height}) async {
