@@ -169,6 +169,7 @@ for (final item in items) {
 | `alwaysDarkTheme` | `true` | `false` follows the app brightness. A custom `theme` wins over it |
 | `texts` | `PickerTexts()` | every text the picker shows, English by default |
 | `cache` | `PickerCache()` | off by default, see below |
+| `markup` | `MarkupOptions()` | text, drawing and stickers on the edit screen, off by default, see below |
 | `camera` | `CameraOptions()` | zoom buttons, timer, grid and an overlay for the camera tabs, see below |
 
 When there's no crop and no filters, next returns the picked items right away. Otherwise next opens the edit screen.
@@ -224,6 +225,27 @@ PickerSettings(
   texts: const PickerTexts(next: "Weiter", done: "Fertig"),
 )
 ```
+
+## Markup
+
+The edit screen can add text (emoji too), freehand drawing and stickers on images. Everything is off by default.
+
+```dart
+PickerSettings(
+  markup: MarkupOptions(
+    text: true,
+    drawing: true,
+    stickers: [AssetImage("assets/stickers/logo.png"), AssetImage("assets/stickers/heart.png")],
+    fonts: ["Lobster", "RobotoMono"],
+  ),
+)
+```
+
+Text and stickers move with one finger, and scale and turn with two, or with the mouse wheel and shift + wheel on desktop. Dropping one on the bin at the bottom removes it. Drawing has three sizes, an eraser for whole lines, and undo and redo (also Ctrl or Cmd + Z). Two fingers zoom while drawing.
+
+Stickers and fonts come from your app, nothing ships with the package. `fonts` are family names your pubspec already registers, the text uses the app's font when it's empty. `colors` replaces the palette.
+
+Markup is drawn into the saved image at its full size, on top of the crop and filter, and the filter never colors it. An image whose markup was all removed comes back untouched. Markup is part of `edit`, so it comes back with `selected`, but the undo history doesn't.
 
 ## Camera
 
