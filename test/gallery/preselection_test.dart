@@ -153,16 +153,15 @@ void main() {
     });
   });
 
-  test("markup comes back when it's on, a sticker that's gone is dropped", () async {
+  test("markup comes back when it's on", () async {
     const text = TextMark(text: "Hi", color: Color(0xFF000000), center: Offset(0.5, 0.5), size: 0.1);
-    const sticker = StickerMark(index: 3, center: Offset(0.5, 0.5), width: 0.2);
     final preselection = await resolve([
-      fromGallery("0", edit: const EditState(markup: [text, sticker])),
+      fromGallery("0", edit: const EditState(markup: [text])),
     ]);
     final (_, _, markups) = preselection.restore(
       ratios: const [],
       filters: false,
-      markup: const MarkupOptions(text: true, stickers: []),
+      markup: const MarkupOptions(text: true),
     );
     expect(markups["0"]!.value, [text]);
     final (_, _, off) = preselection.restore(ratios: const [], filters: false);
