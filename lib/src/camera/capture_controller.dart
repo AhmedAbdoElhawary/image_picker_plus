@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
@@ -13,6 +15,20 @@ class CaptureController with WidgetsBindingObserver {
   final ValueNotifier<bool> hasFlash = ValueNotifier(false);
   final ValueNotifier<bool> flash = ValueNotifier(false);
   final ValueNotifier<bool> microphone = ValueNotifier(true);
+  final ValueNotifier<double> minZoom = ValueNotifier(1);
+  final ValueNotifier<double> maxZoom = ValueNotifier(1);
+  final ValueNotifier<double> zoom = ValueNotifier(1);
+
+  /// seconds before a capture, 0 is off.
+  final ValueNotifier<int> timer = ValueNotifier(0);
+
+  /// seconds left, null when not counting.
+  final ValueNotifier<int?> countdown = ValueNotifier(null);
+  Timer? _countdown;
+
+  // a pinch asks many times a second, only one call goes to the camera at a time
+  bool _zooming = false;
+  double? _nextZoom;
 
   CameraService? _service;
   bool _front = false;
@@ -44,16 +60,74 @@ class CaptureController with WidgetsBindingObserver {
     microphone.value = service.hasMicrophone;
     hasFlash.value = service.hasFlash;
     flash.value = false;
+    _readZoom(service);
     state.value = CaptureState.ready;
+  }
+
+  void _readZoom(CameraService service) {
+    minZoom.value = service.minZoom;
+    maxZoom.value = service.maxZoom;
+    zoom.value = 1.0.clamp(service.minZoom, service.maxZoom);
+  }
+
+  /// the level shows right away, the camera follows with the latest one.
+  Future<void> setZoom(double level) async {
+    final service = this.service;
+    if (service == null) return;
+    zoom.value = level.clamp(minZoom.value, maxZoom.value);
+    if (_zooming) {
+      _nextZoom = zoom.value;
+      return;
+    }
+    _zooming = true;
+    try {
+      double? next = zoom.value;
+      while (next != null) {
+        _nextZoom = null;
+        await service.setZoom(next);
+        next = _nextZoom;
+      }
+    } finally {
+      _zooming = false;
+    }
+  }
+
+  void cycleTimer() => timer.value = switch (timer.value) {
+    0 => 3,
+    3 => 10,
+    _ => 0,
+  };
+
+  /// counts [timer] seconds down, then runs [onEnd].
+  void startCountdown(VoidCallback onEnd) {
+    cancelCountdown();
+    countdown.value = timer.value;
+    _countdown = Timer.periodic(const Duration(seconds: 1), (_) {
+      final left = countdown.value! - 1;
+      if (left > 0) {
+        countdown.value = left;
+        return;
+      }
+      cancelCountdown();
+      onEnd();
+    });
+  }
+
+  void cancelCountdown() {
+    _countdown?.cancel();
+    _countdown = null;
+    countdown.value = null;
   }
 
   Future<void> switchCamera() async {
     final service = this.service;
     if (service == null || state.value != CaptureState.ready || cameraCount.value < 2) return;
+    cancelCountdown();
     await service.switchCamera();
     _front = !_front;
     hasFlash.value = service.hasFlash;
     flash.value = false;
+    _readZoom(service);
   }
 
   Future<void> toggleFlash() async {
@@ -106,6 +180,7 @@ class CaptureController with WidgetsBindingObserver {
   }
 
   void _release() {
+    cancelCountdown();
     final service = _service;
     _service = null;
     state.value = CaptureState.initializing;
@@ -114,9 +189,21 @@ class CaptureController with WidgetsBindingObserver {
 
   void dispose() {
     _disposed = true;
+    _countdown?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _service?.dispose();
-    for (final notifier in [state, cameraCount, hasFlash, flash, microphone]) {
+    for (final notifier in [
+      state,
+      cameraCount,
+      hasFlash,
+      flash,
+      microphone,
+      minZoom,
+      maxZoom,
+      zoom,
+      timer,
+      countdown,
+    ]) {
       notifier.dispose();
     }
   }
