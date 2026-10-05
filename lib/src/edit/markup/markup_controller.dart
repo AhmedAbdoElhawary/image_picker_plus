@@ -25,7 +25,7 @@ class MarkupController extends ValueNotifier<List<MarkupItem>> {
 
   void remove(MarkupItem item) => _commit([...value]..remove(item));
 
-  /// removes whole strokes the eraser [path] touches, never texts or stickers.
+  /// removes whole strokes the eraser [path] touches, never texts or emojis.
   /// [width] is a part of the image width like the stroke widths, [aspect] is the image width / height.
   void erase(List<Offset> path, double width, {double aspect = 1}) {
     // each point of one against each segment of the other, so a fast swipe with few points still hits
