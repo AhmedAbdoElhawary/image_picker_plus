@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
-import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/edit/export_item.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
-import 'package:image_picker_plus/src/services/image_service.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 
 class EditController {
@@ -63,22 +62,14 @@ class EditController {
     }
   }
 
-  /// null when the gallery has no file for it anymore.
-  Future<PickedItem?> _export(MediaItem item) async {
-    final path = item.path;
+  Future<PickedItem?> _export(MediaItem item) {
     final state = stateOf(item);
-    final edited = state != null && state.edited;
-    final file = path != null ? XFile(path) : await services.gallery!.file(item, editable: edited);
-    if (file == null) return null;
-    if (state == null || !edited) {
-      return PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false);
-    }
-    return services.image.export(
-      file,
-      state,
-      filters[state.filterIndex],
-      output,
-      cacheKey: _cacheKey(item, state),
+    return exportItem(
+      services: services,
+      output: output,
+      item: item,
+      state: state,
+      cacheKey: state == null ? null : _cacheKey(item, state),
     );
   }
 
@@ -86,7 +77,7 @@ class EditController {
     final rect = state.cropRect;
     final crop = [rect.left, rect.top, rect.width, rect.height].map((v) => v.toStringAsFixed(4)).join(",");
     return "edit:${item.id}:${item.modified.millisecondsSinceEpoch}:$crop:${state.filterIndex}"
-        ":${output.quality}:${output.maxWidth}x${output.maxHeight}";
+        ":${output.quality}:${output.maxWidth}x${output.maxHeight}:${output.maxBytes}";
   }
 
   void dispose() {
