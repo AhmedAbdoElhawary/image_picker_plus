@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/camera/capture_controller.dart';
@@ -80,6 +82,100 @@ void main() {
     expect(controller.state.value, CaptureState.ready);
     controller.dispose();
     expect(cameras.last.disposeCalls, 1);
+  });
+  group("zoom", () {
+    test("the range comes from the camera and starts at 1", () async {
+      final camera = FakeCameraService()..minZoom = 0.6;
+      final controller = await start(camera);
+      expect((controller.minZoom.value, controller.maxZoom.value, controller.zoom.value), (0.6, 8.0, 1.0));
+    });
+
+    test("a level past the range is clamped", () async {
+      final camera = FakeCameraService();
+      final controller = await start(camera);
+      await controller.setZoom(20);
+      expect(controller.zoom.value, 8);
+      expect(camera.zoomCalls, [8]);
+    });
+
+    test("switching camera resets the zoom and reads the range again", () async {
+      final camera = FakeCameraService();
+      final controller = await start(camera);
+      await controller.setZoom(3);
+      camera.maxZoom = 4;
+      await controller.switchCamera();
+      expect((controller.zoom.value, controller.maxZoom.value), (1.0, 4.0));
+    });
+
+    test("only one call at a time goes to the camera, then the latest", () async {
+      final camera = FakeCameraService()..zoomGate = Completer();
+      final controller = await start(camera);
+      final first = controller.setZoom(2);
+      await controller.setZoom(3);
+      await controller.setZoom(4);
+      await controller.setZoom(5);
+      expect(controller.zoom.value, 5);
+      expect(camera.zoomCalls, [2]);
+      camera.zoomGate!.complete();
+      await first;
+      expect(camera.zoomCalls, [2, 5]);
+    });
+  });
+
+  group("timer", () {
+    test("cycles 3, 10, off", () async {
+      final controller = await start(FakeCameraService());
+      final seen = <int>[];
+      for (var i = 0; i < 3; i++) {
+        controller.cycleTimer();
+        seen.add(controller.timer.value);
+      }
+      expect(seen, [3, 10, 0]);
+    });
+
+    testWidgets("counts down then runs once", (tester) async {
+      final controller = await start(FakeCameraService());
+      controller.cycleTimer();
+      var ends = 0;
+      controller.startCountdown(() => ends++);
+      final seen = <int?>[controller.countdown.value];
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        seen.add(controller.countdown.value);
+      }
+      expect(seen, [3, 2, 1, null]);
+      expect(ends, 1);
+      controller.dispose();
+    });
+
+    testWidgets("a cancel, a camera switch or a pause stops it", (tester) async {
+      final controller = await start(FakeCameraService());
+      controller.cycleTimer();
+      var ends = 0;
+      for (final stop in <Future<void> Function()>[
+        () async => controller.cancelCountdown(),
+        controller.switchCamera,
+        () async => controller.didChangeAppLifecycleState(AppLifecycleState.paused),
+      ]) {
+        controller.startCountdown(() => ends++);
+        await tester.pump(const Duration(seconds: 1));
+        await stop();
+        expect(controller.countdown.value, isNull);
+        await tester.pump(const Duration(seconds: 5));
+      }
+      expect(ends, 0);
+      controller.dispose();
+    });
+
+    testWidgets("dispose stops it", (tester) async {
+      final controller = await start(FakeCameraService());
+      controller.cycleTimer();
+      var ends = 0;
+      controller.startCountdown(() => ends++);
+      controller.dispose();
+      await tester.pump(const Duration(seconds: 5));
+      expect(ends, 0);
+    });
   });
 }
 
