@@ -7,6 +7,10 @@
 * camera: pinch zoom and quick zoom buttons (0.5x where the phone has it, 1x, 2x and the max, up to 10x), a 3 and 10 second timer, and a rule of thirds grid
 * new `PickerSettings.camera` with `CameraOptions`: turn each of them off, start with the grid on, or draw an overlay over the preview
 * new texts `timer`, `timerOff`, `timerSeconds`, `grid` and `zoomLevel`
+* markup on the edit screen: text with emoji and right to left, freehand drawing with undo, redo and an eraser, and stickers you pass. drawn into the saved image at full size
+* new `PickerSettings.markup` with `MarkupOptions`, all off by default. `editing` is now true when a markup tool is on
+* markup is part of `EditState` and its map
+* new texts `text`, `draw`, `stickers`, `undo`, `redo`, `eraser`, `delete`, `font`, `textBackground`, `color`, `size` and `doneEditing`
 
 ## 1.1.0
 * Improve export performance by 80%
