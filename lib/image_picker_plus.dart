@@ -2,6 +2,7 @@ library;
 
 export 'src/core/x_file.dart';
 export 'src/image_picker_plus.dart' show ImagePickerPlus;
+export 'src/models/edit_state.dart';
 export 'src/models/picked_item.dart';
 export 'src/settings/crop_ratio.dart';
 export 'src/settings/output_options.dart';
