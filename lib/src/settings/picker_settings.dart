@@ -1,5 +1,6 @@
 import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_cache.dart';
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
@@ -33,6 +34,7 @@ class PickerSettings {
   /// width / height of a grid cell, 0.5 is twice as tall as wide.
   final double gridCellAspectRatio;
   final bool filters;
+  final MarkupOptions markup;
   final OutputOptions output;
 
   /// null uses the dark theme, or follows the app brightness when [alwaysDarkTheme] is false.
@@ -58,6 +60,7 @@ class PickerSettings {
     this.gridColumns,
     this.gridCellAspectRatio = 1,
     this.filters = false,
+    this.markup = const MarkupOptions(),
     this.output = const OutputOptions(),
     this.theme,
     this.alwaysDarkTheme = true,
@@ -67,7 +70,7 @@ class PickerSettings {
        assert(gridColumns == null || gridColumns > 0),
        assert(gridCellAspectRatio > 0);
 
-  bool get editing => cropRatios.isNotEmpty || filters;
+  bool get editing => cropRatios.isNotEmpty || filters || markup.enabled;
 
   bool get multi => maxSelection > 1;
 }
