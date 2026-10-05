@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
@@ -18,6 +21,12 @@ class EditController {
   /// an image has no crop when cropping is off, and no filter when filters are off.
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
+
+  /// per image id like the crops, empty when markup is off.
+  final Map<String, MarkupController> markups;
+
+  /// the markup mode on the current image, null when not in it.
+  final ValueNotifier<MarkupTool?> tool = ValueNotifier(null);
   final ValueNotifier<MediaItem> current;
   final ValueNotifier<bool> exporting = ValueNotifier(false);
 
@@ -28,8 +37,16 @@ class EditController {
     MediaItem? initial,
     this.crops = const {},
     this.filterIndexes = const {},
+    this.markups = const {},
+    this.stickers = const [],
   }) : items = ValueNotifier(items),
-       current = ValueNotifier(initial ?? items.first);
+       current = ValueNotifier(initial ?? items.first) {
+    // a mode belongs to one image, moving on leaves it
+    current.addListener(() => tool.value = null);
+  }
+
+  /// `MarkupOptions.stickers`, for the export.
+  final List<ImageProvider> stickers;
 
   /// null for videos.
   EditState? stateOf(MediaItem item) {
@@ -39,6 +56,7 @@ class EditController {
       cropRect: crop?.value ?? EditState.full,
       ratio: crop?.ratio,
       filterIndex: filterIndexes[item.id]?.value ?? 0,
+      markup: markups[item.id]?.value ?? const [],
     );
   }
 
@@ -70,6 +88,7 @@ class EditController {
       item: item,
       state: state,
       cacheKey: state == null ? null : _cacheKey(item, state),
+      stickers: stickers,
     );
   }
 
@@ -84,5 +103,6 @@ class EditController {
     items.dispose();
     current.dispose();
     exporting.dispose();
+    tool.dispose();
   }
 }
