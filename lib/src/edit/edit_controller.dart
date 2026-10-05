@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
@@ -38,15 +37,11 @@ class EditController {
     this.crops = const {},
     this.filterIndexes = const {},
     this.markups = const {},
-    this.stickers = const [],
   }) : items = ValueNotifier(items),
        current = ValueNotifier(initial ?? items.first) {
     // a mode belongs to one image, moving on leaves it
     current.addListener(() => tool.value = null);
   }
-
-  /// `MarkupOptions.stickers`, for the export.
-  final List<ImageProvider> stickers;
 
   /// null for videos.
   EditState? stateOf(MediaItem item) {
@@ -88,7 +83,6 @@ class EditController {
       item: item,
       state: state,
       cacheKey: state == null ? null : _cacheKey(item, state),
-      stickers: stickers,
     );
   }
 
