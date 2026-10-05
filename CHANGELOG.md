@@ -1,3 +1,8 @@
+## 1.1.0
+* new `PickerSettings.useRootNavigator`, false by default, so the picker opens on the nearest navigator and a tab bar or nested shell stays visible over it
+* saving edits is faster: the engine decodes at the needed size, the jpeg is encoded as 3 channels 4:2:0 in an isolate, and many images are exported in parallel. heic is read natively now
+* with `showPreview: false` the select button row is gone, a long press on a cell starts the selection
+
 ## 1.0.1
 * pub.dev lists macOS, Windows and Linux too, the pubspec declares the platforms now
 * wasm ready: `video_player` is out of the web build, so a video on web shows a placeholder like on Windows and Linux. it says the preview isn't available there and the video is still exported, the text is `PickerTexts.videoPreviewNotSupported`
