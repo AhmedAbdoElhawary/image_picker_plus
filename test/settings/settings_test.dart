@@ -50,4 +50,12 @@ void main() {
     expect(const CropRatio(1, 1), CropRatio.square);
     expect(OutputOptions.safeMaxSide, 4096);
   });
+
+  test("max bytes and limits", () {
+    expect(const OutputOptions().hasLimits, isFalse);
+    expect(const OutputOptions(maxWidth: 10).hasLimits, isTrue);
+    expect(const OutputOptions(maxBytes: 1000).hasLimits, isTrue);
+    expect(() => OutputOptions(maxBytes: 0), throwsAssertionError);
+    expect(OutputOptions.qualityFloor, 50);
+  });
 }
