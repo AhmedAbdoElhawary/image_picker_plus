@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -96,6 +97,9 @@ class _DemoState extends State<Demo> {
   /// 0 keeps the image size.
   int maxWidth = 0;
   int maxHeight = 0;
+
+  /// 0 has no limit.
+  int maxKb = 0;
   ThemeChoice theme = ThemeChoice.app;
   bool alwaysDarkTheme = true;
   TextsChoice texts = TextsChoice.english;
@@ -103,9 +107,15 @@ class _DemoState extends State<Demo> {
   int cacheMb = 100;
   List<PickedItem> items = const [];
 
-  Future<void> _pick() async {
+  /// web has no temp dir, the saved pick stays in memory there.
+  String? _savedOnWeb;
+  File get _savedFile => File("${Directory.systemTemp.path}/last_pick.json");
+
+  /// [selected] opens with an earlier pick, its crops and filters.
+  Future<void> _pick({List<PickedItem>? selected}) async {
     final picked = await ImagePickerPlus.pick(
       context,
+      selected: selected,
       settings: PickerSettings(
         source: source,
         mediaType: mediaType,
@@ -124,6 +134,7 @@ class _DemoState extends State<Demo> {
           quality: quality,
           maxWidth: maxWidth == 0 ? null : maxWidth,
           maxHeight: maxHeight == 0 ? null : maxHeight,
+          maxBytes: maxKb == 0 ? null : maxKb * 1024,
         ),
         theme: theme == ThemeChoice.custom ? customTheme : null,
         alwaysDarkTheme: alwaysDarkTheme,
@@ -132,6 +143,17 @@ class _DemoState extends State<Demo> {
       ),
     );
     if (picked != null) setState(() => items = picked);
+  }
+
+  Future<void> _save() async {
+    final json = jsonEncode([for (final item in items) item.toMap()]);
+    kIsWeb ? _savedOnWeb = json : await _savedFile.writeAsString(json);
+  }
+
+  Future<void> _load() async {
+    final json = kIsWeb ? _savedOnWeb : (_savedFile.existsSync() ? await _savedFile.readAsString() : null);
+    if (json == null) return;
+    setState(() => items = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)]);
   }
 
   @override
@@ -242,6 +264,13 @@ class _DemoState extends State<Demo> {
             name: (value) => value == 0 ? "off" : "$value",
             onChanged: (value) => setState(() => maxHeight = value),
           ),
+          _Choice<int>(
+            label: "Output max size",
+            value: maxKb,
+            values: const [0, 500, 1024, 2048],
+            name: (value) => value == 0 ? "off" : "$value KB",
+            onChanged: (value) => setState(() => maxKb = value),
+          ),
           _Choice<ThemeChoice>(
             label: "Picker theme",
             value: theme,
@@ -283,6 +312,19 @@ class _DemoState extends State<Demo> {
               divisions: 12,
               onChanged: widget.onTextScale,
             ),
+          ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            children: [
+              if (items.isNotEmpty)
+                OutlinedButton(
+                  onPressed: () => _pick(selected: items),
+                  child: const Text("Change photos"),
+                ),
+              if (items.isNotEmpty) OutlinedButton(onPressed: _save, child: const Text("Save")),
+              OutlinedButton(onPressed: _load, child: const Text("Load")),
+            ],
           ),
           _Results(items),
         ],
@@ -433,7 +475,8 @@ class _Results extends StatelessWidget {
                 start: 4,
                 bottom: 4,
                 child: Text(
-                  "${index + 1} · ${item.width}x${item.height}${item.edited ? " · edited" : ""}",
+                  "${index + 1} · ${item.width}x${item.height}${item.edited ? " · edited" : ""}"
+                  "${item.overLimit ? " · over" : ""}",
                   style: const TextStyle(color: Colors.white, fontSize: 10, shadows: [Shadow(blurRadius: 4)]),
                 ),
               ),
