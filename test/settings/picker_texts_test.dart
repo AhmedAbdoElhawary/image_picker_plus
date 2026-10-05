@@ -34,8 +34,8 @@ void main() {
   test("markup texts", () {
     const texts = PickerTexts();
     expect(
-      [texts.text, texts.draw, texts.stickers, texts.undo, texts.redo, texts.eraser],
-      ["Text", "Draw", "Stickers", "Undo", "Redo", "Eraser"],
+      [texts.text, texts.draw, texts.emojis, texts.undo, texts.redo, texts.eraser],
+      ["Text", "Draw", "Emojis", "Undo", "Redo", "Eraser"],
     );
     expect(
       [texts.delete, texts.font, texts.textBackground, texts.color, texts.size, texts.doneEditing],
