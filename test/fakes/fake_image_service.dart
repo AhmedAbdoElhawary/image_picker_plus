@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/painting.dart';
+
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -11,6 +13,7 @@ class FakeImageService implements ImageService {
   final List<(String, EditState)> calls = [];
   final List<String?> keys = [];
   final List<OutputOptions> outputs = [];
+  final List<List<ImageProvider>> stickerLists = [];
   bool fail = false;
 
   /// copied into every result, like an image that couldn't fit maxBytes.
@@ -24,7 +27,9 @@ class FakeImageService implements ImageService {
     List<double> colorMatrix,
     OutputOptions output, {
     String? cacheKey,
+    List<ImageProvider> stickers = const [],
   }) async {
+    stickerLists.add(stickers);
     await gate?.future;
     if (fail) throw Exception("export failed");
     calls.add((source.path, state));
