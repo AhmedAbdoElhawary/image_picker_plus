@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
+import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -44,7 +47,13 @@ class GalleryController {
   final Map<String, CropController> crops = {};
   final Map<String, ValueNotifier<int>> filterIndexes = {};
 
-  GalleryController({required this.service, required this.settings}) {
+  /// finds an earlier pick again, run only after access is given since lookups fail without it.
+  final Future<Preselection> Function()? preselect;
+
+  /// the first album load keeps the preselection instead of selecting its first item.
+  bool _preselected = false;
+
+  GalleryController({required this.service, required this.settings, this.preselect}) {
     selection.addListener(_syncEdits);
   }
 
@@ -80,6 +89,12 @@ class GalleryController {
       return;
     }
     _changes = service.changes.listen((_) => reload());
+    final preselect = this.preselect;
+    if (preselect != null) {
+      final preselection = await preselect();
+      if (_disposed) return;
+      _preselect(preselection);
+    }
     await _loadAlbums();
   }
 
@@ -110,9 +125,13 @@ class GalleryController {
       return;
     }
     state.value = GalleryState.ready;
-    final first = items.value.first;
-    preview.value = first;
-    if (!multi.value) selection.value = [first];
+    if (_preselected) {
+      _preselected = false;
+    } else {
+      final first = items.value.first;
+      preview.value = first;
+      if (!multi.value) selection.value = [first];
+    }
     unawaited(_loadRest(next, generation));
   }
 
@@ -159,6 +178,24 @@ class GalleryController {
     }
     state.value = fresh.isEmpty ? GalleryState.empty : GalleryState.ready;
     unawaited(_loadRest(current, generation));
+  }
+
+  void _preselect(Preselection preselection) {
+    final items = preselection.items;
+    if (items.isEmpty) return;
+    _preselected = true;
+    // no preview means no ratio picker, so only the image's own ratio is there
+    final (restored, filters) = preselection.restore(
+      ratios: settings.cropRatios.isEmpty || settings.showPreview
+          ? settings.cropRatios
+          : const [CropRatio.original],
+      filters: settings.filters,
+    );
+    crops.addAll(restored);
+    filterIndexes.addAll(filters);
+    multi.value = settings.multi;
+    selection.value = items;
+    preview.value = items.first;
   }
 
   /// false when the max is reached and the item wasn't added.
@@ -212,14 +249,12 @@ class GalleryController {
   /// 1 based order in the selection, 0 when not selected.
   int orderOf(MediaItem item) => selection.value.indexOf(item) + 1;
 
-  Future<List<PickedItem>> pickedItems() async {
+  /// for when editing is off, the output limits still apply.
+  Future<List<PickedItem>> pickedItems(PickerServices services) async {
     final picked = <PickedItem>[];
     for (final item in selection.value) {
-      final file = await service.file(item);
-      if (file == null) continue;
-      picked.add(
-        PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
-      );
+      final done = await exportItem(services: services, output: settings.output, item: item);
+      if (done != null) picked.add(done);
     }
     return picked;
   }
