@@ -6,10 +6,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
 import 'package:image_picker_plus/src/gallery/media_preview.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 import '../fakes/fake_gallery_service.dart';
@@ -275,4 +279,88 @@ void main() {
     await tester.pumpAndSettle();
     expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/b", "/fake/a"]);
   }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
+  group("markup", () {
+    const text = TextMark(text: "Hi", color: Color(0xFFE53935), center: Offset(0.5, 0.5), size: 0.1);
+    const markupOn = PickerSettings(maxSelection: 5, markup: MarkupOptions(text: true, drawing: true));
+
+    testWidgets("buttons show per setting and not for videos", (tester) async {
+      await pumpPicker(
+        tester,
+        EditPage(items: [a, v], markups: {"a": MarkupController()}),
+        settings: const PickerSettings(maxSelection: 5, markup: MarkupOptions(drawing: true)),
+      );
+      expect(find.byTooltip("Draw"), findsOneWidget);
+      expect(find.byTooltip("Text"), findsNothing);
+    });
+
+    testWidgets("a video has no markup buttons", (tester) async {
+      // the video has no markup controller, like the gallery makes them
+      await pumpPicker(
+        tester,
+        EditPage(items: [v, a], markups: {"a": MarkupController()}),
+        settings: const PickerSettings(maxSelection: 5, markup: MarkupOptions(drawing: true)),
+      );
+      expect(find.byTooltip("Draw"), findsNothing);
+    });
+
+    testWidgets("default settings show no markup buttons", (tester) async {
+      await pumpPicker(tester, EditPage(items: [a]), settings: const PickerSettings());
+      expect(find.byTooltip("Draw"), findsNothing);
+      expect(find.byTooltip("Text"), findsNothing);
+    });
+
+    testWidgets("the mode hides the page's done and comes back on done", (tester) async {
+      await pumpPicker(
+        tester,
+        EditPage(items: [a], markups: {"a": MarkupController()}),
+        settings: markupOn,
+      );
+      expect(find.text("Done"), findsOneWidget);
+      await tester.tap(find.byTooltip("Draw"));
+      await tester.pumpAndSettle();
+      expect(find.byType(MarkupView), findsOneWidget);
+      expect(find.text("Done"), findsOneWidget);
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect(find.byType(MarkupView), findsNothing);
+    });
+
+    testWidgets("each image keeps its own markup and goes out in its edit state", (tester) async {
+      final fakes = Fakes();
+      final markups = {"a": MarkupController(), "b": MarkupController()};
+      Object? result;
+      await pumpPicker(
+        tester,
+        EditPage(items: [a, b], markups: markups),
+        fakes: fakes,
+        settings: markupOn,
+        onResult: (r) => result = r,
+      );
+      markups["a"]!.add(text);
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect(fakes.image.calls.single.$2.markup, [text]);
+      expect((result! as List<PickedItem>).map((e) => e.edited), [true, false]);
+      expect(markups["b"]!.value, isEmpty);
+    });
+
+    testWidgets("markup added then removed isn't an edit", (tester) async {
+      final fakes = Fakes();
+      final markup = MarkupController()..add(text);
+      markup.remove(text);
+      Object? result;
+      await pumpPicker(
+        tester,
+        EditPage(items: [a], markups: {"a": markup}),
+        fakes: fakes,
+        settings: const PickerSettings(cropRatios: [], markup: MarkupOptions(text: true)),
+        onResult: (r) => result = r,
+      );
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect(fakes.image.calls, isEmpty);
+      expect((result! as List<PickedItem>).single.edited, isFalse);
+    });
+  });
 }
