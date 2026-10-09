@@ -23,7 +23,7 @@ void main() {
 
   Future<MarkupController> open(
     WidgetTester tester, {
-    MarkupOptions markup = const MarkupOptions(text: true, drawing: true),
+    MarkupOptions markup = const MarkupOptions(text: true, emojis: true, drawing: true),
     List<MarkupItem> items = const [],
     TextDirection direction = TextDirection.ltr,
   }) async {
@@ -275,9 +275,22 @@ void main() {
   });
 
   group("emojis", () {
-    testWidgets("the button shows only with text", (tester) async {
-      await open(tester, markup: const MarkupOptions(drawing: true));
+    testWidgets("the button shows only with emojis, not with text", (tester) async {
+      await open(tester, markup: const MarkupOptions(text: true, drawing: true));
       expect(find.byTooltip("Emojis"), findsNothing);
+    });
+
+    testWidgets("emojis alone, a tap on one doesn't open the text editor", (tester) async {
+      final markup = await open(tester, markup: const MarkupOptions(emojis: true));
+      expect(find.byTooltip("Text"), findsNothing);
+      await tester.tap(find.byTooltip("Emojis"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(EmojiSheet.emojis.first));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(MarkupItemView));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextEditor), findsNothing);
+      expect(markup.value, hasLength(1));
     });
 
     testWidgets("a tap in the sheet adds it as a text in the middle, it moves like one", (tester) async {

@@ -49,7 +49,7 @@ class MessageView extends StatelessWidget {
                 ),
               ),
             ),
-            if (onClose != null) CustomBackButton(onClose: onClose),
+            if (onClose != null) CustomCloseButton(onClose: onClose),
           ],
         ),
       ),

@@ -12,6 +12,9 @@ class PickerTheme {
   /// behind the edit card on wide windows.
   final Color barrier;
 
+  /// the capture button while a video records.
+  final Color recording;
+
   const PickerTheme({
     required this.background,
     required this.surface,
@@ -21,6 +24,7 @@ class PickerTheme {
     required this.onAccent,
     required this.scrim,
     this.barrier = const Color(0x99000000),
+    this.recording = const Color(0xFFFF3B30),
   });
 
   factory PickerTheme.light() => const PickerTheme(
