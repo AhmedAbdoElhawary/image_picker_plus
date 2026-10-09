@@ -28,7 +28,10 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
   /// null when caching is off.
   final CacheService? cache;
 
-  const AssetThumbnail(this.item, this.size, {required this.gallery, this.cache});
+  /// pixels of the box it covers, the thumbnail is cut to it. null keeps it whole.
+  final Size? cover;
+
+  const AssetThumbnail(this.item, this.size, {required this.gallery, this.cache, this.cover});
 
   String get cacheKey => "thumb:${item.id}:${item.modified.millisecondsSinceEpoch}:$size";
 
@@ -37,12 +40,30 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
 
   @override
   ImageStreamCompleter loadImage(AssetThumbnail key, ImageDecoderCallback decode) =>
-      MultiFrameImageStreamCompleter(codec: _load(decode), scale: 1);
+      OneFrameImageStreamCompleter(_load(decode));
 
-  Future<ui.Codec> _load(ImageDecoderCallback decode) async {
+  Future<ImageInfo> _load(ImageDecoderCallback decode) async {
     final bytes = await loadBytes();
     if (bytes == null || bytes.isEmpty) throw StateError("no thumbnail for ${item.id}");
-    return decode(await ui.ImmutableBuffer.fromUint8List(bytes));
+    final codec = await decode(await ui.ImmutableBuffer.fromUint8List(bytes));
+    final image = (await codec.getNextFrame()).image;
+    codec.dispose();
+    final cover = this.cover;
+    if (cover == null) return ImageInfo(image: image);
+    // the sides a cover fit hides would stay decoded in memory for nothing
+    final full = Size(image.width.toDouble(), image.height.toDouble());
+    final source = Alignment.center.inscribe(
+      applyBoxFit(BoxFit.cover, full, cover).source,
+      Offset.zero & full,
+    );
+    final recorder = ui.PictureRecorder();
+    final paint = Paint()..filterQuality = FilterQuality.medium;
+    Canvas(recorder).drawImageRect(image, source, Offset.zero & cover, paint);
+    final picture = recorder.endRecording();
+    final cut = await picture.toImage(cover.width.ceil(), cover.height.ceil());
+    picture.dispose();
+    image.dispose();
+    return ImageInfo(image: cut);
   }
 
   @visibleForTesting
@@ -59,8 +80,9 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
       other is AssetThumbnail &&
       other.item.id == item.id &&
       other.item.modified == item.modified &&
-      other.size == size;
+      other.size == size &&
+      other.cover == cover;
 
   @override
-  int get hashCode => Object.hash(item.id, item.modified, size);
+  int get hashCode => Object.hash(item.id, item.modified, size, cover);
 }
