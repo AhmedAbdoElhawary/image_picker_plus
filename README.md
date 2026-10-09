@@ -219,8 +219,8 @@ PickerSettings(
     accent: Color(0xFFFF7A00),
     onAccent: Color(0xFFFFFFFF),
     scrim: Color(0xB3000000),
-    // behind the edit card on web and desktop, optional
     barrier: Color(0x99000000),
+    recording: Color(0xFFFF3B30),
   ),
   texts: const PickerTexts(next: "Weiter", done: "Fertig"),
 )
@@ -228,12 +228,13 @@ PickerSettings(
 
 ## Markup
 
-The edit screen can add text, emojis and freehand drawing on images. Everything is off by default.
+The edit screen can add text, emojis and freehand drawing on images. Each one turns on by itself, everything is off by default.
 
 ```dart
 PickerSettings(
   markup: MarkupOptions(
     text: true,
+    emojis: true,
     drawing: true,
     fonts: ["Lobster", "RobotoMono"],
   ),
@@ -242,7 +243,7 @@ PickerSettings(
 
 Text and emojis move with one finger, and scale and turn with two. The second finger can be anywhere on the screen once the first is on the item. On desktop it's the mouse wheel and shift + wheel. Dropping one on the bin at the bottom removes it. Drawing has three sizes, an eraser for whole lines, and undo and redo (also Ctrl or Cmd + Z). Two fingers zoom while drawing.
 
-With `text` on, the emoji button opens the popular emojis. They're plain Unicode, so they look like the phone's own. Fonts come from your app, nothing ships with the package. `fonts` are family names your pubspec already registers, the text uses the app's font when it's empty. `colors` replaces the palette.
+With `emojis` on, the emoji button opens the popular emojis. They're plain Unicode, so they look like the phone's own. Fonts come from your app, nothing ships with the package. `fonts` are family names your pubspec already registers, the text uses the app's font when it's empty. `colors` replaces the palette.
 
 Markup is drawn into the saved image at its full size, on top of the crop and filter, and the filter never colors it. An image whose markup was all removed comes back untouched. Markup is part of `edit`, so it comes back with `selected`, but the undo history doesn't.
 
