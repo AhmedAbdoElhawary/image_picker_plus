@@ -90,7 +90,7 @@ class _GalleryPageState extends State<GalleryPage> {
           backgroundColor: scope.theme.background,
           appBar: PickerAppBar(
             title: AlbumPicker(controller: controller),
-            closeIcon: adding ? Icons.arrow_back_rounded : Icons.close_rounded,
+            closeIcon: adding ? CloseButtonEnum.back : CloseButtonEnum.close,
             onClose: widget.onClose,
             action: AnimatedSwitcher(
               duration: PickerDurations.of(context).medium,

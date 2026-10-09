@@ -153,7 +153,6 @@ class _EditPageState extends State<EditPage> {
             backgroundColor: scope.theme.background,
             appBar: PickerAppBar(
               title: MarkupButtons(controller: controller),
-              closeIcon: Icons.arrow_back_rounded,
               onClose: back,
               action: TextButton(
                 onPressed: _done,
