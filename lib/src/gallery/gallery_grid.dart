@@ -70,6 +70,7 @@ class _GalleryGridState extends State<GalleryGrid> {
         final cellHeight = cellWidth / aspect;
         // the thumbnail's short side is size, so it has to cover the cell's longer side
         final size = (max(cellWidth, cellHeight) * pixelRatio).ceil();
+        final cover = Size((cellWidth * pixelRatio).ceilToDouble(), (cellHeight * pixelRatio).ceilToDouble());
         return ValueListenableBuilder<List<MediaItem>>(
           valueListenable: controller.items,
           builder: (context, items, _) => ValueListenableBuilder<bool>(
@@ -104,6 +105,7 @@ class _GalleryGridState extends State<GalleryGrid> {
                       item: item,
                       controller: controller,
                       size: size,
+                      cover: cover,
                       onTap: () => widget.onTap(item),
                       onLongPress: () => widget.onLongPress(item),
                     );

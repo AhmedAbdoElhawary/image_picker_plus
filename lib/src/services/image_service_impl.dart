@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -25,6 +26,9 @@ class ImageServiceImpl implements ImageService {
   /// the decode is capped too, a small crop of a 50 mp photo would decode it all.
   static const int maxDecodeSide = 8192;
 
+  /// one edit at a time, a few big renders at once run out of memory and hang the gpu on android.
+  Future<void> _queue = Future.value();
+
   @override
   Future<PickedItem> export(
     XFile source,
@@ -37,10 +41,12 @@ class ImageServiceImpl implements ImageService {
     if (state.markup.isNotEmpty) cacheKey = null;
     final cached = cacheKey == null ? null : await cache?.read(cacheKey);
     if (cached != null) return _save(cached, output);
-    final (jpeg, width, height) = await _edit(source, state, colorMatrix, output);
-    final saving = _save(jpeg, output, width: width, height: height);
-    if (cacheKey != null) await cache?.write(cacheKey, jpeg);
-    return saving;
+    final edit = _queue.then((_) => _edit(source, state, colorMatrix, output));
+    _queue = edit.then((_) {}, onError: (_) {});
+    final (jpeg, width, height) = await edit;
+    // the picker doesn't wait for the disk, a lost write only means no cache
+    if (cacheKey != null) unawaited(cache?.write(cacheKey, jpeg));
+    return _save(jpeg, output, width: width, height: height);
   }
 
   /// the engine decodes natively and only at the needed size, way faster than the image package,
@@ -74,16 +80,21 @@ class ImageServiceImpl implements ImageService {
 
     var width = max(1, (cropWidth * scale).round());
     var height = max(1, (cropHeight * scale).round());
-    var pixels = await _draw(decoded, state, colorMatrix, width, height);
     // raw pixels carry no exif, so the output has no location or camera data
-    var best = (await encodeJpeg(pixels, width, height, output.quality), width, height);
+    Future<Uint8List> encode(int width, int height, int quality) => encodeJpeg(
+      (top, rows) => _draw(decoded, state, colorMatrix, width, height, top, rows),
+      width,
+      height,
+      quality,
+    );
+    var best = (await encode(width, height, output.quality), width, height);
     final maxBytes = output.maxBytes;
     if (maxBytes != null) {
       // a lower quality first, it keeps more detail than a smaller size
       for (final quality in [80, 65, OutputOptions.qualityFloor]) {
         if (best.$1.length <= maxBytes) break;
         if (quality >= output.quality) continue;
-        final jpeg = await encodeJpeg(pixels, width, height, quality);
+        final jpeg = await encode(width, height, quality);
         if (jpeg.length < best.$1.length) best = (jpeg, width, height);
       }
       final quality = min(output.quality, OutputOptions.qualityFloor);
@@ -91,8 +102,7 @@ class ImageServiceImpl implements ImageService {
         final shrink = sqrt(maxBytes / best.$1.length) * 0.9;
         width = max(1, (best.$2 * shrink).round());
         height = max(1, (best.$3 * shrink).round());
-        pixels = await _draw(decoded, state, colorMatrix, width, height);
-        final jpeg = await encodeJpeg(pixels, width, height, quality);
+        final jpeg = await encode(width, height, quality);
         if (jpeg.length < best.$1.length) best = (jpeg, width, height);
       }
     }
@@ -100,6 +110,7 @@ class ImageServiceImpl implements ImageService {
     return best;
   }
 
+  /// [rows] of the output from [top], a strip keeps the gpu target and the pixels small.
   /// the markup goes on the same canvas after the filtered image, so the filter never touches it.
   Future<ByteData> _draw(
     ui.Image decoded,
@@ -107,10 +118,12 @@ class ImageServiceImpl implements ImageService {
     List<double> colorMatrix,
     int width,
     int height,
+    int top,
+    int rows,
   ) async {
     final rect = state.cropRect;
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
+    final canvas = Canvas(recorder)..translate(0, -top.toDouble());
     canvas.drawImageRect(
       decoded,
       Rect.fromLTRB(
@@ -135,7 +148,7 @@ class ImageServiceImpl implements ImageService {
       canvas.restore();
     }
     final picture = recorder.endRecording();
-    final drawn = await picture.toImage(width, height);
+    final drawn = await picture.toImage(width, rows);
     picture.dispose();
     final pixels = await drawn.toByteData(format: ui.ImageByteFormat.rawRgba);
     drawn.dispose();
@@ -145,12 +158,13 @@ class ImageServiceImpl implements ImageService {
 
   Future<PickedItem> _save(Uint8List jpeg, OutputOptions output, {int? width, int? height}) async {
     if (width == null || height == null) {
-      final codec = await ui.instantiateImageCodecWithSize(await ui.ImmutableBuffer.fromUint8List(jpeg));
-      final image = (await codec.getNextFrame()).image;
-      width = image.width;
-      height = image.height;
-      image.dispose();
-      codec.dispose();
+      // only a cache hit gets here, mobile only, where the descriptor reads the size from the header
+      final buffer = await ui.ImmutableBuffer.fromUint8List(jpeg);
+      final descriptor = await ui.ImageDescriptor.encoded(buffer);
+      width = descriptor.width;
+      height = descriptor.height;
+      descriptor.dispose();
+      buffer.dispose();
     }
     return PickedItem(
       file: await saveJpeg(jpeg, root: root),
