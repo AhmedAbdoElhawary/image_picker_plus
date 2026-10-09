@@ -44,8 +44,8 @@ class ZoomButtons extends StatelessWidget {
                 child: InkResponse(
                   onTap: () => controller.setZoom(level),
                   radius: PickerLayout.minTouch / 2,
-                  child: SizedBox.square(
-                    dimension: PickerLayout.minTouch,
+                  child: SizedBox.fromSize(
+                    size: const Size(PickerLayout.minTouch, PickerLayout.minTouch * 1.2),
                     child: Center(
                       child: Container(
                         width: 36,
@@ -98,7 +98,7 @@ class TimerButton extends StatelessWidget {
               Icon(
                 seconds == 0 ? Icons.timer_off_outlined : Icons.timer_outlined,
                 color: seconds == 0 ? scope.theme.onSurface : scope.theme.accent,
-                size: 28,
+                size: 26,
               ),
               if (seconds > 0)
                 PositionedDirectional(
@@ -136,7 +136,7 @@ class GridButton extends StatelessWidget {
         icon: Icon(
           on ? Icons.grid_on_rounded : Icons.grid_off_rounded,
           color: on ? scope.theme.accent : scope.theme.onSurface,
-          size: 28,
+          size: 26,
         ),
       ),
     );
