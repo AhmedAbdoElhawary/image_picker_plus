@@ -267,12 +267,10 @@ class GalleryController {
 
   /// for when editing is off, the output limits still apply.
   Future<List<PickedItem>> pickedItems(PickerServices services) async {
-    final picked = <PickedItem>[];
-    for (final item in selection.value) {
-      final done = await exportItem(services: services, output: settings.output, item: item);
-      if (done != null) picked.add(done);
-    }
-    return picked;
+    final picked = await Future.wait(
+      selection.value.map((item) => exportItem(services: services, output: settings.output, item: item)),
+    );
+    return picked.nonNulls.toList();
   }
 
   void dispose() {

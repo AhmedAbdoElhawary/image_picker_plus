@@ -13,6 +13,9 @@ class GalleryCell extends StatelessWidget {
 
   /// thumbnail size in pixels.
   final int size;
+
+  /// the cell in pixels.
+  final Size cover;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -20,6 +23,7 @@ class GalleryCell extends StatelessWidget {
     required this.item,
     required this.controller,
     required this.size,
+    required this.cover,
     required this.onTap,
     required this.onLongPress,
     super.key,
@@ -50,6 +54,7 @@ class GalleryCell extends StatelessWidget {
                     size,
                     gallery: scope.services.gallery!,
                     cache: scope.services.cache,
+                    cover: cover,
                   ),
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
