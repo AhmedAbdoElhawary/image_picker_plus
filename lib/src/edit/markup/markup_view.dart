@@ -157,7 +157,6 @@ class _MarkupViewState extends State<MarkupView> {
               backgroundColor: scope.theme.background,
               appBar: PickerAppBar(
                 title: MarkupButtons(controller: _controller),
-                closeIcon: Icons.arrow_back_rounded,
                 onClose: _leave,
                 action: _Actions(markup: markup, onDone: _leave),
               ),
@@ -182,7 +181,11 @@ class _MarkupViewState extends State<MarkupView> {
                               width: _erasing ? PenControls.eraserWidth : _width,
                             ),
                             erasing: _erasing,
-                            onTapText: (mark) => setState(() => _editing = _editingFrom = mark),
+                            onTapText: (mark) {
+                              // an emoji is a text too, it shouldn't open the editor when text is off
+                              if (!scope.settings.markup.text) return;
+                              setState(() => _editing = _editingFrom = mark);
+                            },
                             onMove: (mark, to, pointer) {
                               _moving.value = (mark, to);
                               _dragging.value = pointer;

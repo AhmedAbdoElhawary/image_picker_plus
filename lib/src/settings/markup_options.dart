@@ -1,8 +1,11 @@
 import 'package:flutter/painting.dart';
 
 class MarkupOptions {
-  /// add, edit, move and delete text, and emojis from their own button.
+  /// add, edit, move and delete text.
   final bool text;
+
+  /// the popular emojis from their own button, they move and delete like text.
+  final bool emojis;
 
   /// freehand pen with undo, redo and an eraser.
   final bool drawing;
@@ -16,6 +19,7 @@ class MarkupOptions {
 
   const MarkupOptions({
     this.text = false,
+    this.emojis = false,
     this.drawing = false,
     this.fonts = const [],
     this.colors = defaultColors,
@@ -33,5 +37,5 @@ class MarkupOptions {
     Color(0xFF8E24AA),
   ];
 
-  bool get enabled => text || drawing;
+  bool get enabled => text || emojis || drawing;
 }
