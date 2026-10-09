@@ -58,6 +58,25 @@ void main() {
     });
   });
 
+  testWidgets("a tall image is drawn in strips that line up", (tester) async {
+    await tester.runAsync(() async {
+      // 256 rows a strip at this width, so 3 strips
+      final item = await service.export(
+        grid(4096, 600),
+        const EditState(),
+        filters.first,
+        const OutputOptions(),
+      );
+      expect((item.width, item.height), (4096, 600));
+      final out = await decode(item.file);
+      expectColor(out.getPixel(10, 250), 255, 0, 0);
+      expectColor(out.getPixel(10, 260), 255, 0, 0);
+      expectColor(out.getPixel(4000, 290), 0, 255, 0);
+      expectColor(out.getPixel(10, 310), 0, 0, 255);
+      expectColor(out.getPixel(4000, 590), 255, 255, 255);
+    });
+  });
+
   testWidgets("a filter changes the pixels", (tester) async {
     await tester.runAsync(() async {
       const state = EditState(cropRect: Rect.fromLTWH(0, 0, 0.5, 0.5), filterIndex: 12);
