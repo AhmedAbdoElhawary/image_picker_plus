@@ -31,8 +31,15 @@ Future<ui.ImmutableBuffer> imageBuffer(XFile file) async =>
 /// package off wasm. the preview shows the file name instead, like windows and linux.
 VideoHandle? videoPlayer(String path) => null;
 
-/// the browser encodes off the main thread, the image package would freeze the page.
-Future<Uint8List> encodeJpeg(ByteData rgba, int width, int height, int quality) async {
+/// the browser encodes off the main thread, a dart encoder would freeze the page.
+/// it takes the whole image, so it's drawn in one go here.
+Future<Uint8List> encodeJpeg(
+  Future<ByteData> Function(int top, int rows) draw,
+  int width,
+  int height,
+  int quality,
+) async {
+  final rgba = await draw(0, height);
   final canvas = web.OffscreenCanvas(width, height);
   final context = canvas.getContext("2d")! as web.OffscreenCanvasRenderingContext2D;
   final pixels = rgba.buffer.asUint8ClampedList(rgba.offsetInBytes, rgba.lengthInBytes);

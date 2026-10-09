@@ -106,16 +106,28 @@ class _DemoState extends State<Demo> {
   TextsChoice texts = TextsChoice.english;
   bool cache = false;
 
-  bool markup = true;
+  bool text = true;
+  bool emojis = true;
+  bool drawing = true;
 
-  /// grid on at start and an id card frame over the camera.
-  bool cameraExtras = false;
+  /// grid on at start.
+  bool cameraGrid = false;
+
+  /// an id card frame over the camera.
+  bool cardFrame = false;
   int cacheMb = 100;
   List<PickedItem> items = const [];
 
   /// web has no temp dir, the saved pick stays in memory there.
   String? _savedOnWeb;
   File get _savedFile => File("${Directory.systemTemp.path}/last_pick.json");
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   /// [selected] opens with an earlier pick, its crops and filters.
   Future<void> _pick({List<PickedItem>? selected}) async {
@@ -146,11 +158,21 @@ class _DemoState extends State<Demo> {
         alwaysDarkTheme: alwaysDarkTheme,
         texts: texts == TextsChoice.arabic ? arabicTexts : const PickerTexts(),
         cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
-        markup: markup ? const MarkupOptions(text: true, drawing: true) : const MarkupOptions(),
-        camera: cameraExtras ? CameraOptions(gridOn: true, overlay: _cardFrame) : const CameraOptions(),
+        markup: MarkupOptions(text: text, emojis: emojis, drawing: drawing),
+        camera: CameraOptions(gridOn: cameraGrid, overlay: cardFrame ? _cardFrame : null),
       ),
     );
-    if (picked != null) setState(() => items = picked);
+    if (picked == null) return;
+    setState(() => items = picked);
+    // the results grid only has its height after this frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _save() async {
@@ -205,6 +227,7 @@ class _DemoState extends State<Demo> {
         label: const Text("Pick"),
       ),
       body: ListView(
+        controller: _scroll,
         padding: const EdgeInsetsDirectional.only(bottom: 96),
         children: [
           _Choice<PickerSource>(
@@ -336,14 +359,29 @@ class _DemoState extends State<Demo> {
             onChanged: (value) => setState(() => cacheMb = value),
           ),
           SwitchListTile(
-            title: const Text("Text, emojis and drawing"),
-            value: markup,
-            onChanged: (value) => setState(() => markup = value),
+            title: const Text("Text"),
+            value: text,
+            onChanged: (value) => setState(() => text = value),
           ),
           SwitchListTile(
-            title: const Text("Camera grid and card frame"),
-            value: cameraExtras,
-            onChanged: (value) => setState(() => cameraExtras = value),
+            title: const Text("Emojis"),
+            value: emojis,
+            onChanged: (value) => setState(() => emojis = value),
+          ),
+          SwitchListTile(
+            title: const Text("Drawing"),
+            value: drawing,
+            onChanged: (value) => setState(() => drawing = value),
+          ),
+          SwitchListTile(
+            title: const Text("Camera grid on at start"),
+            value: cameraGrid,
+            onChanged: (value) => setState(() => cameraGrid = value),
+          ),
+          SwitchListTile(
+            title: const Text("Card frame over the camera"),
+            value: cardFrame,
+            onChanged: (value) => setState(() => cardFrame = value),
           ),
           SwitchListTile(title: const Text("Dark"), value: widget.dark, onChanged: widget.onDark),
           SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
