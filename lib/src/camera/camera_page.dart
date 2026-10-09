@@ -108,7 +108,7 @@ class _CameraPageState extends State<CameraPage> {
                     _Preview(controller: controller, grid: _grid),
                     PickerAppBar(
                       color: scope.theme.background.withValues(alpha: 0.6),
-                      closeIcon: widget.adding ? Icons.arrow_back_rounded : Icons.close_rounded,
+                      closeIcon: widget.adding ? CloseButtonEnum.back : CloseButtonEnum.close,
                       onClose: widget.onClose,
                     ),
                     if (camera.timer || camera.grid)
@@ -141,15 +141,14 @@ class _CameraPageState extends State<CameraPage> {
                       child: ColoredBox(
                         color: scope.theme.background.withValues(alpha: 0.6),
                         child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            vertical: PickerLayout.padding * 2.47,
-                          ),
+                          padding: const EdgeInsetsDirectional.only(bottom: PickerLayout.padding * 2.47),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               if (camera.zoomButtons) ZoomButtons(controller: controller),
                               if (widget.video) _MicrophoneNote(controller: controller),
+
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -247,10 +246,21 @@ class _MicrophoneNote extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: controller.microphone,
       builder: (context, microphone, _) {
-        if (microphone) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsetsDirectional.only(top: PickerLayout.padding / 2),
-          child: Text(scope.texts.noMicrophone, style: TextStyle(color: scope.theme.onSurfaceMuted)),
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SizeTransition(sizeFactor: animation, child: child),
+          ),
+          child: microphone
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsetsDirectional.only(bottom: PickerLayout.padding * 0.4),
+                  child: Text(
+                    scope.texts.noMicrophone,
+                    style: TextStyle(color: scope.theme.onSurfaceMuted, fontWeight: FontWeight.w500),
+                  ),
+                ),
         );
       },
     );
