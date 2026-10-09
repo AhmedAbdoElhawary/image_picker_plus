@@ -40,8 +40,7 @@ class MarkupButtons extends StatelessWidget {
                 tooltip: scope.texts.draw,
                 icon: Icon(Icons.brush_rounded, color: color),
               ),
-            // an emoji is a text, so it comes with text
-            if (markup.text)
+            if (markup.emojis)
               IconButton(
                 onPressed: () => _open(MarkupTool.emoji),
                 tooltip: scope.texts.emojis,
