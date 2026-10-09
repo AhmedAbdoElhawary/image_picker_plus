@@ -6,9 +6,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
+import 'package:image_picker_plus/src/platform/jpeg_encoder.dart';
 import 'package:image_picker_plus/src/platform/video_handle.dart';
 import 'package:image_picker_plus/src/services/cache_service_impl.dart';
 import 'package:image_picker_plus/src/services/camera_service_impl.dart';
@@ -42,23 +42,31 @@ Future<ui.ImmutableBuffer> imageBuffer(XFile file) => ui.ImmutableBuffer.fromFil
 
 VideoHandle? videoPlayer(String path) => _FileVideo(VideoPlayerController.file(File(path)));
 
-/// the pixels are premultiplied, so over white it's the color plus what alpha leaves.
-/// 3 channels and 4:2:0 encode about twice as fast.
-Future<Uint8List> encodeJpeg(ByteData rgba, int width, int height, int quality) => Isolate.run(() {
-  final pixels = rgba.buffer.asUint8List(rgba.offsetInBytes, rgba.lengthInBytes);
-  final rgb = Uint8List(width * height * 3);
-  for (var i = 0, j = 0; i < pixels.length; i += 4, j += 3) {
-    final rest = 255 - pixels[i + 3];
-    rgb[j] = pixels[i] + rest;
-    rgb[j + 1] = pixels[i + 1] + rest;
-    rgb[j + 2] = pixels[i + 2] + rest;
+/// one strip drawn and encoded at a time, so only a few mb of pixels are ever out of the gpu.
+Future<Uint8List> encodeJpeg(
+  Future<ByteData> Function(int top, int rows) draw,
+  int width,
+  int height,
+  int quality,
+) async {
+  final rows = jpegStripRows(width);
+  final strips = <Uint8List>[];
+  for (var top = 0; top < height; top += rows) {
+    final strip = min(rows, height - top);
+    strips.add(await _encodeStrip(await draw(top, strip), width, strip, quality));
   }
-  return img.encodeJpg(
-    img.Image.fromBytes(width: width, height: height, bytes: rgb.buffer, numChannels: 3),
-    quality: quality,
-    chroma: img.JpegChroma.yuv420,
-  );
-});
+  return joinJpeg(strips, width, height, quality, rows);
+}
+
+/// its own function, a closure in encodeJpeg would carry draw and its image to the isolate.
+Future<Uint8List> _encodeStrip(ByteData pixels, int width, int height, int quality) => Isolate.run(
+  () => encodeJpegStrip(
+    pixels.buffer.asUint8List(pixels.offsetInBytes, pixels.lengthInBytes),
+    width,
+    height,
+    quality,
+  ),
+);
 
 Future<XFile> saveJpeg(Uint8List jpeg, {String? root}) async {
   final dir = Directory(root ?? "${Directory.systemTemp.path}/image_picker_plus");
