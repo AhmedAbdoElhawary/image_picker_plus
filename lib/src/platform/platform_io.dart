@@ -42,7 +42,11 @@ Future<ui.ImmutableBuffer> imageBuffer(XFile file) => ui.ImmutableBuffer.fromFil
 
 VideoHandle? videoPlayer(String path) => _FileVideo(VideoPlayerController.file(File(path)));
 
-/// one strip drawn and encoded at a time, so only a few mb of pixels are ever out of the gpu.
+/// one core stays for the gpu draws, a few strips encode at once on the rest.
+final int _workers = max(1, min(4, Platform.numberOfProcessors - 1));
+
+/// a few strips drawn and encoded at once, so the encode uses that many cores
+/// and only a few mb of pixels are ever out of the gpu.
 Future<Uint8List> encodeJpeg(
   Future<ByteData> Function(int top, int rows) draw,
   int width,
@@ -50,11 +54,18 @@ Future<Uint8List> encodeJpeg(
   int quality,
 ) async {
   final rows = jpegStripRows(width);
-  final strips = <Uint8List>[];
-  for (var top = 0; top < height; top += rows) {
-    final strip = min(rows, height - top);
-    strips.add(await _encodeStrip(await draw(top, strip), width, strip, quality));
+  final strips = List.filled((height + rows - 1) ~/ rows, Uint8List(0));
+  var next = 0;
+  Future<void> worker() async {
+    while (next < strips.length) {
+      final index = next++;
+      final top = index * rows;
+      final strip = min(rows, height - top);
+      strips[index] = await _encodeStrip(await draw(top, strip), width, strip, quality);
+    }
   }
+
+  await Future.wait([for (var i = 0; i < _workers; i++) worker()]);
   return joinJpeg(strips, width, height, quality, rows);
 }
 
