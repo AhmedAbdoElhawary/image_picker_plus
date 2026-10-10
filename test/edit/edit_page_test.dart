@@ -157,8 +157,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.text("Done"));
     await tester.pump();
-    expect(find.text("Processing"), findsOneWidget);
-    final barrier = find.ancestor(of: find.text("Processing"), matching: find.byType(ColoredBox)).last;
+    expect(find.text("Processing..."), findsOneWidget);
+    final barrier = find.ancestor(of: find.text("Processing..."), matching: find.byType(ColoredBox)).last;
     expect(tester.getSize(barrier), const Size(400, 800));
 
     await tester.tap(find.text("Cool"), warnIfMissed: false);
