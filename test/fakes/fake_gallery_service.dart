@@ -34,7 +34,8 @@ class FakeGalleryService implements GalleryService {
   final List<Album> albumList;
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
-  final List<(String, int)> pageCalls = [];
+  /// album id, page and size of every [items] call.
+  final List<(String, int, int)> pageCalls = [];
   int thumbnailCalls = 0;
   int openSettingsCalls = 0;
   int manageCalls = 0;
@@ -66,7 +67,7 @@ class FakeGalleryService implements GalleryService {
 
   @override
   Future<List<MediaItem>> items(Album album, {required int page, required int size}) async {
-    pageCalls.add((album.id, page));
+    pageCalls.add((album.id, page, size));
     await itemsGate?.future;
     final all = data[album.id] ?? const [];
     final start = page * size;
