@@ -30,7 +30,6 @@ class GalleryPage extends StatefulWidget {
 
 class _GalleryPageState extends State<GalleryPage> {
   final ValueNotifier<bool> _finishing = ValueNotifier(false);
-  late final Listenable _changes = Listenable.merge([widget.controller.state, widget.controller.adding]);
 
   @override
   void initState() {
@@ -80,23 +79,33 @@ class _GalleryPageState extends State<GalleryPage> {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final controller = widget.controller;
-    return ListenableBuilder(
-      listenable: _changes,
-      builder: (context, _) {
-        final state = controller.state.value;
-        final adding = controller.adding.value;
+    return ValueListenableBuilder<GalleryState>(
+      valueListenable: controller.state,
+      builder: (context, state, _) {
         return Scaffold(
           key: const ValueKey(GalleryState.ready),
           backgroundColor: scope.theme.background,
-          appBar: PickerAppBar(
-            title: AlbumPicker(controller: controller),
-            closeIcon: adding ? CloseButtonEnum.back : CloseButtonEnum.close,
-            onClose: widget.onClose,
-            action: AnimatedSwitcher(
-              duration: PickerDurations.of(context).medium,
-              child: state == GalleryState.ready
-                  ? _NextButton(controller: controller, busy: _finishing, adding: adding, onPressed: _next)
-                  : const SizedBox.shrink(),
+          // only the bar follows adding, the grid under it isn't built again
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(PickerLayout.appBarHeight),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: controller.adding,
+              builder: (context, adding, _) => PickerAppBar(
+                title: AlbumPicker(controller: controller),
+                closeIcon: adding ? CloseButtonEnum.back : CloseButtonEnum.close,
+                onClose: widget.onClose,
+                action: AnimatedSwitcher(
+                  duration: PickerDurations.of(context).medium,
+                  child: state == GalleryState.ready
+                      ? _NextButton(
+                          controller: controller,
+                          busy: _finishing,
+                          adding: adding,
+                          onPressed: _next,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
             ),
           ),
           body: AnimatedSwitcher(
