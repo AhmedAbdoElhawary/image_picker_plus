@@ -5,7 +5,6 @@ import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
-import 'package:image_picker_plus/src/widgets/loading_box.dart';
 
 class GalleryCell extends StatelessWidget {
   final MediaItem item;
@@ -14,8 +13,6 @@ class GalleryCell extends StatelessWidget {
   /// thumbnail size in pixels.
   final int size;
 
-  /// the cell in pixels.
-  final Size cover;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -23,7 +20,6 @@ class GalleryCell extends StatelessWidget {
     required this.item,
     required this.controller,
     required this.size,
-    required this.cover,
     required this.onTap,
     required this.onLongPress,
     super.key,
@@ -36,45 +32,43 @@ class GalleryCell extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
-      child: Selector<int>(
+      // a selection change rebuilds only these two selectors, the image stays as is
+      child: Selector<bool>(
         listenable: controller.selection,
-        select: () => controller.orderOf(item),
-        builder: (context, order, _) => Semantics(
+        select: () => controller.orderOf(item) > 0,
+        builder: (context, selected, child) => Semantics(
           button: true,
-          selected: order > 0,
+          selected: selected,
           label: item.isVideo ? scope.texts.video : scope.texts.photo,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ColoredBox(
-                color: scope.theme.surface,
-                child: Image(
-                  image: AssetThumbnail(
-                    item,
-                    size,
-                    gallery: scope.services.gallery!,
-                    cache: scope.services.cache,
-                    cover: cover,
-                  ),
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  frameBuilder: (context, child, frame, sync) =>
-                      frame == null && !sync ? const LoadingBox() : child,
-                  errorBuilder: (context, error, stack) =>
-                      Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
+          child: child,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColoredBox(
+              color: scope.theme.surface,
+              child: Image(
+                image: AssetThumbnail(item, size, gallery: scope.services.gallery!),
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                errorBuilder: (context, error, stack) =>
+                    Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
+              ),
+            ),
+            _PreviewDim(controller: controller, item: item),
+            if (item.isVideo) _Duration(item.duration),
+            if (controller.settings.multi)
+              ValueListenableBuilder<bool>(
+                valueListenable: controller.multi,
+                builder: (context, multi, child) =>
+                    AnimatedOpacity(opacity: multi ? 1 : 0, duration: durations.short, child: child),
+                child: Selector<int>(
+                  listenable: controller.selection,
+                  select: () => controller.orderOf(item),
+                  builder: (context, order, _) => _OrderBadge(order),
                 ),
               ),
-              _PreviewDim(controller: controller, item: item),
-              if (item.isVideo) _Duration(item.duration),
-              if (controller.settings.multi)
-                ValueListenableBuilder<bool>(
-                  valueListenable: controller.multi,
-                  builder: (context, multi, child) =>
-                      AnimatedOpacity(opacity: multi ? 1 : 0, duration: durations.short, child: child),
-                  child: _OrderBadge(order),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
