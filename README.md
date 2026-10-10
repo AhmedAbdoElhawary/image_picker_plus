@@ -271,7 +271,7 @@ Zoom goes up to 10x. The 0.5x button only shows where the phone gives the ultra 
 
 ## Caching
 
-With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` thumbnails and edited images are kept on disk in the app's temp folder, and the oldest go first when it's over `maxBytes`. When caching is off nothing is saved, and an old cache folder is removed on the next open. Caching is only on Android and iOS.
+With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` edited images are kept on disk in the app's temp folder, and the oldest go first when it's over `maxBytes`. When caching is off nothing is saved, and an old cache folder is removed on the next open. Caching is only on Android and iOS.
 
 ```dart
 await ImagePickerPlus.clearCache();
