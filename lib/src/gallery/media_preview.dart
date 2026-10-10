@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
@@ -29,12 +31,14 @@ class MediaPreview extends StatelessWidget {
     final preview = ColoredBox(
       color: scope.theme.scrim,
       // the selection too, a shown item that gets deselected loses its crop
-      child: ListenableBuilder(
+      child: Selector<(MediaItem?, CropController?, MarkupController?)>(
         listenable: Listenable.merge([controller.preview, controller.selection]),
-        builder: (context, _) {
+        select: () {
           final item = controller.preview.value;
-          final crop = item == null ? null : controller.crops[item.id];
-          final markup = item == null ? null : controller.markups[item.id];
+          return (item, controller.crops[item?.id], controller.markups[item?.id]);
+        },
+        builder: (context, shown, _) {
+          final (item, crop, markup) = shown;
           return AnimatedSwitcher(
             duration: PickerDurations.of(context).short,
             child: item == null
@@ -103,7 +107,7 @@ class PreviewImage extends StatelessWidget {
             ? _size(constraints.biggest / (crop?.zoom ?? 1), MediaQuery.devicePixelRatioOf(context))
             : MediaPreview.imageSize;
         return Image(
-          image: mediaImage(item, size, gallery: scope.services.gallery, cache: scope.services.cache),
+          image: mediaImage(item, size, gallery: scope.services.gallery),
           fit: fit,
           gaplessPlayback: true,
           width: double.infinity,
