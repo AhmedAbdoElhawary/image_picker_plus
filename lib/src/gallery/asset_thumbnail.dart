@@ -4,20 +4,32 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/platform/platform.dart';
-import 'package:image_picker_plus/src/services/cache_service.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
+
+/// what the picker put in the image cache, it all goes when the picker closes.
+final Set<ImageProvider> _loaded = {};
 
 /// the thumbnail of a gallery item, or the file itself for a photo just taken.
 /// [gallery] is only used for gallery items, which have no path.
-ImageProvider mediaImage(MediaItem item, int size, {required GalleryService? gallery, CacheService? cache}) {
+ImageProvider mediaImage(MediaItem item, int size, {required GalleryService? gallery}) {
   final path = item.path;
   // short side at size like the gallery thumbnail, so a cover fit is never blurry
   if (path != null) {
-    return item.width >= item.height
+    final image = item.width >= item.height
         ? ResizeImage(fileImage(path), height: size)
         : ResizeImage(fileImage(path), width: size);
+    _loaded.add(image);
+    return image;
   }
-  return AssetThumbnail(item, size, gallery: gallery!, cache: cache);
+  return AssetThumbnail(item, size, gallery: gallery!);
+}
+
+/// the picker closed, the app gets the memory of every image it showed back.
+void evictMediaImages() {
+  for (final image in _loaded) {
+    image.evict();
+  }
+  _loaded.clear();
 }
 
 class AssetThumbnail extends ImageProvider<AssetThumbnail> {
@@ -25,54 +37,24 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
   final int size;
   final GalleryService gallery;
 
-  /// null when caching is off.
-  final CacheService? cache;
-
-  /// pixels of the box it covers, the thumbnail is cut to it. null keeps it whole.
-  final Size? cover;
-
-  const AssetThumbnail(this.item, this.size, {required this.gallery, this.cache, this.cover});
-
-  String get cacheKey => "thumb:${item.id}:${item.modified.millisecondsSinceEpoch}:$size";
+  const AssetThumbnail(this.item, this.size, {required this.gallery});
 
   @override
   Future<AssetThumbnail> obtainKey(ImageConfiguration configuration) => SynchronousFuture(this);
 
   @override
-  ImageStreamCompleter loadImage(AssetThumbnail key, ImageDecoderCallback decode) =>
-      OneFrameImageStreamCompleter(_load(decode));
+  ImageStreamCompleter loadImage(AssetThumbnail key, ImageDecoderCallback decode) {
+    _loaded.add(key);
+    return _ThumbnailCompleter(_load(decode));
+  }
 
   Future<ImageInfo> _load(ImageDecoderCallback decode) async {
-    final bytes = await loadBytes();
+    final bytes = await gallery.thumbnail(item, size);
     if (bytes == null || bytes.isEmpty) throw StateError("no thumbnail for ${item.id}");
     final codec = await decode(await ui.ImmutableBuffer.fromUint8List(bytes));
     final image = (await codec.getNextFrame()).image;
     codec.dispose();
-    final cover = this.cover;
-    if (cover == null) return ImageInfo(image: image);
-    // the sides a cover fit hides would stay decoded in memory for nothing
-    final full = Size(image.width.toDouble(), image.height.toDouble());
-    final source = Alignment.center.inscribe(
-      applyBoxFit(BoxFit.cover, full, cover).source,
-      Offset.zero & full,
-    );
-    final recorder = ui.PictureRecorder();
-    final paint = Paint()..filterQuality = FilterQuality.medium;
-    Canvas(recorder).drawImageRect(image, source, Offset.zero & cover, paint);
-    final picture = recorder.endRecording();
-    final cut = await picture.toImage(cover.width.ceil(), cover.height.ceil());
-    picture.dispose();
-    image.dispose();
-    return ImageInfo(image: cut);
-  }
-
-  @visibleForTesting
-  Future<Uint8List?> loadBytes() async {
-    final cached = await cache?.read(cacheKey);
-    if (cached != null) return cached;
-    final bytes = await gallery.thumbnail(item, size);
-    if (bytes != null) await cache?.write(cacheKey, bytes);
-    return bytes;
+    return ImageInfo(image: image);
   }
 
   @override
@@ -80,9 +62,35 @@ class AssetThumbnail extends ImageProvider<AssetThumbnail> {
       other is AssetThumbnail &&
       other.item.id == item.id &&
       other.item.modified == item.modified &&
-      other.size == size &&
-      other.cover == cover;
+      other.size == size;
 
   @override
-  int get hashCode => Object.hash(item.id, item.modified, size, cover);
+  int get hashCode => Object.hash(item.id, item.modified, size);
+}
+
+/// like [OneFrameImageStreamCompleter], but an image landing after the stream is gone is dropped, not thrown on.
+/// a cell scrolling away after a cache eviction or a memory clear leaves it gone.
+class _ThumbnailCompleter extends ImageStreamCompleter {
+  bool _disposed = false;
+
+  _ThumbnailCompleter(Future<ImageInfo> image) {
+    image.then<void>(
+      (info) => _disposed ? info.dispose() : setImage(info),
+      onError: (Object error, StackTrace stack) {
+        if (_disposed) return;
+        reportError(
+          context: ErrorDescription("loading a gallery thumbnail"),
+          exception: error,
+          stack: stack,
+          silent: true,
+        );
+      },
+    );
+  }
+
+  @override
+  void onDisposed() {
+    _disposed = true;
+    super.onDisposed();
+  }
 }
