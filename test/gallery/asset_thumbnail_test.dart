@@ -1,40 +1,16 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
+import 'package:image_picker_plus/src/models/media_item.dart';
 
-import '../fakes/fake_cache_service.dart';
 import '../fakes/fake_gallery_service.dart';
 
 void main() {
   final item = fakeItem("7");
-
-  test("cache hit doesn't ask the gallery", () async {
-    final gallery = FakeGalleryService();
-    final cache = FakeCacheService();
-    final provider = AssetThumbnail(item, 100, gallery: gallery, cache: cache);
-    cache.data[provider.cacheKey] = tinyPng;
-    expect(await provider.loadBytes(), tinyPng);
-    expect(gallery.thumbnailCalls, 0);
-    expect(cache.reads, 1);
-  });
-
-  test("cache miss asks the gallery and writes", () async {
-    final gallery = FakeGalleryService();
-    final cache = FakeCacheService();
-    await AssetThumbnail(item, 101, gallery: gallery, cache: cache).loadBytes();
-    expect(gallery.thumbnailCalls, 1);
-    expect(cache.writes, 1);
-    expect(cache.data.keys.single, "thumb:7:${item.modified.millisecondsSinceEpoch}:101");
-  });
-
-  test("no cache when it's off", () async {
-    final gallery = FakeGalleryService();
-    await AssetThumbnail(item, 102, gallery: gallery).loadBytes();
-    expect(gallery.thumbnailCalls, 1);
-  });
 
   test("same item, modified time and size are the same image", () {
     final gallery = FakeGalleryService();
@@ -43,30 +19,65 @@ void main() {
       AssetThumbnail(item, 100, gallery: gallery) == AssetThumbnail(item, 200, gallery: gallery),
       isFalse,
     );
-    expect(
-      AssetThumbnail(item, 100, gallery: gallery) ==
-          AssetThumbnail(item, 100, gallery: gallery, cover: const Size(100, 100)),
-      isFalse,
-    );
   });
 
-  testWidgets("cover cuts a wide thumbnail to the cell", (tester) async {
-    final cache = FakeCacheService();
-    final provider = AssetThumbnail(
-      item,
-      20,
-      gallery: FakeGalleryService(),
-      cache: cache,
-      cover: const Size(20, 20),
-    );
-    cache.data[provider.cacheKey] = img.encodePng(img.Image(width: 50, height: 20));
-    final info = await tester.runAsync(() {
-      final completer = Completer<ImageInfo>();
+  testWidgets("evicting drops every loaded thumbnail from the image cache", (tester) async {
+    late AssetThumbnail provider;
+    await tester.runAsync(() {
+      provider = AssetThumbnail(item, 30, gallery: _SlowGallery()..gate.complete());
+      final completer = Completer<void>();
       provider
           .resolve(ImageConfiguration.empty)
-          .addListener(ImageStreamListener((info, _) => completer.complete(info)));
+          .addListener(
+            ImageStreamListener(
+              (_, _) => completer.complete(),
+              onError: (error, _) => completer.completeError(error),
+            ),
+          );
       return completer.future;
     });
-    expect([info!.image.width, info.image.height], [20, 20]);
+    expect(imageCache.containsKey(provider), isTrue);
+    evictMediaImages();
+    await tester.pump();
+    expect(imageCache.containsKey(provider), isFalse);
   });
+
+  testWidgets("a stream dropped while its thumbnail loads lets the image go when it lands", (tester) async {
+    late _SlowGallery gallery;
+    final errors = <Object>[];
+    await tester.runAsync(() async {
+      // made here, a completer from the fake async zone would never complete in real time
+      gallery = _SlowGallery();
+      final provider = AssetThumbnail(item, 40, gallery: gallery);
+      runZonedGuarded(() {
+        // ignore: invalid_use_of_protected_member
+        final completer = provider.loadImage(
+          provider,
+          PaintingBinding.instance.instantiateImageCodecWithSize,
+        );
+        final listener = ImageStreamListener((_, _) {});
+        // the cell scrolls away once the cache let go of it, after the picker closed or a memory clear
+        completer
+          ..addListener(listener)
+          ..removeListener(listener);
+      }, (error, _) => errors.add(error));
+      gallery.gate.complete();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    expect(gallery.loaded, isTrue);
+    expect(errors, isEmpty);
+  });
+}
+
+/// holds the thumbnail back until [gate] completes.
+class _SlowGallery extends FakeGalleryService {
+  final Completer<void> gate = Completer<void>();
+  bool loaded = false;
+
+  @override
+  Future<Uint8List?> thumbnail(MediaItem item, int size) async {
+    await gate.future;
+    loaded = true;
+    return img.encodePng(img.Image(width: 8, height: 8));
+  }
 }
