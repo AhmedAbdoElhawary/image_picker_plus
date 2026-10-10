@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 
@@ -6,17 +7,17 @@ import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 class MarkupPainter extends CustomPainter {
   final List<MarkupItem> items;
 
-  /// the stroke being drawn, kept apart so only it repaints while drawing.
-  final StrokeMark? active;
+  /// the stroke being drawn, it repaints from this on every move without a rebuild.
+  final ValueListenable<StrokeMark?>? active;
 
-  const MarkupPainter({required this.items, this.active});
+  const MarkupPainter({required this.items, this.active}) : super(repaint: active);
 
   @override
   void paint(Canvas canvas, Size size) {
     for (final item in items) {
       paintItem(canvas, size, item);
     }
-    final active = this.active;
+    final active = this.active?.value;
     if (active != null) paintItem(canvas, size, active);
   }
 
