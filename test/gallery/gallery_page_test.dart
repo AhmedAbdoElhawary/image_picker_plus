@@ -337,8 +337,8 @@ void main() {
   testWidgets("the rest of the album loads without scrolling", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(200));
     await pumpPicker(tester, const PickerHome(), fakes: fakes);
-    // 10 full pages, the 11th comes back empty and ends it
-    expect(fakes.gallery.pageCalls.length, 11);
+    // the first 20, then one big page that comes back short and ends it
+    expect(fakes.gallery.pageCalls, [("all", 0, 20), ("all", 0, 500)]);
   });
 
   testWidgets("switching album from the sheet", (tester) async {
