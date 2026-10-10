@@ -6,6 +6,7 @@ import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/files/files_picker.dart';
+import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/widgets/loading_box.dart';
@@ -64,6 +65,7 @@ class _FilesFlowState extends State<FilesFlow> {
   @override
   void dispose() {
     _clear();
+    evictMediaImages();
     super.dispose();
   }
 
