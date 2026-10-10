@@ -7,11 +7,11 @@ import 'dart:typed_data';
 Uint8List encodeJpegStrip(Uint8List rgba, int width, int height, int quality) =>
     _Strip(rgba, width, height, quality).encode();
 
-/// about 4 mb of pixels, in whole mcu rows so only the last strip has a partial one,
+/// about 2 mb of pixels, in whole mcu rows so only the last strip has a partial one,
 /// and few enough mcus for a restart interval.
 int jpegStripRows(int width) {
   final mcuColumns = (width + 15) >> 4;
-  return max(1, min((1 << 16) ~/ width, 65535 ~/ mcuColumns)) << 4;
+  return max(1, min((1 << 15) ~/ width, 65535 ~/ mcuColumns)) << 4;
 }
 
 /// the headers, then the strips with a restart marker between each.
