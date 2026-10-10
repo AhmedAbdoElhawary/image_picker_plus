@@ -87,14 +87,41 @@ class ImageServiceImpl implements ImageService {
       height,
       quality,
     );
-    var best = (await encode(width, height, output.quality), width, height);
+    // 4 bands spread down the image, an eighth of it in all, tell its size at a quality
+    Future<bool> clearlyOver(int quality, int limit) async {
+      final rows = max(16, (height ~/ 32 + 15) & ~15);
+      if (rows * 4 >= height) return false;
+      Future<Uint8List> band(int top) => encodeJpeg(
+        (offset, count) => _draw(decoded, state, colorMatrix, width, height, top + offset, count),
+        width,
+        rows,
+        quality,
+      );
+      // on the mcu grid of the whole, so a band encodes like that part of it
+      final bands = await Future.wait([
+        for (var i = 0; i < 4; i++) band(((height - rows) * (2 * i + 1) ~/ 8) & ~15),
+      ]);
+      final bytes = bands.fold(0, (sum, jpeg) => sum + jpeg.length);
+      // each band has its own headers so it reads a bit high, only a clear miss counts
+      return bytes * height / (rows * 4) > limit * 1.1;
+    }
+
     final maxBytes = output.maxBytes;
+    // a lower quality first, it keeps more detail than a smaller size
+    final qualities = [
+      output.quality,
+      for (final quality in [80, 65, OutputOptions.qualityFloor])
+        if (quality < output.quality) quality,
+    ];
+    var step = 0;
+    // the whole image is only encoded at a quality that may fit, a full encode is the slow part
+    while (maxBytes != null && step < qualities.length - 1 && await clearlyOver(qualities[step], maxBytes)) {
+      step++;
+    }
+    var best = (await encode(width, height, qualities[step]), width, height);
     if (maxBytes != null) {
-      // a lower quality first, it keeps more detail than a smaller size
-      for (final quality in [80, 65, OutputOptions.qualityFloor]) {
-        if (best.$1.length <= maxBytes) break;
-        if (quality >= output.quality) continue;
-        final jpeg = await encode(width, height, quality);
+      while (best.$1.length > maxBytes && ++step < qualities.length) {
+        final jpeg = await encode(width, height, qualities[step]);
         if (jpeg.length < best.$1.length) best = (jpeg, width, height);
       }
       final quality = min(output.quality, OutputOptions.qualityFloor);
