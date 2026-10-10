@@ -39,9 +39,15 @@ class _MarkupViewState extends State<MarkupView> {
   TextMark? _editing;
   TextMark? _editingFrom;
 
-  Color? _color;
-  double _width = PenControls.widths[1];
-  bool _erasing = false;
+  /// apart from the page's state, a color or size tap rebuilds only the pen controls.
+  late final ValueNotifier<StrokeMark> _pen = ValueNotifier(
+    StrokeMark(
+      points: const [],
+      color: PickerScope.of(context).settings.markup.colors.first,
+      width: PenControls.widths[1],
+    ),
+  );
+  final ValueNotifier<bool> _erasing = ValueNotifier(false);
 
   EditController get _controller => widget.controller;
   MarkupController get _markup => _controller.markups[_controller.current.value.id]!;
@@ -61,7 +67,7 @@ class _MarkupViewState extends State<MarkupView> {
   void dispose() {
     _controller.tool.removeListener(_onTool);
     _focus.dispose();
-    for (final notifier in [_moving, _active, _dragging]) {
+    for (final notifier in [_moving, _active, _dragging, _pen, _erasing]) {
       notifier.dispose();
     }
     super.dispose();
@@ -173,13 +179,7 @@ class _MarkupViewState extends State<MarkupView> {
                             moving: _moving,
                             active: _active,
                             editingFrom: _editingFrom,
-                            pen: StrokeMark(
-                              points: const [],
-                              color: _erasing
-                                  ? scope.theme.onSurface.withValues(alpha: 0.4)
-                                  : _color ?? scope.settings.markup.colors.first,
-                              width: _erasing ? PenControls.eraserWidth : _width,
-                            ),
+                            pen: _pen,
                             erasing: _erasing,
                             onTapText: (mark) {
                               // an emoji is a text too, it shouldn't open the editor when text is off
@@ -194,14 +194,25 @@ class _MarkupViewState extends State<MarkupView> {
                           ),
                         ),
                         if (tool == MarkupTool.draw)
-                          PenControls(
-                            colors: scope.settings.markup.colors,
-                            color: _color ?? scope.settings.markup.colors.first,
-                            width: _width,
-                            erasing: _erasing,
-                            onColor: (color) => setState(() => _color = color),
-                            onWidth: (width) => setState(() => _width = width),
-                            onErasing: (erasing) => setState(() => _erasing = erasing),
+                          ListenableBuilder(
+                            listenable: Listenable.merge([_pen, _erasing]),
+                            builder: (context, _) => PenControls(
+                              colors: scope.settings.markup.colors,
+                              color: _pen.value.color,
+                              width: _pen.value.width,
+                              erasing: _erasing.value,
+                              onColor: (color) => _pen.value = StrokeMark(
+                                points: const [],
+                                color: color,
+                                width: _pen.value.width,
+                              ),
+                              onWidth: (width) => _pen.value = StrokeMark(
+                                points: const [],
+                                color: _pen.value.color,
+                                width: width,
+                              ),
+                              onErasing: (erasing) => _erasing.value = erasing,
+                            ),
                           ),
                         const SizedBox(height: PickerLayout.padding / 2),
                       ],
