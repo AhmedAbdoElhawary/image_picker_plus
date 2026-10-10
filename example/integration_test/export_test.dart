@@ -55,6 +55,18 @@ void main() {
       sampler.cancel();
       memory.add((peak - before) >> 20);
     }
+    // the photo is about 3.6 mb, so 1 mb needs a lower quality and a smaller size
+    final limited = <int>[];
+    for (var i = 0; i < 2; i++) {
+      final watch = Stopwatch()..start();
+      await service.export(
+        XFile(source.path),
+        const EditState(filterIndex: 1),
+        filters[1],
+        const OutputOptions(maxBytes: 1 << 20),
+      );
+      limited.add(watch.elapsedMilliseconds);
+    }
     await dir.delete(recursive: true);
 
     binding.reportData = {
@@ -62,8 +74,11 @@ void main() {
       "encode_ms": encodes,
       "export_ms": exports,
       "export_extra_mb": memory,
+      "export_1mb_ms": limited,
     };
-    debugPrint("encode ms $encodes, full export ms $exports, extra memory mb $memory");
+    debugPrint(
+      "encode ms $encodes, full export ms $exports, extra memory mb $memory, 1 mb limit ms $limited",
+    );
   });
 }
 
