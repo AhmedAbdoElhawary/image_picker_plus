@@ -143,12 +143,7 @@ class _ThumbState extends State<_Thumb> {
                 child: item.isVideo && item.path != null
                     ? const VideoTile()
                     : Image(
-                        image: mediaImage(
-                          item,
-                          pixels,
-                          gallery: scope.services.gallery,
-                          cache: scope.services.cache,
-                        ),
+                        image: mediaImage(item, pixels, gallery: scope.services.gallery),
                         fit: BoxFit.cover,
                         gaplessPlayback: true,
                         errorBuilder: (context, error, stack) =>
