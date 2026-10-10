@@ -91,7 +91,8 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
               child: ClipRRect(borderRadius: BorderRadius.circular(PickerLayout.radius), child: preview),
             ),
           ),
-          Expanded(child: widget.grid(EdgeInsets.zero, _collapse)),
+          // a scroll would paint the preview again too, nothing else splits them
+          Expanded(child: RepaintBoundary(child: widget.grid(EdgeInsets.zero, _collapse))),
         ],
       );
     }
@@ -105,7 +106,10 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
             children: [
               NotificationListener<ScrollUpdateNotification>(
                 onNotification: _onScroll,
-                child: widget.grid(EdgeInsetsDirectional.only(top: height + PickerLayout.gap), _collapse),
+                // a scroll would paint the preview again too, nothing else splits them
+                child: RepaintBoundary(
+                  child: widget.grid(EdgeInsetsDirectional.only(top: height + PickerLayout.gap), _collapse),
+                ),
               ),
               Positioned(
                 top: 0,
@@ -129,7 +133,11 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
                                 _collapse.value = (_collapse.value - details.delta.dy).clamp(0, _maxCollapse)
                           : null,
                       onVerticalDragEnd: collapsed ? _onDragEnd : null,
-                      child: AbsorbPointer(absorbing: collapsed, child: preview),
+                      // sliding it up only moves the layer, the image and crop aren't painted again
+                      child: AbsorbPointer(
+                        absorbing: collapsed,
+                        child: RepaintBoundary(child: preview),
+                      ),
                     ),
                   ),
                 ),
