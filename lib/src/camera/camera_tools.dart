@@ -5,6 +5,7 @@ import 'package:image_picker_plus/src/camera/capture_controller.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/selector.dart';
 
 /// 0.5x only when the camera goes below 1, the max only when it's past 2. fewer than two hides the row.
 List<double> quickLevels(double low, double high) {
@@ -25,12 +26,15 @@ class ZoomButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
-    return ListenableBuilder(
+    // a pinch sets the zoom many times a second, the row only changes at the 0.1 it shows
+    return Selector<(double, double, double)>(
       listenable: Listenable.merge([controller.minZoom, controller.maxZoom, controller.zoom]),
-      builder: (context, _) {
-        final levels = quickLevels(controller.minZoom.value, controller.maxZoom.value);
+      select: () =>
+          (controller.minZoom.value, controller.maxZoom.value, (controller.zoom.value * 10).round() / 10),
+      builder: (context, zooms, _) {
+        final (low, high, zoom) = zooms;
+        final levels = quickLevels(low, high);
         if (levels.isEmpty) return const SizedBox.shrink();
-        final zoom = controller.zoom.value;
         // the highest level at or under the zoom, it shows the zoom when it's between levels
         final active = levels.lastWhere((level) => level <= zoom + 0.05, orElse: () => levels.first);
         return Row(
@@ -57,7 +61,7 @@ class ZoomButtons extends StatelessWidget {
                         ),
                         child: ExcludeSemantics(
                           child: Text(
-                            level == active ? _zoomLabel((zoom * 10).round() / 10) : _zoomLabel(level),
+                            level == active ? _zoomLabel(zoom) : _zoomLabel(level),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
