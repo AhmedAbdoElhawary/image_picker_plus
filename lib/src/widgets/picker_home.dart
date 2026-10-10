@@ -7,6 +7,7 @@ import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
@@ -31,6 +32,9 @@ class _PickerHomeState extends State<PickerHome> {
 
   /// made without the gallery tab too, it holds what the camera adds.
   GalleryController? _gallery;
+
+  /// made once, so a tab switch or adding doesn't build the hidden gallery again.
+  late final Widget _galleryPage = GalleryPage(controller: _gallery!, onEdit: _edit, onClose: _close);
 
   /// what the edit page had when its plus was tapped, back from adding puts it back.
   List<MediaItem> _beforeAdd = const [];
@@ -72,6 +76,7 @@ class _PickerHomeState extends State<PickerHome> {
     _crop?.dispose();
     _filterIndex?.dispose();
     _markup?.dispose();
+    evictMediaImages();
     super.dispose();
   }
 
@@ -202,16 +207,13 @@ class _PickerHomeState extends State<PickerHome> {
                     if (hasGallery)
                       Offstage(
                         offstage: current != PickerTab.gallery,
-                        child: TickerMode(
-                          enabled: current == PickerTab.gallery,
-                          child: GalleryPage(controller: _gallery!, onEdit: _edit, onClose: _close),
-                        ),
+                        child: TickerMode(enabled: current == PickerTab.gallery, child: _galleryPage),
                       ),
                     // the camera is built only while shown, so it's released when leaving.
                     // no fade, two camera pages at once fight over the one camera
                     if (current != PickerTab.gallery)
                       SizedBox(
-                        height: MediaQuery.of(context).size.height - (PickerLayout.pickerTabsHeight),
+                        height: MediaQuery.sizeOf(context).height - (PickerLayout.pickerTabsHeight),
                         child: CameraPage(
                           key: ValueKey(current),
                           video: current == PickerTab.video,
