@@ -60,7 +60,7 @@ void main() {
 
   testWidgets("a tall image is drawn in strips that line up", (tester) async {
     await tester.runAsync(() async {
-      // 256 rows a strip at this width, so 3 strips
+      // 128 rows a strip at this width, so 5 strips
       final item = await service.export(
         grid(4096, 600),
         const EditState(),
