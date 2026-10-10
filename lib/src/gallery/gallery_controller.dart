@@ -18,6 +18,9 @@ enum GalleryState { loading, ready, denied, empty }
 class GalleryController {
   static const int pageSize = 20;
 
+  /// the pages after the first, big since each one builds the grid again.
+  static const int restSize = 500;
+
   final GalleryService service;
   final PickerSettings settings;
 
@@ -36,6 +39,7 @@ class GalleryController {
   /// opened again from the edit page's plus, next adds to what's there.
   final ValueNotifier<bool> adding = ValueNotifier(false);
 
+  /// pages of [restSize] loaded.
   int _page = 0;
   bool _disposed = false;
 
@@ -126,8 +130,10 @@ class GalleryController {
     items.value = const [];
     ended.value = false;
     _page = 0;
-    await _loadPage(next, generation);
+    final page = await service.items(next, page: 0, size: pageSize);
     if (_disposed || generation != _generation) return;
+    items.value = page;
+    if (page.length < pageSize) ended.value = true;
     if (items.value.isEmpty) {
       state.value = GalleryState.empty;
       return;
@@ -143,18 +149,15 @@ class GalleryController {
     unawaited(_loadRest(next, generation));
   }
 
-  Future<void> _loadPage(Album current, int generation) async {
-    final page = await service.items(current, page: _page, size: pageSize);
-    if (_disposed || generation != _generation) return;
-    _page++;
-    items.value = [...items.value, ...page];
-    if (page.length < pageSize) ended.value = true;
-  }
-
   /// stops when the album changes or reloads, they start their own.
   Future<void> _loadRest(Album current, int generation) async {
     while (!_disposed && generation == _generation && !ended.value) {
-      await _loadPage(current, generation);
+      final page = await service.items(current, page: _page, size: restSize);
+      if (_disposed || generation != _generation) return;
+      // the first big page has the small first one in it, so it takes its place
+      items.value = _page == 0 ? page : [...items.value, ...page];
+      _page++;
+      if (page.length < restSize) ended.value = true;
     }
   }
 
@@ -168,10 +171,10 @@ class GalleryController {
     final fresh = <MediaItem>[];
     var end = false;
     for (var page = 0; page < pages && !end; page++) {
-      final list = await service.items(current, page: page, size: pageSize);
+      final list = await service.items(current, page: page, size: restSize);
       if (_disposed || generation != _generation) return;
       fresh.addAll(list);
-      end = list.length < pageSize;
+      end = list.length < restSize;
     }
     final now = fresh.toSet();
     _page = pages;
