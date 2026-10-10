@@ -27,18 +27,19 @@ void main() {
     return controller;
   }
 
-  test("shows the first page, then loads the rest 20 at a time to the end", () async {
-    final gallery = FakeGalleryService.withItems(50);
+  test("shows the first 20, then loads the rest 500 at a time to the end", () async {
+    final gallery = FakeGalleryService.withItems(1100);
     final controller = controllerFor(gallery);
     await controller.init();
-    expect(gallery.pageCalls.first, ("all", 0));
+    expect(gallery.pageCalls.first, ("all", 0, 20));
     expect(controller.state.value, GalleryState.ready);
     expect(controller.preview.value?.id, "0");
     expect(controller.selection.value.map((e) => e.id), ["0"]);
 
     await pumpEventQueue();
-    expect(gallery.pageCalls, [("all", 0), ("all", 1), ("all", 2)]);
-    expect(controller.items.value.length, 50);
+    expect(gallery.pageCalls, [("all", 0, 20), ("all", 0, 500), ("all", 1, 500), ("all", 2, 500)]);
+    expect(controller.items.value.length, 1100);
+    expect(controller.items.value.last.id, "1099");
     expect(controller.ended.value, isTrue);
   });
 
