@@ -21,21 +21,37 @@ class MarkupLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final active = this.active;
+    final layer = ListenableBuilder(
+      listenable: Listenable.merge([controller, moving]),
+      builder: (context, _) {
+        final moving = this.moving?.value;
+        final items = [
+          for (final item in controller.value)
+            if (item != hidden) moving != null && item == moving.$1 ? moving.$2 : item,
+        ];
+        return CustomPaint(
+          size: Size.infinite,
+          painter: MarkupPainter(items: items),
+        );
+      },
+    );
     return IgnorePointer(
-      child: ListenableBuilder(
-        listenable: Listenable.merge([controller, moving, active]),
-        builder: (context, _) {
-          final moving = this.moving?.value;
-          final items = [
-            for (final item in controller.value)
-              if (item != hidden) moving != null && item == moving.$1 ? moving.$2 : item,
-          ];
-          return CustomPaint(
-            size: Size.infinite,
-            painter: MarkupPainter(items: items, active: active?.value),
-          );
-        },
-      ),
+      child: active == null
+          ? layer
+          : Stack(
+              fit: StackFit.expand,
+              children: [
+                layer,
+                // its own layer, a finger move repaints the one stroke and not every stroke and text
+                RepaintBoundary(
+                  child: CustomPaint(
+                    size: Size.infinite,
+                    painter: MarkupPainter(items: const [], active: active),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
