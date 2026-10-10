@@ -8,7 +8,6 @@ import 'package:image_picker_plus/src/gallery/gallery_cell.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_scrollbar.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
-import 'package:image_picker_plus/src/widgets/loading_box.dart';
 
 class GalleryGrid extends StatefulWidget {
   final GalleryController controller;
@@ -59,7 +58,8 @@ class _GalleryGridState extends State<GalleryGrid> {
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final settings = controller.settings;
-    final texts = PickerScope.of(context).texts;
+    final scope = PickerScope.of(context);
+    final texts = scope.texts;
     final columns = settings.gridColumns ?? PickerLayout.of(context).columns;
     final aspect = settings.gridCellAspectRatio;
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
@@ -70,7 +70,6 @@ class _GalleryGridState extends State<GalleryGrid> {
         final cellHeight = cellWidth / aspect;
         // the thumbnail's short side is size, so it has to cover the cell's longer side
         final size = (max(cellWidth, cellHeight) * pixelRatio).ceil();
-        final cover = Size((cellWidth * pixelRatio).ceilToDouble(), (cellHeight * pixelRatio).ceilToDouble());
         return ValueListenableBuilder<List<MediaItem>>(
           valueListenable: controller.items,
           builder: (context, items, _) => ValueListenableBuilder<bool>(
@@ -98,14 +97,13 @@ class _GalleryGridState extends State<GalleryGrid> {
                     crossAxisSpacing: PickerLayout.gap,
                   ),
                   itemBuilder: (context, index) {
-                    if (index >= items.length) return const LoadingBox();
+                    if (index >= items.length) return ColoredBox(color: scope.theme.surface);
                     final item = items[index];
                     return GalleryCell(
                       key: ValueKey(item.id),
                       item: item,
                       controller: controller,
                       size: size,
-                      cover: cover,
                       onTap: () => widget.onTap(item),
                       onLongPress: () => widget.onLongPress(item),
                     );
