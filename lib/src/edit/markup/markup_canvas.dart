@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/cropped_image.dart';
@@ -9,6 +10,7 @@ import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item_view.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
+import 'package:image_picker_plus/src/edit/markup/pen_controls.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 
 /// the current image cropped like it'll be saved, with its markup to move or draw on.
@@ -21,9 +23,9 @@ class MarkupCanvas extends StatelessWidget {
   /// left out while it's open in the editor.
   final TextMark? editingFrom;
 
-  /// the color and width a new stroke gets.
-  final StrokeMark pen;
-  final bool erasing;
+  /// the color and width a new stroke gets, read when it starts, so a change doesn't build the canvas again.
+  final ValueListenable<StrokeMark> pen;
+  final ValueListenable<bool> erasing;
   final ValueChanged<TextMark> onTapText;
   final void Function(MarkupItem mark, MarkupItem to, Offset pointer) onMove;
   final void Function(MarkupItem mark, MarkupItem to, Offset pointer) onEnd;
@@ -117,8 +119,8 @@ class _Pen extends StatefulWidget {
   final Size size;
   final MarkupController markup;
   final ValueNotifier<StrokeMark?> active;
-  final StrokeMark pen;
-  final bool erasing;
+  final ValueListenable<StrokeMark> pen;
+  final ValueListenable<bool> erasing;
 
   const _Pen({
     required this.size,
@@ -141,6 +143,7 @@ class _PenState extends State<_Pen> {
   Widget build(BuildContext context) {
     final size = widget.size;
     final active = widget.active;
+    final eraser = PickerScope.of(context).theme.onSurface.withValues(alpha: 0.4);
     return Listener(
       behavior: HitTestBehavior.opaque,
       onPointerDown: (event) {
@@ -150,11 +153,12 @@ class _PenState extends State<_Pen> {
           active.value = null;
           return;
         }
-        final pen = widget.pen;
+        final pen = widget.pen.value;
+        final erasing = widget.erasing.value;
         active.value = StrokeMark(
           points: [_normalized(event.localPosition)],
-          color: pen.color,
-          width: pen.width,
+          color: erasing ? eraser : pen.color,
+          width: erasing ? PenControls.eraserWidth : pen.width,
         );
       },
       onPointerMove: (event) {
@@ -175,7 +179,7 @@ class _PenState extends State<_Pen> {
         final stroke = active.value;
         if (stroke == null) return;
         active.value = null;
-        widget.erasing
+        widget.erasing.value
             ? widget.markup.erase(stroke.points, stroke.width, aspect: size.width / size.height)
             : widget.markup.add(stroke);
       },
