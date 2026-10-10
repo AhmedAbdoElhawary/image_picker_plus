@@ -60,9 +60,9 @@ void main() {
     expect(low.length, lessThan(high.length));
   });
 
-  test("strips are about 4 mb, whole mcu rows and fit a restart interval", () {
-    expect(jpegStripRows(4096), 256);
-    expect(jpegStripRows(1000), 1040);
+  test("strips are about 2 mb, whole mcu rows and fit a restart interval", () {
+    expect(jpegStripRows(4096), 128);
+    expect(jpegStripRows(1000), 512);
     // 65535 wide is 4096 mcus a row, so 1 mcu row a strip at most
     expect(jpegStripRows(65535), 16);
   });
