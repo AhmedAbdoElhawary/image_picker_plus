@@ -15,6 +15,7 @@ class PickerLayout {
   static const double minTouch = 48;
   static const double minButtonTouchHeight = 30;
   static const double pickerTabsHeight = 52;
+  static const double appBarHeight = 56;
 
   /// the edit page on web and desktop is a card from this width up.
   static const double cardBreakpoint = 600;

@@ -115,7 +115,8 @@ class CameraServiceImpl implements CameraService {
   @override
   Future<PickedItem> takePhoto() async {
     final file = await _camera.takePicture();
-    final buffer = await ui.ImmutableBuffer.fromUint8List(await file.readAsBytes());
+    // read by the engine, the photo never gets copied into dart memory just for its size
+    final buffer = await ui.ImmutableBuffer.fromFilePath(file.path);
     final descriptor = await ui.ImageDescriptor.encoded(buffer);
     final item = PickedItem(
       file: file,

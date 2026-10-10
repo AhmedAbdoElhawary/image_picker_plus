@@ -23,7 +23,7 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(56);
+  Size get preferredSize => const Size.fromHeight(PickerLayout.appBarHeight);
   Widget getCloseIcon(BuildContext context) {
     final scope = PickerScope.of(context);
     final theme = scope.theme;

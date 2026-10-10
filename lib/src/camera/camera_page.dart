@@ -97,7 +97,7 @@ class _CameraPageState extends State<CameraPage> {
           ),
           _ => SafeArea(
             child: SizedBox(
-              height: MediaQuery.of(context).size.height - (PickerLayout.pickerTabsHeight),
+              height: MediaQuery.sizeOf(context).height - (PickerLayout.pickerTabsHeight),
 
               child: Material(
                 key: const ValueKey(CaptureState.ready),
