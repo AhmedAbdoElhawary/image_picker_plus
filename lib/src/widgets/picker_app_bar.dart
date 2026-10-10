@@ -1,5 +1,4 @@
-import 'dart:io' show Platform;
-
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
@@ -36,7 +35,7 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   IconData getIcon(BuildContext context) => closeIcon == CloseButtonEnum.back
-      ? Platform.isAndroid
+      ? defaultTargetPlatform == TargetPlatform.android
             ? Icons.arrow_back_rounded
             : Icons.arrow_back_ios_rounded
       : Icons.close_rounded;
