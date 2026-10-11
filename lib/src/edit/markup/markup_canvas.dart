@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/cropped_image.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
-import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/filtered_image.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item_view.dart';
@@ -48,8 +48,9 @@ class MarkupCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     final item = controller.current.value;
     final markup = controller.markups[item.id]!;
-    final crop = controller.crops[item.id]?.value ?? EditState.full;
-    final imageAspect = item.height == 0 ? 1.0 : item.width / item.height;
+    final orientation = controller.crops[item.id];
+    final crop = orientation?.value ?? EditState.full;
+    final imageAspect = orientation?.imageAspect ?? (item.height == 0 ? 1.0 : item.width / item.height);
     Widget canvas = AspectRatio(
       aspectRatio: imageAspect * crop.width / crop.height,
       child: CroppedImage(
@@ -63,7 +64,9 @@ class MarkupCanvas extends StatelessWidget {
                 FilteredImage(
                   item: item,
                   filter: controller.filterIndexes[item.id],
+                  adjustments: controller.adjustments[item.id],
                   crop: null,
+                  orientation: orientation,
                   markup: null,
                 ),
                 MarkupLayer(controller: markup, moving: moving, hidden: editingFrom, active: active),
@@ -101,7 +104,9 @@ class MarkupCanvas extends StatelessWidget {
           child: FilteredImage(
             item: item,
             filter: controller.filterIndexes[item.id],
+            adjustments: controller.adjustments[item.id],
             crop: null,
+            orientation: orientation,
             markup: markup,
           ),
         ),
