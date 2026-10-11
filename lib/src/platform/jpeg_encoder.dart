@@ -1,12 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-/// baseline jpeg, 4:2:0 with the standard tables. each strip is its own restart interval,
-/// so strips encode apart and join as they are.
-/// the image package's encoder reads a pixel object per pixel and writes bit by bit, this is a few times faster.
-Uint8List encodeJpegStrip(Uint8List rgba, int width, int height, int quality) =>
-    _Strip(rgba, width, height, quality).encode();
-
 /// about 2 mb of pixels, in whole mcu rows so only the last strip has a partial one,
 /// and few enough mcus for a restart interval.
 int jpegStripRows(int width) {
@@ -14,8 +8,9 @@ int jpegStripRows(int width) {
   return max(1, min((1 << 15) ~/ width, 65535 ~/ mcuColumns)) << 4;
 }
 
-/// the headers, then the strips with a restart marker between each.
-Uint8List joinJpeg(List<Uint8List> strips, int width, int height, int quality, int stripRows) {
+/// the headers a strip encode writes behind, [stripRows] is null for a single strip image.
+/// each strip after the first follows a restart marker, [restartMarker] gives them in order.
+Uint8List jpegHeader(int width, int height, int quality, int? stripRows) {
   final luma = _quant(_lumaBase, quality);
   final chroma = _quant(_chromaBase, quality);
   final bytes = BytesBuilder(copy: false)
@@ -39,45 +34,58 @@ Uint8List joinJpeg(List<Uint8List> strips, int width, int height, int quality, i
       ..add(counts)
       ..add(values);
   }
-  if (strips.length > 1) {
+  if (stripRows != null) {
     final interval = (stripRows >> 4) * ((width + 15) >> 4);
     bytes.add([0xff, 0xdd, 0, 4, interval >> 8, interval & 0xff]);
   }
   bytes.add([0xff, 0xda, 0, 12, 3, 1, 0, 2, 0x11, 3, 0x11, 0, 0x3f, 0]);
-  for (var i = 0; i < strips.length; i++) {
-    if (i > 0) bytes.add([0xff, 0xd0 + (i - 1) % 8]);
-    bytes.add(strips[i]);
-  }
-  bytes.add([0xff, 0xd9]);
   return bytes.takeBytes();
 }
 
-class _Strip {
-  final Uint8List rgba;
+/// before the strip after [index], its own restart interval starts there.
+Uint8List restartMarker(int index) => Uint8List.fromList([0xff, 0xd0 + index % 8]);
+
+/// after the last strip.
+const List<int> jpegEnd = [0xff, 0xd9];
+
+/// baseline jpeg, 4:2:0 with the standard tables. each strip is its own restart interval,
+/// so strips encode apart and join as they are.
+/// the image package's encoder reads a pixel object per pixel and writes bit by bit, this is a few times faster.
+/// one encoder does every strip of an image: the tables, the blocks and the output buffer are
+/// made once instead of a megabyte of them per strip.
+class JpegStripEncoder {
   final int width;
-  final int height;
   final Float32List lumaScale;
   final Float32List chromaScale;
   final Int32List coefficients = Int32List(64);
+  final List<Float32List> _luma = List.generate(4, (_) => Float32List(64));
+  final Float32List _blue = Float32List(64);
+  final Float32List _red = Float32List(64);
+  final Int32List _columns = Int32List(16);
   Uint8List out;
   int length = 0;
   int bits = 0;
   int count = 0;
 
-  _Strip(this.rgba, this.width, this.height, int quality)
+  JpegStripEncoder(this.width, int quality)
     : lumaScale = _scale(_quant(_lumaBase, quality)),
       chromaScale = _scale(_quant(_chromaBase, quality)),
-      out = Uint8List(max(1024, width * height ~/ 2));
+      out = Uint8List(max(1024, width * 8));
 
-  Uint8List encode() {
-    final luma = List.generate(4, (_) => Float32List(64));
-    final blue = Float32List(64);
-    final red = Float32List(64);
-    final columns = Int32List(16);
+  /// the first [rows] rows of [rgba]. the bytes are the encoder's own buffer, they hold until
+  /// the next strip goes into it.
+  Uint8List encode(Uint8List rgba, int rows) {
+    final luma = _luma;
+    final blue = _blue;
+    final red = _red;
+    final columns = _columns;
+    length = 0;
+    bits = 0;
+    count = 0;
     var dcLuma = 0;
     var dcBlue = 0;
     var dcRed = 0;
-    for (var top = 0; top < height; top += 16) {
+    for (var top = 0; top < rows; top += 16) {
       for (var left = 0; left < width; left += 16) {
         // the edge pixel repeats past the right and bottom
         for (var column = 0; column < 16; column++) {
@@ -86,7 +94,7 @@ class _Strip {
         blue.fillRange(0, 64, 0);
         red.fillRange(0, 64, 0);
         for (var row = 0; row < 16; row++) {
-          final start = min(top + row, height - 1) * width;
+          final start = min(top + row, rows - 1) * width;
           final half = (row >> 3) << 1;
           final lumaRow = (row & 7) << 3;
           final chromaRow = (row >> 1) << 3;
