@@ -49,6 +49,18 @@ class MarkupController extends ValueNotifier<List<MarkupItem>> {
     ]);
   }
 
+  /// every item and every undo and redo step through [map], with no step of its own,
+  /// for when the image under them turns or flips.
+  void transform(MarkupItem Function(MarkupItem) map) {
+    List<MarkupItem> all(List<MarkupItem> items) => [for (final item in items) map(item)];
+    for (final stack in [_undo, _redo]) {
+      for (var i = 0; i < stack.length; i++) {
+        stack[i] = all(stack[i]);
+      }
+    }
+    value = all(value);
+  }
+
   void undo() {
     if (_undo.isEmpty) return;
     _redo.add(value);
