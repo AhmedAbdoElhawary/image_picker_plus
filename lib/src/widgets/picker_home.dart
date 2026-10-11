@@ -3,10 +3,9 @@ import 'package:image_picker_plus/src/camera/camera_page.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_route.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
-import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/image_edits.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
@@ -40,9 +39,7 @@ class _PickerHomeState extends State<PickerHome> {
   List<MediaItem> _beforeAdd = const [];
 
   /// the last photo's edits, kept until the next photo since the edit page uses them while it closes.
-  CropController? _crop;
-  ValueNotifier<int>? _filterIndex;
-  MarkupController? _markup;
+  ImageEdits _takenEdits = ImageEdits();
 
   @override
   void didChangeDependencies() {
@@ -73,9 +70,7 @@ class _PickerHomeState extends State<PickerHome> {
   @override
   void dispose() {
     _gallery?.dispose();
-    _crop?.dispose();
-    _filterIndex?.dispose();
-    _markup?.dispose();
+    _takenEdits.dispose();
     evictMediaImages();
     super.dispose();
   }
@@ -102,6 +97,7 @@ class _PickerHomeState extends State<PickerHome> {
         crops: gallery.crops,
         filterIndexes: gallery.filterIndexes,
         markups: gallery.markups,
+        adjustments: gallery.adjustments,
         onAdd: _add,
         onReorder: (items) => gallery.selection.value = items,
       ),
@@ -153,29 +149,18 @@ class _PickerHomeState extends State<PickerHome> {
       if (mounted) Navigator.of(context).pop([?done]);
       return;
     }
-    _crop?.dispose();
-    _filterIndex?.dispose();
-    _markup?.dispose();
-    final crop = _crop = settings.cropRatios.isEmpty
-        ? null
-        : CropController(
-            imageAspect: item.height == 0 ? 1 : item.width / item.height,
-            ratio: settings.cropRatios.first,
-          );
-    final filterIndex = _filterIndex = settings.filters ? ValueNotifier(0) : null;
-    final markup = _markup = settings.markup.enabled ? MarkupController() : null;
+    _takenEdits.dispose();
+    final taken = _takenEdits = ImageEdits()..prepare([item], settings);
     return _open(
       EditPage(
         items: [item],
-        crops: {item.id: ?crop},
-        filterIndexes: {item.id: ?filterIndex},
-        markups: {item.id: ?markup},
+        crops: taken.crops,
+        filterIndexes: taken.filterIndexes,
+        markups: taken.markups,
+        adjustments: taken.adjustments,
         onAdd: () {
-          // the gallery owns them from here
-          _crop = null;
-          _filterIndex = null;
-          _markup = null;
-          gallery.selectTaken(item, crop: crop, filterIndex: filterIndex, markup: markup);
+          // the gallery owns them from here, and _takenEdits is left empty
+          gallery.selectTaken(item, taken);
           _add();
         },
       ),
