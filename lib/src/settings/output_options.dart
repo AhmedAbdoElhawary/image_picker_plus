@@ -38,8 +38,9 @@ class OutputOptions {
        assert(maxHeight == null || maxHeight > 0, "maxHeight is > 0 when set"),
        assert(maxBytes == null || maxBytes > 0, "maxBytes is > 0 when set");
 
-  /// above any phone screen and below the gpu texture limit of older devices.
-  static const int safeMaxSide = 4096;
+  /// above any phone screen, and an export holds about 8 bytes a pixel of what it writes,
+  /// so a bigger one than this is memory a 2 gb phone doesn't have.
+  static const int safeMaxSide = 2048;
 
   /// below this jpeg blocks show, scaling down looks better.
   static const int qualityFloor = 50;
