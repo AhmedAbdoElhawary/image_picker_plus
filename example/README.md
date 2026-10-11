@@ -12,7 +12,7 @@ final items = await ImagePickerPlus.pick(
     mediaType: MediaType.all,
     maxSelection: 10,
     cropRatios: [CropRatio.square, CropRatio.portrait],
-    filters: true,
+    filters: PickerFilter.all,
   ),
 );
 if (items == null) return; // closed
