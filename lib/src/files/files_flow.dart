@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/edit_frame.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
-import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/image_edits.dart';
 import 'package:image_picker_plus/src/files/files_picker.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
@@ -31,9 +30,7 @@ class _FilesFlowState extends State<FilesFlow> {
 
   /// shown first on the edit page, the first added one after adding.
   MediaItem? _initial;
-  final Map<String, CropController> _crops = {};
-  final Map<String, ValueNotifier<int>> _filterIndexes = {};
-  final Map<String, MarkupController> _markups = {};
+  final ImageEdits _edits = ImageEdits();
 
   /// goes up on each back, an older pick that comes back late is dropped.
   int _generation = 0;
@@ -50,21 +47,14 @@ class _FilesFlowState extends State<FilesFlow> {
       return;
     }
     final settings = PickerScope.of(context).settings;
-    final (crops, filters, markups) = preselection.restore(
-      ratios: settings.cropRatios,
-      filters: settings.filters,
-      markup: settings.markup,
-    );
-    _crops.addAll(crops);
-    _filterIndexes.addAll(filters);
-    _markups.addAll(markups);
-    _prepare(preselection.items);
+    preselection.restore(_edits, settings: settings, ratios: settings.cropRatios);
+    _edits.prepare(preselection.items, settings);
     _items = preselection.items;
   }
 
   @override
   void dispose() {
-    _clear();
+    _edits.dispose();
     evictMediaImages();
     super.dispose();
   }
@@ -80,28 +70,12 @@ class _FilesFlowState extends State<FilesFlow> {
       Navigator.of(context).pop();
       return;
     }
-    _clear();
-    _prepare(pick.items);
+    _edits.dispose();
+    _edits.prepare(pick.items, settings);
     setState(() {
       _items = pick.items;
       _initial = null;
     });
-  }
-
-  void _prepare(List<MediaItem> items) {
-    final settings = PickerScope.of(context).settings;
-    for (final item in items) {
-      if (item.isVideo) continue;
-      if (settings.cropRatios.isNotEmpty) {
-        final aspect = item.height == 0 ? 1.0 : item.width / item.height;
-        _crops.putIfAbsent(
-          item.id,
-          () => CropController(imageAspect: aspect, ratio: settings.cropRatios.first),
-        );
-      }
-      if (settings.filters) _filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
-      if (settings.markup.enabled) _markups.putIfAbsent(item.id, MarkupController.new);
-    }
   }
 
   /// the new files go after the ones there, only as many as still fit.
@@ -123,7 +97,7 @@ class _FilesFlowState extends State<FilesFlow> {
       pick.showMessages(ScaffoldMessenger.maybeOf(context), scope.settings);
       final added = pick.items;
       if (added.isEmpty) return;
-      _prepare(added);
+      _edits.prepare(added, scope.settings);
       setState(() {
         _generation++;
         _items = [..._items!, ...added];
@@ -147,21 +121,6 @@ class _FilesFlowState extends State<FilesFlow> {
     });
   }
 
-  void _clear() {
-    for (final crop in _crops.values) {
-      crop.dispose();
-    }
-    for (final filter in _filterIndexes.values) {
-      filter.dispose();
-    }
-    for (final markup in _markups.values) {
-      markup.dispose();
-    }
-    _crops.clear();
-    _filterIndexes.clear();
-    _markups.clear();
-  }
-
   @override
   Widget build(BuildContext context) {
     final items = _items;
@@ -175,9 +134,10 @@ class _FilesFlowState extends State<FilesFlow> {
         key: ValueKey(_generation),
         items: items,
         initial: _initial,
-        crops: _crops,
-        filterIndexes: _filterIndexes,
-        markups: _markups,
+        crops: _edits.crops,
+        filterIndexes: _edits.filterIndexes,
+        markups: _edits.markups,
+        adjustments: _edits.adjustments,
         onBack: _repick,
         onAdd: _add,
         onReorder: (items) => _items = items,
