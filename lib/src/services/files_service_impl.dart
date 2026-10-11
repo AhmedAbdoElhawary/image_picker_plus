@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
+import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/services/files_service.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
@@ -32,8 +33,9 @@ class FilesServiceImpl implements FilesService {
       var width = 0;
       var height = 0;
       if (type == MediaType.image) {
+        // read by the engine, the file isn't copied into dart memory just for its size
         final codec = await ui.instantiateImageCodecWithSize(
-          await ui.ImmutableBuffer.fromUint8List(await file.readAsBytes()),
+          await imageBuffer(file),
           getTargetSize: (intrinsicWidth, intrinsicHeight) {
             width = intrinsicWidth;
             height = intrinsicHeight;
