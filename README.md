@@ -165,7 +165,7 @@ for (final item in items) {
 | `gridCellAspectRatio` | `1` | width / height of a grid cell, `0.5` is twice as tall as wide |
 | `filters` | `[]` | the filter strip on the edit screen, `PickerFilter.all` for the shipped ones or your own, see below. `[]` hides it |
 | `adjustments` | `false` | brightness, contrast, saturation and warmth sliders on the edit screen |
-| `output` | `OutputOptions()` | `format` (JPEG or PNG), JPEG `quality` (90), and optional `maxWidth`, `maxHeight` and `maxBytes` for every returned image |
+| `output` | `OutputOptions()` | `format` (JPEG or PNG), JPEG `quality` (90), and optional `maxWidth`, `maxHeight` and `maxBytes` for every returned image. An edited image is 2048 pixels on its long side at most unless `maxWidth` or `maxHeight` asks for more |
 | `theme` | `null` | `null` uses `PickerTheme.dark()`, or follows the app brightness with `PickerTheme.light()` / `PickerTheme.dark()` when `alwaysDarkTheme` is `false` |
 | `alwaysDarkTheme` | `true` | `false` follows the app brightness. A custom `theme` wins over it |
 | `texts` | `PickerTexts()` | every text the picker shows, English by default. `PickerTexts.of(context)` follows the app's language |
@@ -178,6 +178,10 @@ When there's no crop, no filters, no sliders and no markup, next returns the pic
 The edit screen has rotate left and flip buttons under the image, for images only. Text, drawings and emojis turn with the photo, and a flip moves them without mirroring the letters.
 
 Edited images are returned as new JPEG files with no metadata, or PNG with `OutputOptions(format: OutputFormat.png)`. PNG keeps transparency and ignores `quality`. A JPEG gets white where the image was see through. Items that weren't edited, and all videos, are returned as the original file.
+
+A photo is decoded at 16 MP at most while exporting, so a phone with little memory can export one from a big sensor. A crop tight enough to want more than that comes back at the size the cap gives, not upscaled to it.
+
+An export holds about 8 bytes for every pixel of the image it writes, so the output size is what decides its memory. With no `maxWidth` or `maxHeight` an edited image is written at up to 2048 pixels on its long side, about 65 MB while it runs. Ask for more with `maxWidth` when you need it, and know what it costs: 4096 pixels is four times the pixels and about 100 MB. PNG takes nearly twice as much as JPEG, the engine's PNG encoder needs the whole image at once.
 
 The output limits hold for every image, edited or not. An image over `maxWidth`, `maxHeight` or `maxBytes` comes back as a smaller JPEG, with `edited` still `false` and the untouched file in `original`. For `maxBytes` the quality goes down first, to 50 at the lowest, then the size. A PNG has no quality, so only its size goes down. If it still can't fit, the smallest try comes back with `overLimit: true`. Videos are never re-encoded.
 
