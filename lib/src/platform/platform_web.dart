@@ -28,6 +28,14 @@ ImageProvider fileImage(String path) => NetworkImage(path);
 Future<ui.ImmutableBuffer> imageBuffer(XFile file) async =>
     ui.ImmutableBuffer.fromUint8List(await file.readAsBytes());
 
+/// ImageDescriptor.width throws here, so the codec reads the size and disposes the buffer itself.
+Future<ui.Image> decodeImage(XFile file, ui.TargetImageSizeCallback targetSize) async {
+  final codec = await ui.instantiateImageCodecWithSize(await imageBuffer(file), getTargetSize: targetSize);
+  final image = (await codec.getNextFrame()).image;
+  codec.dispose();
+  return image;
+}
+
 /// no player here, video_player's library imports dart:io and that would keep the
 /// package off wasm. the preview shows the file name instead, like windows and linux.
 VideoHandle? videoPlayer(String path) => null;
