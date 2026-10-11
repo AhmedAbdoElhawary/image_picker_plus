@@ -10,8 +10,8 @@ import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
-import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
+import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/select_button.dart';
 import 'package:image_picker_plus/src/gallery/video_preview.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
@@ -96,12 +96,16 @@ class PreviewImage extends StatelessWidget {
   /// set inside a crop view, it lays the image out bigger while zoomed in.
   final CropController? crop;
 
-  const PreviewImage({required this.item, this.fit = BoxFit.contain, this.crop, super.key});
+  /// the turns and flip to show the image with, [crop] when null.
+  final CropController? orientation;
+
+  const PreviewImage({required this.item, this.fit = BoxFit.contain, this.crop, this.orientation, super.key});
 
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
-    return LayoutBuilder(
+    final orientation = this.orientation ?? crop;
+    final image = LayoutBuilder(
       builder: (context, constraints) {
         final size = scope.settings.resizePreview
             ? _size(constraints.biggest / (crop?.zoom ?? 1), MediaQuery.devicePixelRatioOf(context))
@@ -116,6 +120,17 @@ class PreviewImage extends StatelessWidget {
               Center(child: Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted)),
         );
       },
+    );
+    if (orientation == null) return image;
+    // the box is the image as shown, the file is laid out turned back inside it
+    return Selector<(int, bool)>(
+      listenable: orientation,
+      select: () => (orientation.turns, orientation.flipped),
+      builder: (context, shown, image) => RotatedBox(
+        quarterTurns: -shown.$1,
+        child: Transform.flip(flipX: shown.$2, child: image),
+      ),
+      child: image,
     );
   }
 
