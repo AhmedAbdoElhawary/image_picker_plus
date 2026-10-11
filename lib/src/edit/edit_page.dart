@@ -7,17 +7,17 @@ import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
+import 'package:image_picker_plus/src/edit/edit_tools.dart';
 import 'package:image_picker_plus/src/edit/exporting_overlay.dart';
-import 'package:image_picker_plus/src/edit/filter_strip.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/edit/filtered_image.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_buttons.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
-import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
+import 'package:image_picker_plus/src/edit/orientation_buttons.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
-import 'package:image_picker_plus/src/gallery/media_preview.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
 import 'package:image_picker_plus/src/gallery/video_preview.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
 
@@ -26,6 +26,7 @@ class EditPage extends StatefulWidget {
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
   final Map<String, MarkupController> markups;
+  final Map<String, ValueNotifier<Adjustments>> adjustments;
 
   /// null pops, the system picker flow picks again instead.
   final VoidCallback? onBack;
@@ -44,6 +45,7 @@ class EditPage extends StatefulWidget {
     this.crops = const {},
     this.filterIndexes = const {},
     this.markups = const {},
+    this.adjustments = const {},
     this.onBack,
     this.initial,
     this.onAdd,
@@ -69,11 +71,13 @@ class _EditPageState extends State<EditPage> {
     _controller = EditController(
       services: scope.services,
       output: scope.settings.output,
+      filters: scope.settings.filters,
       items: widget.items,
       initial: widget.initial,
       crops: widget.crops,
       filterIndexes: widget.filterIndexes,
       markups: widget.markups,
+      adjustments: widget.adjustments,
     );
     _controller!.tool.addListener(_onTool);
     final onReorder = widget.onReorder;
@@ -173,7 +177,7 @@ class _EditPageState extends State<EditPage> {
               child: Column(
                 children: [
                   Expanded(child: _CurrentItem(controller: controller)),
-                  if (scope.settings.filters) FilterStrip(controller: controller),
+                  EditTools(controller: controller),
                   if (widget.items.length > 1 ||
                       (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
                     ReorderStrip(controller: controller, onAdd: widget.onAdd),
@@ -204,6 +208,7 @@ class _CurrentItem extends StatelessWidget {
         final image = FilteredImage(
           item: item,
           filter: controller.filterIndexes[item.id],
+          adjustments: controller.adjustments[item.id],
           crop: crop,
           markup: markup,
         );
@@ -227,13 +232,18 @@ class _CurrentItem extends StatelessWidget {
             key: ObjectKey(item),
             children: [
               CropView(controller: crop, image: image, heroTag: markup),
-              // a taken or picked file has no gallery preview to pick the ratio in, so it's picked here
-              if (item.path != null && scope.settings.cropRatios.length > 1)
+              if (scope.settings.cropRatios.length > 1)
                 PositionedDirectional(
                   start: PickerLayout.padding,
                   bottom: PickerLayout.ratioButtonBottomPadding,
                   child: RatioButton(controller: crop),
                 ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: PickerLayout.ratioButtonBottomPadding,
+                child: Center(child: OrientationButtons(controller: crop)),
+              ),
             ],
           );
         } else {
@@ -251,46 +261,6 @@ class _CurrentItem extends StatelessWidget {
           child: AnimatedSwitcher(duration: PickerDurations.of(context).short, child: child),
         );
       },
-    );
-  }
-}
-
-/// only this rebuilds when the filter changes, not the crop around it.
-class FilteredImage extends StatelessWidget {
-  final MediaItem item;
-  final ValueNotifier<int>? filter;
-  final CropController? crop;
-  final MarkupController? markup;
-
-  const FilteredImage({
-    required this.item,
-    required this.filter,
-    required this.crop,
-    required this.markup,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final image = PreviewImage(item: item, fit: BoxFit.fill, crop: crop);
-    final filter = this.filter;
-    final filtered = filter == null
-        ? image
-        : ValueListenableBuilder<int>(
-            valueListenable: filter,
-            builder: (context, index, image) =>
-                ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
-            child: image,
-          );
-    final markup = this.markup;
-    if (markup == null) return filtered;
-    // beside the filter, not under it, so it keeps its own colors
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        filtered,
-        MarkupLayer(controller: markup),
-      ],
     );
   }
 }
