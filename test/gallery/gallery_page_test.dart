@@ -17,6 +17,7 @@ import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/widgets/message_view.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 import '../fakes/fake_gallery_service.dart';
 import '../fakes/pump_picker.dart';
@@ -99,7 +100,7 @@ void main() {
   });
 
   group("adding from the edit page", () {
-    const editing = PickerSettings(maxSelection: 3, filters: true);
+    const editing = PickerSettings(maxSelection: 3, filters: PickerFilter.all);
 
     Future<void> openEdit(WidgetTester tester, {void Function(Object?)? onResult}) async {
       await pumpPicker(
@@ -165,7 +166,7 @@ void main() {
   });
 
   group("adding from the camera", () {
-    const both = PickerSettings(source: PickerSource.both, maxSelection: 3, filters: true);
+    const both = PickerSettings(source: PickerSource.both, maxSelection: 3, filters: PickerFilter.all);
 
     Future<void> openEdit(WidgetTester tester, {void Function(Object?)? onResult}) async {
       await pumpPicker(
@@ -420,7 +421,7 @@ void main() {
     await pumpPicker(
       tester,
       const PickerHome(),
-      settings: const PickerSettings(filters: true),
+      settings: const PickerSettings(filters: PickerFilter.all),
       onResult: (r) => result = r,
     );
     await tester.tap(find.text("Next"));
@@ -495,7 +496,7 @@ void main() {
     expect(find.text("1:1"), findsOneWidget);
   });
 
-  testWidgets("no preview: no crop view, and the edit page crops at the image's own ratio", (tester) async {
+  testWidgets("no preview: no crop view, and the edit page crops at the first ratio", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(10));
     await pumpPicker(
       tester,
@@ -507,7 +508,8 @@ void main() {
     await tester.tap(find.text("Next"));
     await tester.pumpAndSettle();
     final crop = tester.widget<CropView>(find.byType(CropView)).controller;
-    expect(crop.ratio, CropRatio.original);
+    expect(crop.ratio, CropRatio.square);
+    // one ratio, nothing to pick
     expect(find.byType(RatioButton), findsNothing);
   });
 
