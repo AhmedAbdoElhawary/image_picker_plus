@@ -1,10 +1,11 @@
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 /// every way out of the picker ends here, so the output limits hold for unedited images too.
 /// null when the gallery has no file for it anymore.
@@ -12,6 +13,7 @@ Future<PickedItem?> exportItem({
   required PickerServices services,
   required OutputOptions output,
   required MediaItem item,
+  List<PickerFilter> filters = const [],
   EditState? state,
   String? cacheKey,
 }) async {
@@ -52,7 +54,7 @@ Future<PickedItem?> exportItem({
   final picked = await services.image.export(
     source,
     edit,
-    filters[edit.filterIndex],
+    composeMatrix(filterMatrix(filters, edit.filterIndex), edit.adjustments),
     output,
     cacheKey: edited ? cacheKey : null,
   );
