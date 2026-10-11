@@ -15,6 +15,7 @@ import 'package:image_picker_plus/src/services/camera_service_impl.dart';
 import 'package:image_picker_plus/src/services/files_service_impl.dart';
 import 'package:image_picker_plus/src/services/gallery_service_impl.dart';
 import 'package:image_picker_plus/src/services/image_service_impl.dart';
+import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:video_player/video_player.dart';
 
@@ -79,13 +80,22 @@ Future<Uint8List> _encodeStrip(ByteData pixels, int width, int height, int quali
   ),
 );
 
-Future<XFile> saveJpeg(Uint8List jpeg, {String? root}) async {
+/// the engine encodes it off the dart thread.
+Future<Uint8List> encodePng(ui.Image image) async {
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  if (png == null) throw StateError("couldn't encode the png");
+  return png.buffer.asUint8List(png.offsetInBytes, png.lengthInBytes);
+}
+
+Future<XFile> saveImage(Uint8List bytes, OutputFormat format, {String? root}) async {
   final dir = Directory(root ?? "${Directory.systemTemp.path}/image_picker_plus");
   await dir.create(recursive: true);
-  final name = "${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(1 << 32)}.jpg";
-  final file = await File("${dir.path}/$name").writeAsBytes(jpeg);
-  return XFile(file.path, mimeType: "image/jpeg");
+  final name = "${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(1 << 32)}.${_extension(format)}";
+  final file = await File("${dir.path}/$name").writeAsBytes(bytes);
+  return XFile(file.path, mimeType: "image/${format.name}");
 }
+
+String _extension(OutputFormat format) => format == OutputFormat.jpeg ? "jpg" : "png";
 
 class _FileVideo implements VideoHandle {
   final VideoPlayerController _player;
