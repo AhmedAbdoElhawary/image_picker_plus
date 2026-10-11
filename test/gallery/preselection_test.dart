@@ -10,6 +10,9 @@ import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
+import 'package:image_picker_plus/src/edit/image_edits.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 
 import '../fakes/fake_files_service.dart';
 import '../fakes/fake_gallery_service.dart';
@@ -117,39 +120,66 @@ void main() {
 
     Future<Preselection> one(EditState edit) => resolve([fromGallery("0", edit: edit)]);
 
+    ImageEdits restored(
+      Preselection preselection, {
+      List<CropRatio> ratios = const [],
+      PickerSettings settings = const PickerSettings(),
+    }) {
+      final edits = ImageEdits();
+      preselection.restore(edits, settings: settings, ratios: ratios);
+      return edits;
+    }
+
     test("a ratio still offered keeps its rect", () async {
-      final (crops, filters, _) = (await one(square)).restore(ratios: CropRatio.all, filters: true);
-      expect(crops["0"]!.ratio, CropRatio.square);
-      expect(crops["0"]!.value, square.cropRect);
-      expect(filters["0"]!.value, 3);
+      final edits = restored(
+        await one(square),
+        ratios: CropRatio.all,
+        settings: const PickerSettings(filters: PickerFilter.all),
+      );
+      expect(edits.crops["0"]!.ratio, CropRatio.square);
+      expect(edits.crops["0"]!.value, square.cropRect);
+      expect(edits.filterIndexes["0"]!.value, 3);
     });
 
     test("a removed ratio falls back to the first one, centred", () async {
-      final (crops, _, _) = (await one(square)).restore(ratios: const [CropRatio.portrait], filters: false);
-      final crop = crops["0"]!;
+      final crop = restored(await one(square), ratios: const [CropRatio.portrait]).crops["0"]!;
       expect(crop.ratio, CropRatio.portrait);
       expect(crop.value.center.dx, closeTo(0.5, 0.001));
     });
 
     test("only original offered keeps only an original crop", () async {
       const original = EditState(cropRect: Rect.fromLTWH(0, 0, 1, 1), ratio: CropRatio.original);
-      final (kept, _, _) = (await one(original)).restore(ratios: const [CropRatio.original], filters: false);
-      expect(kept["0"]!.ratio, CropRatio.original);
-      final (reset, _, _) = (await one(square)).restore(ratios: const [CropRatio.original], filters: false);
-      expect(reset["0"]!.value, isNot(square.cropRect));
+      final kept = restored(await one(original), ratios: const [CropRatio.original]).crops["0"]!;
+      expect(kept.ratio, CropRatio.original);
+      final reset = restored(await one(square), ratios: const [CropRatio.original]).crops["0"]!;
+      expect(reset.value, isNot(square.cropRect));
     });
 
     test("crop off or filters off restores nothing for them", () async {
-      final (crops, filters, _) = (await one(square)).restore(ratios: const [], filters: false);
-      expect(crops, isEmpty);
-      expect(filters, isEmpty);
+      final edits = restored(await one(square));
+      expect(edits.crops, isEmpty);
+      expect(edits.filterIndexes, isEmpty);
     });
 
     test("a filter out of range is no filter", () async {
-      final (_, filters, _) = (await one(
-        const EditState(filterIndex: 99),
-      )).restore(ratios: const [], filters: true);
-      expect(filters["0"]!.value, 0);
+      final edits = restored(
+        await one(const EditState(filterIndex: 99)),
+        settings: const PickerSettings(filters: PickerFilter.all),
+      );
+      expect(edits.filterIndexes["0"]!.value, 0);
+    });
+
+    test("the turns, flip and sliders come back", () async {
+      const adjustments = Adjustments(brightness: 0.4, warmth: -0.2);
+      final edits = restored(
+        await one(
+          const EditState(ratio: CropRatio.square, turns: 3, flipped: true, adjustments: adjustments),
+        ),
+        ratios: CropRatio.all,
+        settings: const PickerSettings(adjustments: true),
+      );
+      expect((edits.crops["0"]!.turns, edits.crops["0"]!.flipped), (3, true));
+      expect(edits.adjustments["0"]!.value, adjustments);
     });
   });
 
@@ -158,13 +188,15 @@ void main() {
     final preselection = await resolve([
       fromGallery("0", edit: const EditState(markup: [text])),
     ]);
-    final (_, _, markups) = preselection.restore(
+    final on = ImageEdits();
+    preselection.restore(
+      on,
+      settings: const PickerSettings(markup: MarkupOptions(text: true)),
       ratios: const [],
-      filters: false,
-      markup: const MarkupOptions(text: true),
     );
-    expect(markups["0"]!.value, [text]);
-    final (_, _, off) = preselection.restore(ratios: const [], filters: false);
-    expect(off, isEmpty);
+    expect(on.markups["0"]!.value, [text]);
+    final off = ImageEdits();
+    preselection.restore(off, settings: const PickerSettings(), ratios: const []);
+    expect(off.markups, isEmpty);
   });
 }
