@@ -5,6 +5,24 @@ homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus
 repository: https://github.com/AhmedAbdoElhawary/image_picker_plus
 issue_tracker: https://github.com/AhmedAbdoElhawary/image_picker_plus/issues
 
+topics:
+  - image-picker
+  - gallery
+  - camera
+  - image-editing
+  - crop
+
+# TODO(ahmed): snapshots/ is in .pubignore, pub.dev only shows screenshots that are in the package, so let these 4 files in (about 8 mb) or drop this list.
+screenshots:
+  - description: The gallery with the crop preview and multi selection.
+    path: snapshots/gallery.gif
+  - description: The camera with photo and video tabs.
+    path: snapshots/camera.gif
+  - description: The picker on macOS, through the system file picker.
+    path: snapshots/macos.gif
+  - description: The picker on the web.
+    path: snapshots/web.png
+
 environment:
   sdk: ^3.12.0
   flutter: ">=3.44.0"
