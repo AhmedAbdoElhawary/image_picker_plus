@@ -6,10 +6,11 @@ import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
 import 'package:image_picker_plus/src/edit/video_tile.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 class FilterStrip extends StatelessWidget {
   final EditController controller;
@@ -26,6 +27,9 @@ class FilterStrip extends StatelessWidget {
       valueListenable: controller.current,
       builder: (context, item, _) {
         final filter = controller.filterIndexes[item.id];
+        // the sliders don't move while the strip shows, so the tiles take them as they are
+        final adjustments = controller.adjustments[item.id]?.value ?? Adjustments.neutral;
+        final filters = scope.settings.filters;
         // a picked video can't be decoded as an image
         final image = item.isVideo && item.path != null
             ? null
@@ -40,11 +44,13 @@ class FilterStrip extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsetsDirectional.symmetric(horizontal: PickerLayout.padding),
-                itemCount: filters.length,
+                itemCount: filters.length + 1,
                 separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (context, index) => _FilterTile(
-                  name: index < scope.texts.filterNames.length ? scope.texts.filterNames[index] : "",
-                  matrix: filters[index],
+                  name: index == 0
+                      ? scope.texts.filterNames.firstOrNull ?? ""
+                      : filters[index - 1].nameIn(scope.texts),
+                  matrix: composeMatrix(filterMatrix(filters, index), adjustments),
                   image: image,
                   // a video has no filter, -1 marks none of the tiles
                   filter: filter ?? const AlwaysStoppedAnimation(-1),
