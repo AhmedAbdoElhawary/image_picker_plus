@@ -68,7 +68,9 @@ class Demo extends StatefulWidget {
 
 enum ThemeChoice { app, custom }
 
-enum TextsChoice { english, arabic }
+enum TextsChoice { english, arabic, app }
+
+enum FiltersChoice { off, shipped, custom }
 
 class _DemoState extends State<Demo> {
   /* CropRatio.all
@@ -92,7 +94,9 @@ class _DemoState extends State<Demo> {
   /// 0 follows the screen width.
   int gridColumns = 0;
   double gridCellAspectRatio = 1;
-  bool filters = true;
+  FiltersChoice filters = FiltersChoice.shipped;
+  bool adjustments = true;
+  bool png = false;
   int quality = 90;
 
   /// 0 keeps the image size.
@@ -147,8 +151,14 @@ class _DemoState extends State<Demo> {
         resizePreview: resizePreview,
         gridColumns: gridColumns == 0 ? null : gridColumns,
         gridCellAspectRatio: gridCellAspectRatio,
-        filters: filters,
+        filters: switch (filters) {
+          FiltersChoice.off => const [],
+          FiltersChoice.shipped => PickerFilter.all,
+          FiltersChoice.custom => customFilters,
+        },
+        adjustments: adjustments,
         output: OutputOptions(
+          format: png ? OutputFormat.png : OutputFormat.jpeg,
           quality: quality,
           maxWidth: maxWidth == 0 ? null : maxWidth,
           maxHeight: maxHeight == 0 ? null : maxHeight,
@@ -156,7 +166,11 @@ class _DemoState extends State<Demo> {
         ),
         theme: theme == ThemeChoice.custom ? customTheme : null,
         alwaysDarkTheme: alwaysDarkTheme,
-        texts: texts == TextsChoice.arabic ? arabicTexts : const PickerTexts(),
+        texts: switch (texts) {
+          TextsChoice.english => const PickerTexts(),
+          TextsChoice.arabic => const ArabicTexts(),
+          TextsChoice.app => PickerTexts.of(context),
+        },
         cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
         markup: MarkupOptions(text: text, emojis: emojis, drawing: drawing),
         camera: CameraOptions(gridOn: cameraGrid, overlay: cardFrame ? _cardFrame : null),
@@ -292,10 +306,22 @@ class _DemoState extends State<Demo> {
             name: (value) => "$value",
             onChanged: (value) => setState(() => gridCellAspectRatio = value),
           ),
-          SwitchListTile(
-            title: const Text("Filters"),
+          _Choice<FiltersChoice>(
+            label: "Filters",
             value: filters,
+            values: FiltersChoice.values,
             onChanged: (value) => setState(() => filters = value),
+          ),
+          SwitchListTile(
+            title: const Text("Adjustments"),
+            value: adjustments,
+            onChanged: (value) => setState(() => adjustments = value),
+          ),
+          SwitchListTile(
+            title: const Text("PNG output"),
+            subtitle: const Text("keeps transparency, quality does nothing"),
+            value: png,
+            onChanged: (value) => setState(() => png = value),
           ),
           ListTile(
             title: Text("Output quality: $quality"),
@@ -436,67 +462,36 @@ const PickerTheme customTheme = PickerTheme(
   scrim: Color(0xFF000000),
 );
 
-const PickerTexts arabicTexts = PickerTexts(
-  gallery: "المعرض",
-  photo: "صورة",
-  video: "فيديو",
-  next: "التالي",
-  add: "إضافة",
-  done: "تم",
-  close: "إغلاق",
-  recent: "الأحدث",
-  noImages: "لا توجد صور",
-  noCamera: "لا توجد كاميرا",
-  accessDenied: "اسمح بالوصول إلى صورك للمتابعة",
-  cameraDenied: "اسمح بالوصول إلى الكاميرا للمتابعة",
-  noMicrophone: "اسمح بالوصول إلى الميكروفون لتسجيل الصوت",
-  openSettings: "فتح الإعدادات",
-  manageAccess: "إدارة الوصول",
-  maxReached: "يمكنك اختيار {max} عناصر كحد أقصى",
-  videoNotEditable: "الفيديوهات يمكن ترتيبها فقط",
-  notSupported: "هذه المنصة غير مدعومة بعد",
-  crop: "قص",
-  original: "الأصلي",
-  select: "تحديد",
-  cancel: "إلغاء",
-  switchCamera: "تبديل الكاميرا",
-  flash: "الفلاش",
-  capture: "التقاط",
-  processing: "جارٍ المعالجة",
-  exportFailed: "تعذر حفظ الصور، حاول مرة أخرى",
-  maxKept: "تم الاحتفاظ بأول {max} فقط",
-  filesSkipped: "تعذر فتح بعض الملفات",
-  filterNames: [
-    "عادي",
-    "دافئ",
-    "بارد",
-    "قديم",
-    "جلامور",
-    "درامي",
-    "ناعم",
-    "بني داكن",
-    "تركوازي",
-    "ساطع",
-    "تباين",
-    "باهت",
-    "أحادي",
-    "أسود",
-  ],
-  months: [
-    "يناير",
-    "فبراير",
-    "مارس",
-    "أبريل",
-    "مايو",
-    "يونيو",
-    "يوليو",
-    "أغسطس",
-    "سبتمبر",
-    "أكتوبر",
-    "نوفمبر",
-    "ديسمبر",
-  ],
-);
+/// three made up looks, to show a strip with only the app's own filters.
+const List<PickerFilter> customFilters = [
+  PickerFilter(
+    name: "Sunset",
+    matrix: [
+      1.2, 0.1, 0, 0, 10, //
+      0, 1, 0, 0, 0, //
+      0, 0, 0.8, 0, -10, //
+      0, 0, 0, 1, 0, //
+    ],
+  ),
+  PickerFilter(
+    name: "Ocean",
+    matrix: [
+      0.8, 0, 0, 0, 0, //
+      0, 1, 0.1, 0, 0, //
+      0, 0.1, 1.2, 0, 15, //
+      0, 0, 0, 1, 0, //
+    ],
+  ),
+  PickerFilter(
+    name: "Ink",
+    matrix: [
+      0.4, 0.8, 0.2, 0, -30, //
+      0.4, 0.8, 0.2, 0, -30, //
+      0.4, 0.8, 0.2, 0, -30, //
+      0, 0, 0, 1, 0, //
+    ],
+  ),
+];
 
 class _Choice<T> extends StatelessWidget {
   final String label;
