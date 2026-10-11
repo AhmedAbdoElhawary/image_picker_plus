@@ -32,6 +32,15 @@ void evictMediaImages() {
   _loaded.clear();
 }
 
+/// an export is starting and it needs the memory more than the grid needs its thumbnails,
+/// which can be a hundred mb of them. what's still on screen keeps the image it holds.
+Future<void> freeMediaImages() async {
+  final cache = PaintingBinding.instance.imageCache;
+  for (final image in [..._loaded]) {
+    cache.evict(await image.obtainKey(ImageConfiguration.empty), includeLive: false);
+  }
+}
+
 class AssetThumbnail extends ImageProvider<AssetThumbnail> {
   final MediaItem item;
   final int size;
