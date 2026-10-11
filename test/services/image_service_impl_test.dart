@@ -60,12 +60,12 @@ void main() {
 
   testWidgets("a tall image is drawn in strips that line up", (tester) async {
     await tester.runAsync(() async {
-      // 128 rows a strip at this width, so 5 strips
+      // 128 rows a strip at this width, so 5 strips. past the default cap, so it asks for the width
       final item = await service.export(
         grid(4096, 600),
         const EditState(),
         PickerFilter.identity,
-        const OutputOptions(),
+        const OutputOptions(maxWidth: 4096),
       );
       expect((item.width, item.height), (4096, 600));
       final out = await decode(item.file);
@@ -74,6 +74,15 @@ void main() {
       expectColor(out.getPixel(4000, 290), 0, 255, 0);
       expectColor(out.getPixel(10, 310), 0, 0, 255);
       expectColor(out.getPixel(4000, 590), 255, 255, 255);
+    });
+  });
+
+  testWidgets("a crop asking for more than the decode cap holds gets the capped size", (tester) async {
+    await tester.runAsync(() async {
+      // the crop wants all 900 px of its tenth of a 9000 px photo, which decodes at 8192 of it
+      const state = EditState(cropRect: Rect.fromLTWH(0, 0, 0.1, 1));
+      final item = await service.export(grid(9000, 20), state, PickerFilter.identity, const OutputOptions());
+      expect((item.width, item.height), (819, 18));
     });
   });
 
@@ -196,9 +205,17 @@ void main() {
     });
   });
 
+  test("decode scale", () {
+    expect(ImageServiceImpl.decodeScale(4000, 3000), 1);
+    // 50 mp, so 16 mp of it
+    expect(ImageServiceImpl.decodeScale(8192, 6144), closeTo(0.577, 0.001));
+    // under 16 mp but too wide for a texture
+    expect(ImageServiceImpl.decodeScale(16000, 1000), closeTo(0.512, 0.001));
+  });
+
   test("output scale", () {
     expect(ImageServiceImpl.outputScale(100, 100, const OutputOptions()), 1);
-    expect(ImageServiceImpl.outputScale(8192, 100, const OutputOptions()), 0.5);
+    expect(ImageServiceImpl.outputScale(8192, 100, const OutputOptions()), 0.25);
     expect(ImageServiceImpl.outputScale(200, 100, const OutputOptions(maxWidth: 100, maxHeight: 10)), 0.1);
   });
 
