@@ -4,9 +4,11 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 import '../fakes/fake_gallery_service.dart';
@@ -155,6 +157,30 @@ void main() {
     ))!;
     expect(item.overLimit, isTrue);
     expect(fakes.image.outputs.single.maxBytes, 10);
+  });
+
+  test("an unedited image over a limit is re-encoded in the chosen format, its original kept", () async {
+    final fakes = Fakes();
+    final item = (await exportItem(
+      services: fakes.services,
+      output: const OutputOptions(format: OutputFormat.png, maxWidth: 100),
+      item: taken("/files/big.png"),
+    ))!;
+    expect(fakes.image.outputs.single.format, OutputFormat.png);
+    expect((item.edited, item.original.path), (false, "/files/big.png"));
+  });
+
+  test("the filter and the sliders go out as one matrix", () async {
+    final fakes = Fakes();
+    const state = EditState(filterIndex: 1, adjustments: Adjustments(brightness: 0.5));
+    await exportItem(
+      services: fakes.services,
+      output: const OutputOptions(),
+      filters: PickerFilter.all,
+      item: photo,
+      state: state,
+    );
+    expect(fakes.image.matrices.single, composeMatrix(PickerFilter.all.first.matrix, state.adjustments));
   });
 }
 
