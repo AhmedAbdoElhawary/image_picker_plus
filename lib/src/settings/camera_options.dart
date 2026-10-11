@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+/// builds what's drawn over the camera preview, like a document frame.
 typedef CameraOverlayBuilder = Widget Function(BuildContext context, Size previewSize);
 
+/// the camera page's extra controls.
 class CameraOptions {
   /// the 0.5x, 1x, 2x and max buttons. pinch zoom works either way.
   final bool zoomButtons;
@@ -19,6 +21,7 @@ class CameraOptions {
   /// it doesn't get taps, so focus and zoom work through it.
   final CameraOverlayBuilder? overlay;
 
+  /// every control on, the grid off at start.
   const CameraOptions({
     this.zoomButtons = true,
     this.timer = true,
