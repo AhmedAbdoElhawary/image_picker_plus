@@ -15,6 +15,7 @@ import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
 import 'package:image_picker_plus/src/edit/orientation_buttons.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
+import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
 import 'package:image_picker_plus/src/gallery/video_preview.dart';
 import 'package:image_picker_plus/src/models/adjustments.dart';
@@ -122,6 +123,7 @@ class _EditPageState extends State<EditPage> {
     if (controller.exporting.value) return;
     final texts = PickerScope.of(context).texts;
     try {
+      await freeMediaImages();
       final items = await controller.export();
       if (mounted) Navigator.of(context).pop(items);
     } catch (_) {
