@@ -145,6 +145,7 @@ class _PickerHomeState extends State<PickerHome> {
       return _edit();
     }
     if (item.isVideo || !settings.editing) {
+      await freeMediaImages();
       final done = await exportItem(services: scope.services, output: settings.output, item: item);
       if (mounted) Navigator.of(context).pop([?done]);
       return;
