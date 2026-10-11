@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 
@@ -30,6 +31,48 @@ void main() {
         "later": true,
       }),
       const EditState(),
+    );
+  });
+
+  test("a turn, a flip or a slider is an edit", () {
+    expect(const EditState(turns: 1).edited, isTrue);
+    expect(const EditState(flipped: true).edited, isTrue);
+    expect(const EditState(adjustments: Adjustments(contrast: 0.3)).edited, isTrue);
+    expect(const EditState(turns: 0, adjustments: Adjustments.neutral).edited, isFalse);
+  });
+
+  test("turns, flip and sliders round trip, and are only written when set", () {
+    const state = EditState(
+      turns: 3,
+      flipped: true,
+      adjustments: Adjustments(brightness: -0.5, warmth: 0.25),
+    );
+    expect(roundTrip(state), state);
+    final plain = const EditState().toMap();
+    expect(
+      [plain.containsKey("turns"), plain.containsKey("flip"), plain.containsKey("adjust")],
+      [false, false, false],
+    );
+  });
+
+  test("a map from before them, or a broken one, loads them as defaults", () {
+    final older = EditState.fromMap(const {
+      "crop": [0, 0, 1, 1],
+      "filter": 2,
+    });
+    expect((older.turns, older.flipped, older.adjustments), (0, false, Adjustments.neutral));
+    final broken = EditState.fromMap(const {
+      "turns": "x",
+      "flip": "yes",
+      "adjust": [1],
+    });
+    expect((broken.turns, broken.flipped, broken.adjustments), (0, false, Adjustments.neutral));
+    expect(EditState.fromMap(const {"turns": 5}).turns, 1);
+    expect(
+      EditState.fromMap(const {
+        "adjust": [3, 0, 0, 0],
+      }).adjustments.brightness,
+      1,
     );
   });
 }
