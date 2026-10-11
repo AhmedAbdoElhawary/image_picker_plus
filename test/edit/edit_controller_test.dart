@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
@@ -78,5 +79,30 @@ void main() {
     await expectLater(controller.export(), throwsException);
     expect(controller.exporting.value, isFalse);
     controller.dispose();
+  });
+
+  test("the cache key changes with the turns, flip, sliders and format", () async {
+    Future<String?> keyOf({
+      OutputOptions output = const OutputOptions(),
+      int turns = 0,
+      double warmth = 0,
+    }) async {
+      final fakes = Fakes();
+      final crop = CropController(imageAspect: 1, ratio: CropRatio.square, turns: turns);
+      await EditController(
+        services: fakes.services,
+        output: output,
+        items: [a],
+        crops: {"a": crop},
+        adjustments: {"a": ValueNotifier(Adjustments(warmth: warmth))},
+      ).export();
+      return fakes.image.keys.single;
+    }
+
+    final plain = await keyOf(turns: 1);
+    expect(await keyOf(turns: 2), isNot(plain));
+    expect(await keyOf(turns: 1, warmth: 0.2), isNot(plain));
+    expect(await keyOf(turns: 1, output: const OutputOptions(format: OutputFormat.png)), isNot(plain));
+    expect(await keyOf(turns: 1), plain);
   });
 }
