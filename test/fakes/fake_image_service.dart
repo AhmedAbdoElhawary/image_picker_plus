@@ -11,6 +11,7 @@ class FakeImageService implements ImageService {
   final List<(String, EditState)> calls = [];
   final List<String?> keys = [];
   final List<OutputOptions> outputs = [];
+  final List<List<double>> matrices = [];
   bool fail = false;
 
   /// copied into every result, like an image that couldn't fit maxBytes.
@@ -30,6 +31,7 @@ class FakeImageService implements ImageService {
     calls.add((source.path, state));
     keys.add(cacheKey);
     outputs.add(output);
+    matrices.add(colorMatrix);
     return PickedItem(
       file: XFile("${source.path}.edited.jpg"),
       type: MediaType.image,
