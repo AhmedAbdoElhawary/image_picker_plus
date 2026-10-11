@@ -3,16 +3,43 @@ import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_cache.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
 import 'package:image_picker_plus/src/settings/picker_theme.dart';
 
-enum PickerSource { gallery, camera, both }
+/// where the picker opens.
+enum PickerSource {
+  /// the gallery only.
+  gallery,
 
-enum MediaType { image, video, all }
+  /// the camera only.
+  camera,
 
+  /// the gallery with a camera tab.
+  both,
+}
+
+/// what can be picked.
+enum MediaType {
+  /// photos only.
+  image,
+
+  /// videos only.
+  video,
+
+  /// photos and videos.
+  all,
+}
+
+/// everything the picker can be set up with.
 class PickerSettings {
+  /// gallery by default.
   final PickerSource source;
+
+  /// the camera page's extra controls.
   final CameraOptions camera;
+
+  /// images only by default.
   final MediaType mediaType;
 
   /// 1 means single selection.
@@ -33,8 +60,17 @@ class PickerSettings {
 
   /// width / height of a grid cell, 0.5 is twice as tall as wide.
   final double gridCellAspectRatio;
-  final bool filters;
+
+  /// the looks on the filter strip after "Normal", empty hides the strip. [PickerFilter.all] for the shipped ones.
+  final List<PickerFilter> filters;
+
+  /// brightness, contrast, saturation and warmth sliders on the edit page.
+  final bool adjustments;
+
+  /// text, emojis and drawing, all off by default.
   final MarkupOptions markup;
+
+  /// how edited images are saved, jpeg at 90 by default.
   final OutputOptions output;
 
   /// null uses the dark theme, or follows the app brightness when [alwaysDarkTheme] is false.
@@ -42,12 +78,18 @@ class PickerSettings {
 
   /// false follows the app brightness. a custom [theme] wins over it.
   final bool alwaysDarkTheme;
+
+  /// english by default. [PickerTexts.of] follows the app's language.
   final PickerTexts texts;
+
+  /// off by default.
   final PickerCache cache;
 
   /// false pushes on the nearest navigator, which keeps a tab bar or a nested
   /// shell visible over the picker.
   final bool useRootNavigator;
+
+  /// a single image from the gallery, with the crop.
   const PickerSettings({
     this.useRootNavigator = false,
     this.source = PickerSource.gallery,
@@ -59,7 +101,8 @@ class PickerSettings {
     this.resizePreview = true,
     this.gridColumns,
     this.gridCellAspectRatio = 1,
-    this.filters = false,
+    this.filters = const [],
+    this.adjustments = false,
     this.markup = const MarkupOptions(),
     this.output = const OutputOptions(),
     this.theme,
@@ -70,7 +113,9 @@ class PickerSettings {
        assert(gridColumns == null || gridColumns > 0),
        assert(gridCellAspectRatio > 0);
 
-  bool get editing => cropRatios.isNotEmpty || filters || markup.enabled;
+  /// true when the edit page has something to show.
+  bool get editing => cropRatios.isNotEmpty || filters.isNotEmpty || adjustments || markup.enabled;
 
+  /// true when more than one can be picked.
   bool get multi => maxSelection > 1;
 }
