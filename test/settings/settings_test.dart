@@ -61,7 +61,7 @@ void main() {
     expect(CropRatio.landscape.toString(), "16:9");
     expect(CropRatio.original.toString(), "original");
     expect(const CropRatio(1, 1), CropRatio.square);
-    expect(OutputOptions.safeMaxSide, 4096);
+    expect(OutputOptions.safeMaxSide, 2048);
   });
 
   test("max bytes and limits", () {
