@@ -1,4 +1,13 @@
 ## 2.0.0
+* **breaking:** `PickerSettings.filters` is a list now. `filters: true` is `filters: PickerFilter.all`, and `[]` (the default) hides the strip
+* custom filters with `PickerFilter(name, matrix)`, after a "Normal" that's always first
+* new `PickerSettings.adjustments`: brightness, contrast, saturation and warmth sliders on top of the filter, with a switch when filters are on too
+* rotate left and flip in the crop, kept per image, with the markup following
+* new `OutputOptions.format`: JPEG or PNG. PNG keeps transparency, a JPEG now gets white where it was see through instead of black
+* English and Arabic built in: `PickerTexts.of(context)` follows the app's language, `ArabicTexts()` picks Arabic. Still English by default
+* `EditState` has `turns`, `flipped` and `adjustments`, in its map too. maps saved before load with none of them
+* new texts `rotate`, `flip`, `filters`, `adjust`, `brightness`, `contrast`, `saturation`, `warmth` and `reset`
+* every exported class and setting is documented, topics and screenshots for pub.dev
 * `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
 * new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. on web and desktop it skips the system picker
 * `PickedItem` has `id`, `original`, `edit` and `overLimit`, and `toMap()` / `PickedItem.fromMap()` to keep a pick between launches
