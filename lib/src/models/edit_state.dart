@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 
+/// what was done to one image, saved with [toMap] to open the picker with it again.
 class EditState {
-  /// normalized 0..1 of the image.
+  /// normalized 0..1 of the image as shown, after [turns] and [flipped].
   final Rect cropRect;
 
   /// null when the crop was off.
@@ -17,20 +19,58 @@ class EditState {
   /// what was added on top, in draw order. opaque to apps, it round trips through the map.
   final List<MarkupItem> markup;
 
-  const EditState({this.cropRect = full, this.ratio, this.filterIndex = 0, this.markup = const []});
+  /// quarter turns counter clockwise, 0..3.
+  final int turns;
 
+  /// mirrored left to right, before the [turns].
+  final bool flipped;
+
+  /// the sliders, neutral when they were off or untouched.
+  final Adjustments adjustments;
+
+  /// no edit by default.
+  const EditState({
+    this.cropRect = full,
+    this.ratio,
+    this.filterIndex = 0,
+    this.markup = const [],
+    this.turns = 0,
+    this.flipped = false,
+    this.adjustments = Adjustments.neutral,
+  });
+
+  /// the whole image, no crop.
   static const Rect full = Rect.fromLTWH(0, 0, 1, 1);
 
-  bool get edited => !_isFull(cropRect) || filterIndex != 0 || markup.isNotEmpty;
+  /// false when it's the image as it came in.
+  bool get edited =>
+      !_isFull(cropRect) ||
+      filterIndex != 0 ||
+      markup.isNotEmpty ||
+      turns != 0 ||
+      flipped ||
+      !adjustments.isNeutral;
 
-  EditState copyWith({Rect? cropRect, CropRatio? ratio, int? filterIndex, List<MarkupItem>? markup}) =>
-      EditState(
-        cropRect: cropRect ?? this.cropRect,
-        ratio: ratio ?? this.ratio,
-        filterIndex: filterIndex ?? this.filterIndex,
-        markup: markup ?? this.markup,
-      );
+  /// a copy with the given parts changed.
+  EditState copyWith({
+    Rect? cropRect,
+    CropRatio? ratio,
+    int? filterIndex,
+    List<MarkupItem>? markup,
+    int? turns,
+    bool? flipped,
+    Adjustments? adjustments,
+  }) => EditState(
+    cropRect: cropRect ?? this.cropRect,
+    ratio: ratio ?? this.ratio,
+    filterIndex: filterIndex ?? this.filterIndex,
+    markup: markup ?? this.markup,
+    turns: turns ?? this.turns,
+    flipped: flipped ?? this.flipped,
+    adjustments: adjustments ?? this.adjustments,
+  );
 
+  /// json safe, [EditState.fromMap] reads it back.
   Map<String, Object?> toMap() {
     final ratio = this.ratio;
     return {
@@ -38,6 +78,10 @@ class EditState {
       if (ratio != null) "ratio": ratio == CropRatio.original ? "original" : [ratio.width, ratio.height],
       "filter": filterIndex,
       if (markup.isNotEmpty) "markup": [for (final item in markup) item.toMap()],
+      if (turns != 0) "turns": turns,
+      if (flipped) "flip": true,
+      if (!adjustments.isNeutral)
+        "adjust": [adjustments.brightness, adjustments.contrast, adjustments.saturation, adjustments.warmth],
     };
   }
 
@@ -47,6 +91,8 @@ class EditState {
     final ratio = map["ratio"];
     final filter = map["filter"];
     final markup = map["markup"];
+    final turns = map["turns"];
+    final adjust = map["adjust"];
     return EditState(
       cropRect: crop is List && crop.length == 4 && crop.every((value) => value is num)
           ? Rect.fromLTWH(
@@ -71,6 +117,16 @@ class EditState {
                 if (item is Map) ?MarkupItem.fromMap(item.cast<String, Object?>()),
             ]
           : const [],
+      turns: turns is int ? turns % 4 : 0,
+      flipped: map["flip"] == true,
+      adjustments: adjust is List && adjust.length == 4 && adjust.every((value) => value is num)
+          ? Adjustments(
+              brightness: (adjust[0] as num).toDouble().clamp(-1, 1),
+              contrast: (adjust[1] as num).toDouble().clamp(-1, 1),
+              saturation: (adjust[2] as num).toDouble().clamp(-1, 1),
+              warmth: (adjust[3] as num).toDouble().clamp(-1, 1),
+            )
+          : Adjustments.neutral,
     );
   }
 
@@ -80,10 +136,14 @@ class EditState {
       other.cropRect == cropRect &&
       other.ratio == ratio &&
       other.filterIndex == filterIndex &&
-      listEquals(other.markup, markup);
+      listEquals(other.markup, markup) &&
+      other.turns == turns &&
+      other.flipped == flipped &&
+      other.adjustments == adjustments;
 
   @override
-  int get hashCode => Object.hash(cropRect, ratio, filterIndex, Object.hashAll(markup));
+  int get hashCode =>
+      Object.hash(cropRect, ratio, filterIndex, Object.hashAll(markup), turns, flipped, adjustments);
 
   // pan math leaves tiny float errors, they're not a real crop
   static bool _isFull(Rect rect) =>
