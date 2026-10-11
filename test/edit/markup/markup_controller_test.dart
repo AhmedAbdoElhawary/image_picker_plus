@@ -69,4 +69,19 @@ void main() {
     controller.erase(const [Offset(0.5, 0.9)], 0.02);
     expect(controller.value, hasLength(2));
   });
+
+  test("transform maps the items and every undo and redo step, with no step of its own", () {
+    final controller = MarkupController()
+      ..add(text)
+      ..add(line(0.2))
+      ..undo();
+    controller.transform((item) => item is TextMark ? item.copyWith(size: 0.2) : item);
+    expect((controller.value.single as TextMark).size, 0.2);
+    controller.redo();
+    expect((controller.value.first as TextMark).size, 0.2);
+    controller.undo();
+    controller.undo();
+    expect(controller.value, isEmpty);
+    expect(controller.canUndo.value, isFalse);
+  });
 }
