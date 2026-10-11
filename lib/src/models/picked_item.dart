@@ -2,13 +2,18 @@ import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
+/// one picked image or video, in the order the user left them.
 class PickedItem {
   /// the original file, or the edited jpeg.
   final XFile file;
 
   /// image or video.
   final MediaType type;
+
+  /// of [file], in pixels.
   final int width;
+
+  /// of [file], in pixels.
   final int height;
 
   /// true when cropped or filtered, false for an image only re-encoded for a limit.
@@ -26,6 +31,7 @@ class PickedItem {
   /// still over OutputOptions.maxBytes after every attempt.
   final bool overLimit;
 
+  /// [original] is [file] when not given.
   const PickedItem({
     required this.file,
     required this.type,
@@ -38,6 +44,7 @@ class PickedItem {
     this.overLimit = false,
   }) : original = original ?? file;
 
+  /// a copy with the given parts changed.
   PickedItem copyWith({bool? edited, String? id, XFile? original, EditState? edit}) => PickedItem(
     file: file,
     type: type,
