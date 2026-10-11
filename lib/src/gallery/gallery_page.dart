@@ -5,6 +5,7 @@ import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/gallery/album_picker.dart';
+import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_grid.dart';
 import 'package:image_picker_plus/src/gallery/gallery_layout.dart';
@@ -69,7 +70,9 @@ class _GalleryPageState extends State<GalleryPage> {
       return;
     }
     _finishing.value = true;
-    final items = await controller.pickedItems(PickerScope.of(context).services);
+    final services = PickerScope.of(context).services;
+    await freeMediaImages();
+    final items = await controller.pickedItems(services);
     if (!mounted) return;
     _finishing.value = false;
     Navigator.of(context).pop(items);
