@@ -10,6 +10,7 @@ import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/edit/image_edits.dart';
 
 import '../fakes/fake_gallery_service.dart';
 import '../fakes/pump_picker.dart';
@@ -223,7 +224,9 @@ void main() {
     final photo = fakeItem("photo");
     final crop = CropController(imageAspect: 1, ratio: CropRatio.square);
     final filterIndex = ValueNotifier(2);
-    controller.selectTaken(photo, crop: crop, filterIndex: filterIndex);
+    final taken = ImageEdits()..put("photo", crop: crop, filterIndex: filterIndex);
+    controller.selectTaken(photo, taken);
+    expect(taken.crops, isEmpty);
     expect(controller.selection.value, [photo]);
     expect(controller.crops["photo"], same(crop));
     expect(controller.filterIndexes["photo"], same(filterIndex));
@@ -314,6 +317,22 @@ void main() {
     controller.toggle(controller.items.value[4]);
     expect(controller.markups.keys, ["0"]);
     expect(() => markup.addListener(() {}), throwsFlutterError);
+    controller.dispose();
+  });
+
+  test("sliders follow the selection like markups, only when they're on", () async {
+    final controller = GalleryController(
+      service: FakeGalleryService.withItems(10),
+      settings: const PickerSettings(maxSelection: 3, adjustments: true),
+    );
+    await controller.init();
+    controller.startMulti(controller.preview.value);
+    controller.toggle(controller.items.value[4]);
+    expect(controller.adjustments.keys, ["0", "4"]);
+    final sliders = controller.adjustments["4"]!;
+    controller.toggle(controller.items.value[4]);
+    expect(controller.adjustments.keys, ["0"]);
+    expect(() => sliders.addListener(() {}), throwsFlutterError);
     controller.dispose();
   });
 
