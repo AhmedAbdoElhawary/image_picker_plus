@@ -10,6 +10,7 @@ import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 import '../fakes/fake_camera_service.dart';
 import '../fakes/pump_picker.dart';
@@ -58,7 +59,7 @@ void main() {
     await pumpPicker(
       tester,
       const PickerHome(),
-      settings: const PickerSettings(source: PickerSource.camera, filters: true),
+      settings: const PickerSettings(source: PickerSource.camera, filters: PickerFilter.all),
     );
     await tester.tap(find.byType(CaptureButton));
     await tester.pumpAndSettle();
@@ -106,7 +107,7 @@ void main() {
       tester,
       const PickerHome(),
       fakes: fakes,
-      settings: const PickerSettings(source: PickerSource.camera, maxSelection: 3, filters: true),
+      settings: const PickerSettings(source: PickerSource.camera, maxSelection: 3, filters: PickerFilter.all),
       onResult: (r) => result = r,
     );
     await tester.tap(find.byType(CaptureButton));
