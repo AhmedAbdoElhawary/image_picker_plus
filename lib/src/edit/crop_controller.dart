@@ -5,25 +5,42 @@ import 'package:flutter/painting.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 
-/// the crop of one image, as a rect normalized to 0..1 of the image.
+/// the crop of one image, as a rect normalized to 0..1 of the image as shown, after its turns and flip.
 class CropController extends ValueNotifier<Rect> {
-  /// width / height of the image in pixels.
-  final double imageAspect;
+  /// width / height of the image file in pixels, before any turn.
+  final double sourceAspect;
   CropRatio _ratio;
+  int _turns;
+  bool _flipped;
+
+  /// after a rotate or a flip, with the shown aspect before it, so the markup can follow.
+  void Function(bool flip, double aspectBefore)? onOrient;
 
   /// the crop can't get smaller than this part of its biggest size.
   static const double minScale = 0.2;
 
-  CropController({required this.imageAspect, required this._ratio}) : super(EditState.full) {
+  CropController({required double imageAspect, required this._ratio, int turns = 0, this._flipped = false})
+    : sourceAspect = imageAspect,
+      _turns = turns % 4,
+      super(EditState.full) {
     value = _fit(const Offset(0.5, 0.5), 1);
   }
 
   CropRatio get ratio => _ratio;
 
+  /// quarter turns counter clockwise, 0..3.
+  int get turns => _turns;
+
+  /// mirrored left to right, before the turns.
+  bool get flipped => _flipped;
+
+  /// width / height of the image as shown.
+  double get imageAspect => _turns.isOdd ? 1 / sourceAspect : sourceAspect;
+
   /// width / height of the crop in pixels.
   double get aspect => _ratio.ratio ?? imageAspect;
 
-  bool get edited => EditState(cropRect: value).edited;
+  bool get edited => EditState(cropRect: value, turns: _turns, flipped: _flipped).edited;
 
   /// how much the crop is zoomed in, 1 is the biggest crop.
   double get zoom => _maxSize.width / value.width;
@@ -32,6 +49,37 @@ class CropController extends ValueNotifier<Rect> {
     if (next == _ratio) return;
     _ratio = next;
     value = _fit(value.center, 1);
+  }
+
+  /// a quarter turn counter clockwise. the crop turns with the image when it still has its ratio,
+  /// else it's the biggest centred one.
+  void rotate() {
+    final before = imageAspect;
+    final rect = value;
+    _turns = (_turns + 1) % 4;
+    final turned = Rect.fromLTWH(rect.top, 1 - rect.right, rect.height, rect.width);
+    final keeps = (turned.width / turned.height * imageAspect - aspect).abs() < 0.01;
+    _set(keeps ? _clamp(turned) : _fit(const Offset(0.5, 0.5), 1));
+    onOrient?.call(false, before);
+  }
+
+  /// mirrors what's shown left to right.
+  void flip() {
+    final before = imageAspect;
+    // a flip after turns is the flip first and the turns the other way
+    _flipped = !_flipped;
+    _turns = (4 - _turns) % 4;
+    _set(Rect.fromLTRB(1 - value.right, value.top, 1 - value.left, value.bottom));
+    onOrient?.call(true, before);
+  }
+
+  /// the turns and flip changed even when the rect didn't, so listeners always hear it.
+  void _set(Rect rect) {
+    if (rect == value) {
+      notifyListeners();
+    } else {
+      value = rect;
+    }
   }
 
   /// [delta] is in parts of the image, moving the crop over it.
