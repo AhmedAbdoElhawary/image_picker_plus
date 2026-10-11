@@ -4,14 +4,19 @@ import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 class EditController {
   final PickerServices services;
   final OutputOptions output;
+
+  /// the strip's looks after Normal, what a filter index points into.
+  final List<PickerFilter> filters;
 
   /// in the order they'll be returned.
   final ValueNotifier<List<MediaItem>> items;
@@ -23,6 +28,7 @@ class EditController {
 
   /// per image id like the crops, empty when markup is off.
   final Map<String, MarkupController> markups;
+  final Map<String, ValueNotifier<Adjustments>> adjustments;
 
   /// the markup mode on the current image, null when not in it.
   final ValueNotifier<MarkupTool?> tool = ValueNotifier(null);
@@ -32,11 +38,13 @@ class EditController {
   EditController({
     required this.services,
     required this.output,
+    this.filters = const [],
     required List<MediaItem> items,
     MediaItem? initial,
     this.crops = const {},
     this.filterIndexes = const {},
     this.markups = const {},
+    this.adjustments = const {},
   }) : items = ValueNotifier(items),
        current = ValueNotifier(initial ?? items.first) {
     // a mode belongs to one image, moving on leaves it
@@ -52,6 +60,9 @@ class EditController {
       ratio: crop?.ratio,
       filterIndex: filterIndexes[item.id]?.value ?? 0,
       markup: markups[item.id]?.value ?? const [],
+      turns: crop?.turns ?? 0,
+      flipped: crop?.flipped ?? false,
+      adjustments: adjustments[item.id]?.value ?? Adjustments.neutral,
     );
   }
 
@@ -80,6 +91,7 @@ class EditController {
     return exportItem(
       services: services,
       output: output,
+      filters: filters,
       item: item,
       state: state,
       cacheKey: state == null ? null : _cacheKey(item, state),
@@ -89,8 +101,11 @@ class EditController {
   String _cacheKey(MediaItem item, EditState state) {
     final rect = state.cropRect;
     final crop = [rect.left, rect.top, rect.width, rect.height].map((v) => v.toStringAsFixed(4)).join(",");
+    final adjust = state.adjustments;
     return "edit:${item.id}:${item.modified.millisecondsSinceEpoch}:$crop:${state.filterIndex}"
-        ":${output.quality}:${output.maxWidth}x${output.maxHeight}:${output.maxBytes}";
+        ":${state.turns}:${state.flipped}"
+        ":${adjust.brightness},${adjust.contrast},${adjust.saturation},${adjust.warmth}"
+        ":${output.format.name}:${output.quality}:${output.maxWidth}x${output.maxHeight}:${output.maxBytes}";
   }
 
   void dispose() {
