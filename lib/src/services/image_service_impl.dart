@@ -24,6 +24,10 @@ class ImageServiceImpl implements ImageService {
   ImageServiceImpl({this.root, this.cache});
 
   /// the decode is capped too, a small crop of a 50 mp photo would decode it all.
+  /// 16 mp is 64 mb of pixels, about as much as a 2 gb phone can give an export.
+  static const int maxDecodePixels = 16 << 20;
+
+  /// a decode above this may be too big for the gpu to draw.
   static const int maxDecodeSide = 8192;
 
   /// one edit at a time, a few big renders at once run out of memory and hang the gpu on android.
@@ -50,7 +54,7 @@ class ImageServiceImpl implements ImageService {
   }
 
   /// the engine decodes natively and only at the needed size, way faster than the image package,
-  /// and it reads heic too. only the jpeg encode is left for an isolate.
+  /// and it reads heic too. the strips are drawn and encoded one at a time, nothing else.
   Future<(Uint8List, int, int)> _edit(
     XFile source,
     EditState state,
@@ -61,24 +65,18 @@ class ImageServiceImpl implements ImageService {
     late double scale;
     late double cropWidth;
     late double cropHeight;
-    // ImageDescriptor.width throws on web, this gives the real size on every platform
-    final codec = await ui.instantiateImageCodecWithSize(
-      await imageBuffer(source),
-      getTargetSize: (width, height) {
-        // the crop is of the image as shown, which a quarter turn swaps
-        final turned = state.turns.isOdd;
-        cropWidth = rect.width * (turned ? height : width);
-        cropHeight = rect.height * (turned ? width : height);
-        scale = outputScale(cropWidth, cropHeight, output);
-        final decodeScale = min(scale, maxDecodeSide / max(width, height));
-        return ui.TargetImageSize(
-          width: max(1, (width * decodeScale).round()),
-          height: max(1, (height * decodeScale).round()),
-        );
-      },
-    );
-    final decoded = (await codec.getNextFrame()).image;
-    codec.dispose();
+    final decoded = await decodeImage(source, (width, height) {
+      // the crop is of the image as shown, which a quarter turn swaps
+      final turned = state.turns.isOdd;
+      cropWidth = rect.width * (turned ? height : width);
+      cropHeight = rect.height * (turned ? width : height);
+      // upscaling a capped decode back to the crop's size would only add bytes, not detail
+      scale = min(outputScale(cropWidth, cropHeight, output), decodeScale(width, height));
+      return ui.TargetImageSize(
+        width: max(1, (width * scale).round()),
+        height: max(1, (height * scale).round()),
+      );
+    });
 
     var width = max(1, (cropWidth * scale).round());
     var height = max(1, (cropHeight * scale).round());
@@ -93,6 +91,7 @@ class ImageServiceImpl implements ImageService {
           quality,
         );
       }
+      // the engine's png encoder takes the whole image, so this one is drawn in one go
       final image = await _render(decoded, state, colorMatrix, width, height, 0, height, png: true);
       try {
         return await encodePng(image);
@@ -111,11 +110,12 @@ class ImageServiceImpl implements ImageService {
         rows,
         quality,
       );
-      // on the mcu grid of the whole, so a band encodes like that part of it
-      final bands = await Future.wait([
-        for (var i = 0; i < 4; i++) band(((height - rows) * (2 * i + 1) ~/ 8) & ~15),
-      ]);
-      final bytes = bands.fold(0, (sum, jpeg) => sum + jpeg.length);
+      // one at a time, four bands at once is four of everything a band needs
+      var bytes = 0;
+      for (var i = 0; i < 4; i++) {
+        // on the mcu grid of the whole, so a band encodes like that part of it
+        bytes += (await band(((height - rows) * (2 * i + 1) ~/ 8) & ~15)).length;
+      }
       // each band has its own headers so it reads a bit high, only a clear miss counts
       return bytes * height / (rows * 4) > limit * 1.1;
     }
@@ -238,6 +238,10 @@ class ImageServiceImpl implements ImageService {
       overLimit: output.maxBytes != null && bytes.length > output.maxBytes!,
     );
   }
+
+  /// scale a photo this size can be decoded at, the whole of it is what the engine decodes.
+  static double decodeScale(int width, int height) =>
+      min(1.0, min(sqrt(maxDecodePixels / (width * height)), maxDecodeSide / max(width, height)));
 
   /// scale of the crop so it fits the max sizes, never above 1.
   static double outputScale(double cropWidth, double cropHeight, OutputOptions output) {
