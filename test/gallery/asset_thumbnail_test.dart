@@ -42,6 +42,32 @@ void main() {
     expect(imageCache.containsKey(provider), isFalse);
   });
 
+  testWidgets("freeing for an export gives the cache back and keeps the shown image", (tester) async {
+    imageCache
+      ..clear()
+      ..clearLiveImages();
+    late AssetThumbnail provider;
+    await tester.runAsync(() {
+      provider = AssetThumbnail(item, 50, gallery: _SlowGallery()..gate.complete());
+      final completer = Completer<void>();
+      // the listener stays, like a cell still on screen behind the exporting popup
+      provider
+          .resolve(ImageConfiguration.empty)
+          .addListener(
+            ImageStreamListener(
+              (_, _) => completer.complete(),
+              onError: (error, _) => completer.completeError(error),
+            ),
+          );
+      return completer.future;
+    });
+    expect(imageCache.containsKey(provider), isTrue);
+    await freeMediaImages();
+    await tester.pump();
+    expect(imageCache.containsKey(provider), isFalse);
+    expect(imageCache.liveImageCount, 1);
+  });
+
   testWidgets("a stream dropped while its thumbnail loads lets the image go when it lands", (tester) async {
     late _SlowGallery gallery;
     final errors = <Object>[];
