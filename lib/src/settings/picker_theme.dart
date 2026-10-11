@@ -1,12 +1,26 @@
 import 'package:flutter/widgets.dart';
 
+/// the picker's colors, dark by default.
 class PickerTheme {
+  /// behind every page.
   final Color background;
+
+  /// buttons, menus and empty cells.
   final Color surface;
+
+  /// text and icons.
   final Color onSurface;
+
+  /// less important text and icons.
   final Color onSurfaceMuted;
+
+  /// selection, done and the focus ring.
   final Color accent;
+
+  /// text and icons on [accent].
   final Color onAccent;
+
+  /// behind the preview image.
   final Color scrim;
 
   /// behind the edit card on wide windows.
@@ -15,6 +29,7 @@ class PickerTheme {
   /// the capture button while a video records.
   final Color recording;
 
+  /// [barrier] and [recording] have defaults.
   const PickerTheme({
     required this.background,
     required this.surface,
@@ -27,6 +42,7 @@ class PickerTheme {
     this.recording = const Color(0xFFFF3B30),
   });
 
+  /// the shipped light colors.
   factory PickerTheme.light() => const PickerTheme(
     background: Color(0xFFFFFFFF),
     surface: Color(0xFFF2F2F5),
@@ -37,6 +53,7 @@ class PickerTheme {
     scrim: Color(0xFFFFFFFF),
   );
 
+  /// the shipped dark colors.
   factory PickerTheme.dark() => const PickerTheme(
     background: Color(0xFF0E0E10),
     surface: Color(0xFF1C1C20),
@@ -47,6 +64,7 @@ class PickerTheme {
     scrim: Color(0xFF000000),
   );
 
+  /// [custom], or the shipped one for [brightness].
   static PickerTheme resolve(PickerTheme? custom, Brightness brightness) {
     if (custom != null) return custom;
     return brightness == Brightness.dark ? PickerTheme.dark() : PickerTheme.light();
