@@ -10,6 +10,7 @@ import 'package:image_picker_plus/src/image_picker_plus.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/settings/picker_theme.dart';
 
@@ -75,13 +76,16 @@ void main() {
 
   testWidgets("cancel returns null and pushes nothing", (tester) async {
     fakes.files.next = [];
-    final result = await open(tester, settings: const PickerSettings(filters: true));
+    final result = await open(tester, settings: const PickerSettings(filters: PickerFilter.all));
     expect(find.byType(FilesFlow), findsNothing);
     expect(await result, isNull);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets("with editing, the picked files open in the edit flow", (tester) async {
-    final result = await open(tester, settings: const PickerSettings(maxSelection: 5, filters: true));
+    final result = await open(
+      tester,
+      settings: const PickerSettings(maxSelection: 5, filters: PickerFilter.all),
+    );
     expect(find.byType(FilesFlow), findsOneWidget);
     await tester.tap(find.text("Done"));
     await tester.pumpAndSettle();
@@ -182,7 +186,7 @@ void main() {
     }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 
     testWidgets("edits come back, also through a json round trip", (tester) async {
-      const settings = PickerSettings(maxSelection: 5, filters: true);
+      const settings = PickerSettings(maxSelection: 5, filters: PickerFilter.all);
       const edit = EditState(
         cropRect: Rect.fromLTWH(0.1, 0, 0.75, 1),
         ratio: CropRatio.square,
