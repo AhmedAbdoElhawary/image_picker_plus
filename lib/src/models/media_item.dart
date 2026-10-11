@@ -1,10 +1,20 @@
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
+/// an image or video in the gallery, from the camera or from the system picker.
 class MediaItem {
+  /// the gallery id, or the file path when it isn't in the gallery.
   final String id;
+
+  /// image or video.
   final MediaType type;
+
+  /// in pixels.
   final int width;
+
+  /// in pixels.
   final int height;
+
+  /// zero for images.
   final Duration duration;
 
   /// part of the cache key, so an edited photo never gets an old thumbnail.
@@ -19,6 +29,7 @@ class MediaItem {
   /// the file name from the system picker, null for gallery items.
   final String? name;
 
+  /// an item as the gallery or a file reports it.
   const MediaItem({
     required this.id,
     required this.type,
@@ -31,6 +42,7 @@ class MediaItem {
     this.name,
   });
 
+  /// true for a video.
   bool get isVideo => type == MediaType.video;
 
   @override
