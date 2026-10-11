@@ -1,5 +1,6 @@
 import 'package:flutter/painting.dart';
 
+/// text, emojis and drawing on images, all off by default.
 class MarkupOptions {
   /// add, edit, move and delete text.
   final bool text;
@@ -17,6 +18,7 @@ class MarkupOptions {
   /// for text and the pen, at least one.
   final List<Color> colors;
 
+  /// every tool off by default.
   const MarkupOptions({
     this.text = false,
     this.emojis = false,
@@ -37,5 +39,6 @@ class MarkupOptions {
     Color(0xFF8E24AA),
   ];
 
+  /// true when any tool is on.
   bool get enabled => text || emojis || drawing;
 }
