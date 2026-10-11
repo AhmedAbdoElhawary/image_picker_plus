@@ -5,11 +5,11 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/platform/platform.dart';
 import 'package:image_picker_plus/src/services/image_service_impl.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:integration_test/integration_test.dart';
 
 /// flutter test integration_test/export_test.dart on a phone, the numbers are printed.
@@ -48,7 +48,7 @@ void main() {
       await service.export(
         XFile(source.path),
         const EditState(filterIndex: 1),
-        filters[1],
+        PickerFilter.all.first.matrix,
         const OutputOptions(),
       );
       exports.add(watch.elapsedMilliseconds);
@@ -62,7 +62,7 @@ void main() {
       await service.export(
         XFile(source.path),
         const EditState(filterIndex: 1),
-        filters[1],
+        PickerFilter.all.first.matrix,
         const OutputOptions(maxBytes: 1 << 20),
       );
       limited.add(watch.elapsedMilliseconds);
