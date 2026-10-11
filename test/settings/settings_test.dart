@@ -5,6 +5,7 @@ import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
 import 'package:image_picker_plus/src/settings/picker_cache.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 void main() {
   test("defaults", () {
@@ -14,7 +15,9 @@ void main() {
     expect(settings.maxSelection, 1);
     expect(settings.cropRatios, CropRatio.all);
     expect(settings.resizePreview, isTrue);
-    expect(settings.filters, isFalse);
+    expect(settings.filters, isEmpty);
+    expect(settings.adjustments, isFalse);
+    expect(settings.output.format, OutputFormat.jpeg);
     expect(settings.output.quality, 90);
     expect(settings.output.maxWidth, isNull);
     expect(settings.cache.enabled, isFalse);
@@ -26,7 +29,15 @@ void main() {
   });
 
   test("editing and multi", () {
-    expect(const PickerSettings(filters: true).editing, isTrue);
+    expect(const PickerSettings(cropRatios: [], adjustments: true).editing, isTrue);
+    expect(
+      const PickerSettings(
+        cropRatios: [],
+        filters: [PickerFilter(name: "a", matrix: [])],
+      ).editing,
+      isTrue,
+    );
+    expect(const PickerSettings(filters: PickerFilter.all).editing, isTrue);
     expect(const PickerSettings(cropRatios: [CropRatio.square]).editing, isTrue);
     expect(const PickerSettings(cropRatios: []).editing, isFalse);
     expect(const PickerSettings(maxSelection: 3).multi, isTrue);
