@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/settings/languages/arabic_texts.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
 
 void main() {
@@ -14,11 +16,9 @@ void main() {
     expect(const PickerTexts().filesSkipped, "Some files couldn't be opened");
   });
 
-  test("one name per filter", () {
-    expect(const PickerTexts().filterNames.length, filters.length);
-    for (final matrix in filters) {
-      expect(matrix.length, 20);
-    }
+  test("one name per filter, Normal first", () {
+    expect(const PickerTexts().filterNames.length, PickerFilter.all.length + 1);
+    expect(const PickerTexts().filterNames.first, "Normal");
   });
 
   test("camera texts put the number in", () {
@@ -41,5 +41,53 @@ void main() {
       [texts.delete, texts.font, texts.textBackground, texts.color, texts.size, texts.doneEditing],
       ["Drag here to delete", "Font", "Background", "Color", "Size", "Done"],
     );
+  });
+
+  test("rotate, filter and slider texts", () {
+    const texts = PickerTexts();
+    expect(
+      [texts.rotate, texts.flip, texts.filters, texts.adjust, texts.reset],
+      ["Rotate", "Flip", "Filters", "Adjust", "Reset"],
+    );
+    expect(
+      [texts.brightness, texts.contrast, texts.saturation, texts.warmth],
+      ["Brightness", "Contrast", "Saturation", "Warmth"],
+    );
+  });
+
+  group("of", () {
+    Future<PickerTexts> textsIn(WidgetTester tester, Locale? locale) async {
+      late PickerTexts texts;
+      final probe = Builder(
+        builder: (context) {
+          texts = PickerTexts.of(context);
+          return const SizedBox();
+        },
+      );
+      await tester.pumpWidget(
+        locale == null
+            ? probe
+            : Localizations(
+                locale: locale,
+                delegates: const [DefaultWidgetsLocalizations.delegate],
+                child: probe,
+              ),
+      );
+      return texts;
+    }
+
+    testWidgets("matches the language code, english for the rest", (tester) async {
+      expect(await textsIn(tester, const Locale("ar")), isA<ArabicTexts>());
+      expect(await textsIn(tester, const Locale("ar", "EG")), isA<ArabicTexts>());
+      expect((await textsIn(tester, const Locale("fr"))).done, "Done");
+      expect((await textsIn(tester, null)).done, "Done");
+    });
+  });
+
+  test("a shipped language takes single strings", () {
+    const texts = ArabicTexts(done: "خلاص");
+    expect(texts.done, "خلاص");
+    expect(texts.gallery, const ArabicTexts().gallery);
+    expect(PickerTexts.languages.keys, ["en", "ar"]);
   });
 }
