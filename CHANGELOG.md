@@ -22,6 +22,10 @@
 * markup is part of `EditState` and its map
 * new texts `text`, `draw`, `emojis`, `undo`, `redo`, `eraser`, `delete`, `font`, `textBackground`, `color`, `size` and `doneEditing`
 * saving an edited image is faster and lighter on memory, it is drawn and encoded in small strips one at a time. `image` is no longer a dependency
+* a photo is decoded at 16 mp at most while exporting, a tight crop of a 50 mp one used to decode all 200 mb of it. a crop that wants more than the cap comes back at the size the cap gives, not upscaled to it
+* the thumbnails and previews the picker cached are given back when an export starts, they can be a hundred mb the export needs more
+* **breaking:** an edited image with no `maxWidth` or `maxHeight` is written at up to 2048 pixels on its long side, it was 4096. an export holds about 8 bytes for every pixel it writes, so the old cap was about 100 mb for one photo and this is a quarter of those pixels. pass `maxWidth` to ask for more
+* the strips of an edited image are drawn and encoded one at a time, not four at once in isolates. sending a strip to an isolate copies its pixels, and four of them in flight were 30 mb of pixels for a 12 mp photo. an export now holds about half the memory and takes about half again as long, which is the trade a 2 gb phone needs
 
 ## 1.1.0
 * Improve export performance by 80%
