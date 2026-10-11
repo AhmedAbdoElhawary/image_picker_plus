@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:flutter/painting.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/services/image_service_impl.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 import '../fakes/fake_cache_service.dart';
 
@@ -49,7 +49,7 @@ void main() {
   testWidgets("the crop rect gives the right size and colors", (tester) async {
     await tester.runAsync(() async {
       const state = EditState(cropRect: Rect.fromLTWH(0.5, 0, 0.5, 1));
-      final item = await service.export(grid(200, 100), state, filters.first, const OutputOptions());
+      final item = await service.export(grid(200, 100), state, PickerFilter.identity, const OutputOptions());
       expect(item.edited, isTrue);
       expect((item.width, item.height), (100, 100));
       final out = await decode(item.file);
@@ -64,7 +64,7 @@ void main() {
       final item = await service.export(
         grid(4096, 600),
         const EditState(),
-        filters.first,
+        PickerFilter.identity,
         const OutputOptions(),
       );
       expect((item.width, item.height), (4096, 600));
@@ -80,7 +80,12 @@ void main() {
   testWidgets("a filter changes the pixels", (tester) async {
     await tester.runAsync(() async {
       const state = EditState(cropRect: Rect.fromLTWH(0, 0, 0.5, 0.5), filterIndex: 12);
-      final item = await service.export(grid(200, 100), state, filters[12], const OutputOptions());
+      final item = await service.export(
+        grid(200, 100),
+        state,
+        PickerFilter.all[11].matrix,
+        const OutputOptions(),
+      );
       final pixel = (await decode(item.file)).getPixel(20, 20);
       // mono, so red turns gray
       expect(pixel.r, closeTo(pixel.g, 24));
@@ -93,21 +98,21 @@ void main() {
       final wide = await service.export(
         grid(200, 100),
         const EditState(),
-        filters.first,
+        PickerFilter.identity,
         const OutputOptions(maxWidth: 50),
       );
       expect((wide.width, wide.height), (50, 25));
       final tall = await service.export(
         grid(200, 100),
         const EditState(),
-        filters.first,
+        PickerFilter.identity,
         const OutputOptions(maxHeight: 20),
       );
       expect((tall.width, tall.height), (40, 20));
       final small = await service.export(
         grid(200, 100),
         const EditState(),
-        filters.first,
+        PickerFilter.identity,
         const OutputOptions(maxWidth: 999),
       );
       expect((small.width, small.height), (200, 100));
@@ -119,7 +124,7 @@ void main() {
       final item = await service.export(
         grid(5000, 10),
         const EditState(),
-        filters.first,
+        PickerFilter.identity,
         const OutputOptions(),
       );
       expect(item.width, OutputOptions.safeMaxSide);
@@ -131,13 +136,13 @@ void main() {
       final high = await service.export(
         grid(200, 100),
         const EditState(),
-        filters[3],
+        PickerFilter.all[2].matrix,
         const OutputOptions(quality: 100),
       );
       final low = await service.export(
         grid(200, 100),
         const EditState(),
-        filters[3],
+        PickerFilter.all[2].matrix,
         const OutputOptions(quality: 10),
       );
       final bytes = await high.file.readAsBytes();
@@ -157,7 +162,7 @@ void main() {
       final item = await service.export(
         XFile(file.path),
         const EditState(filterIndex: 1),
-        filters[1],
+        PickerFilter.all[0].matrix,
         const OutputOptions(),
       );
       expect((item.width, item.height), (100, 200));
@@ -174,14 +179,14 @@ void main() {
       final first = await cached.export(
         grid(200, 100),
         state,
-        filters[1],
+        PickerFilter.all[0].matrix,
         const OutputOptions(),
         cacheKey: "k",
       );
       final second = await cached.export(
         grid(200, 100),
         state,
-        filters[1],
+        PickerFilter.all[0].matrix,
         const OutputOptions(),
         cacheKey: "k",
       );
@@ -216,7 +221,7 @@ void main() {
       final item = await service.export(
         source,
         const EditState(),
-        filters.first,
+        PickerFilter.identity,
         OutputOptions(quality: quality),
       );
       return item.file.length();
@@ -228,7 +233,7 @@ void main() {
         final item = await service.export(
           source,
           const EditState(),
-          filters.first,
+          PickerFilter.identity,
           const OutputOptions(maxBytes: 100 * 1024 * 1024),
         );
         expect((item.width, item.overLimit), (400, false));
@@ -243,7 +248,7 @@ void main() {
         final item = await service.export(
           source,
           const EditState(),
-          filters.first,
+          PickerFilter.identity,
           OutputOptions(maxBytes: limit),
         );
         expect(item.width, 400);
@@ -259,7 +264,7 @@ void main() {
         final item = await service.export(
           source,
           const EditState(),
-          filters.first,
+          PickerFilter.identity,
           OutputOptions(maxBytes: limit),
         );
         expect(item.width, lessThan(400));
@@ -274,7 +279,7 @@ void main() {
         final item = await service.export(
           noise(400, 300),
           const EditState(),
-          filters.first,
+          PickerFilter.identity,
           const OutputOptions(maxBytes: 100),
         );
         expect(item.overLimit, isTrue);
@@ -293,7 +298,7 @@ void main() {
         final item = await service.export(
           grid(200, 100),
           const EditState(markup: [stroke]),
-          filters.first,
+          PickerFilter.identity,
           const OutputOptions(),
         );
         final out = await decode(item.file);
@@ -308,7 +313,7 @@ void main() {
         final item = await service.export(
           grid(200, 100),
           const EditState(filterIndex: 12, markup: [stroke]),
-          filters[12],
+          PickerFilter.all[11].matrix,
           const OutputOptions(),
         );
         final out = await decode(item.file);
@@ -323,7 +328,7 @@ void main() {
         final item = await service.export(
           grid(200, 100),
           const EditState(cropRect: Rect.fromLTWH(0, 0.5, 1, 0.5), markup: [top, bottom]),
-          filters.first,
+          PickerFilter.identity,
           const OutputOptions(),
         );
         final out = await decode(item.file);
@@ -346,7 +351,7 @@ void main() {
           (await service.export(
             grid(200, 100),
             const EditState(),
-            filters.first,
+            PickerFilter.identity,
             const OutputOptions(),
           )).file,
         );
@@ -354,7 +359,7 @@ void main() {
           (await service.export(
             grid(200, 100),
             const EditState(markup: [text]),
-            filters.first,
+            PickerFilter.identity,
             const OutputOptions(),
           )).file,
         );
@@ -376,11 +381,147 @@ void main() {
         await cached.export(
           grid(20, 10),
           const EditState(markup: [stroke]),
-          filters.first,
+          PickerFilter.identity,
           const OutputOptions(),
           cacheKey: "k",
         );
         expect(cache.writes, 0);
+      });
+    });
+  });
+
+  group("rotate and flip", () {
+    testWidgets("a turn swaps the size and turns the colors counter clockwise", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(turns: 1),
+          PickerFilter.identity,
+          const OutputOptions(),
+        );
+        expect((item.width, item.height), (100, 200));
+        final out = await decode(item.file);
+        expectColor(out.getPixel(10, 10), 0, 255, 0);
+        expectColor(out.getPixel(90, 10), 255, 255, 255);
+        expectColor(out.getPixel(10, 190), 255, 0, 0);
+        expectColor(out.getPixel(90, 190), 0, 0, 255);
+      });
+    });
+
+    testWidgets("a flip swaps left and right", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(flipped: true),
+          PickerFilter.identity,
+          const OutputOptions(),
+        );
+        final out = await decode(item.file);
+        expectColor(out.getPixel(10, 10), 0, 255, 0);
+        expectColor(out.getPixel(190, 10), 255, 0, 0);
+        expectColor(out.getPixel(10, 90), 255, 255, 255);
+      });
+    });
+
+    testWidgets("the crop is of the image as shown after the turn", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(turns: 1, cropRect: Rect.fromLTWH(0, 0, 1, 0.5)),
+          PickerFilter.identity,
+          const OutputOptions(),
+        );
+        expect((item.width, item.height), (100, 100));
+        final out = await decode(item.file);
+        expectColor(out.getPixel(10, 50), 0, 255, 0);
+        expectColor(out.getPixel(90, 50), 255, 255, 255);
+      });
+    });
+
+    testWidgets("markup on a turned image lands where the preview put it", (tester) async {
+      await tester.runAsync(() async {
+        const line = StrokeMark(
+          points: [Offset(0, 0.1), Offset(1, 0.1)],
+          color: Color(0xFF000000),
+          width: 0.05,
+        );
+        final item = await service.export(
+          grid(200, 100),
+          const EditState(turns: 1, markup: [line]),
+          PickerFilter.identity,
+          const OutputOptions(),
+        );
+        final out = await decode(item.file);
+        expectColor(out.getPixel(50, 20), 0, 0, 0);
+        expectColor(out.getPixel(10, 60), 0, 255, 0);
+      });
+    });
+  });
+
+  group("format", () {
+    /// the left half see through, the right half red.
+    XFile halfClear() {
+      final image = img.Image(width: 40, height: 20, numChannels: 4);
+      for (final pixel in image) {
+        pixel
+          ..r = 255
+          ..a = pixel.x < 20 ? 0 : 255;
+      }
+      final file = File("${dir.path}/clear.png")..writeAsBytesSync(img.encodePng(image));
+      return XFile(file.path);
+    }
+
+    testWidgets("png keeps transparency and says it's a png", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          halfClear(),
+          const EditState(cropRect: Rect.fromLTWH(0, 0, 1, 0.5)),
+          PickerFilter.identity,
+          const OutputOptions(format: OutputFormat.png),
+        );
+        expect(item.file.path, endsWith(".png"));
+        expect(item.file.mimeType, "image/png");
+        final out = img.decodePng(await item.file.readAsBytes())!;
+        expect(out.getPixel(5, 5).a, 0);
+        expect(out.getPixel(35, 5).a, 255);
+        expect(out.getPixel(35, 5).r, closeTo(255, 2));
+      });
+    });
+
+    testWidgets("jpeg puts white behind the transparent part", (tester) async {
+      await tester.runAsync(() async {
+        final item = await service.export(
+          halfClear(),
+          const EditState(cropRect: Rect.fromLTWH(0, 0, 1, 0.5)),
+          PickerFilter.identity,
+          const OutputOptions(),
+        );
+        expect(item.file.path, endsWith(".jpg"));
+        final out = await decode(item.file);
+        expectColor(out.getPixel(5, 5), 255, 255, 255);
+        expectColor(out.getPixel(35, 5), 255, 0, 0);
+      });
+    });
+
+    testWidgets("png gets under a max size by scaling down", (tester) async {
+      await tester.runAsync(() async {
+        final source = grid(400, 400);
+        final full = await service.export(
+          source,
+          const EditState(),
+          PickerFilter.all[11].matrix,
+          const OutputOptions(format: OutputFormat.png),
+        );
+        final limit = await full.file.length() ~/ 3;
+        final limited = await service.export(
+          source,
+          const EditState(),
+          PickerFilter.all[11].matrix,
+          OutputOptions(format: OutputFormat.png, maxBytes: limit),
+        );
+        expect(limited.width, lessThan(400));
+        expect(limited.file.path, endsWith(".png"));
+        expect(await limited.file.length() <= limit || limited.overLimit, isTrue);
       });
     });
   });
