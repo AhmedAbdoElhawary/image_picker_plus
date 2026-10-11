@@ -15,6 +15,7 @@ import 'package:image_picker_plus/src/settings/picker_theme.dart';
 import 'package:image_picker_plus/src/widgets/message_view.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
 
+/// opens the picker, see [pick].
 abstract final class ImagePickerPlus {
   /// fakes for tests, used instead of the platform services.
   @visibleForTesting
@@ -31,6 +32,16 @@ abstract final class ImagePickerPlus {
     PickerSettings settings = const PickerSettings(),
     List<PickedItem>? selected,
   }) async {
+    for (final filter in settings.filters) {
+      // a list's length can't be checked in a const constructor, so it's checked here before anything opens
+      if (filter.matrix.length != 20) {
+        throw ArgumentError.value(
+          filter.name,
+          "filters",
+          "a filter matrix is 20 values (5x4), got ${filter.matrix.length}",
+        );
+      }
+    }
     final brightness = settings.alwaysDarkTheme ? Brightness.dark : Theme.of(context).brightness;
     final theme = PickerTheme.resolve(settings.theme, brightness);
     // turned off later, so the old files go
@@ -92,6 +103,7 @@ abstract final class ImagePickerPlus {
       kIsWeb ||
       (defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS);
 
+  /// deletes the edited images kept by [PickerCache].
   static Future<void> clearCache() => platform.clearCache();
 }
 
