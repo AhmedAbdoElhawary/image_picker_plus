@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/settings/languages/arabic_texts.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_texts.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
 
 import '../fakes/fake_gallery_service.dart';
@@ -24,6 +27,48 @@ void main() {
       find.descendant(of: find.byKey(const ValueKey("0")), matching: find.text("1")),
     );
     expect(badge.dx, lessThan(cell.center.dx));
+  });
+
+  /// no text on screen is one of the english defaults.
+  void expectNoEnglish(WidgetTester tester) {
+    const english = PickerTexts();
+    final shown = tester.widgetList<Text>(find.byType(Text)).map((text) => text.data).nonNulls.toSet();
+    final words = {
+      english.gallery,
+      english.done,
+      english.recent,
+      english.crop,
+      english.next,
+      english.rotate,
+      english.flip,
+      english.filters,
+      english.adjust,
+      english.brightness,
+      ...english.filterNames,
+    };
+    expect(shown.intersection(words), isEmpty);
+  }
+
+  testWidgets("arabic texts leave no english in the gallery", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(maxSelection: 3, texts: ArabicTexts()),
+    );
+    expectNoEnglish(tester);
+    expect(find.text(const ArabicTexts().recent), findsWidgets);
+  });
+
+  testWidgets("arabic texts leave no english on the edit page", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [fakeItem("a")], filterIndexes: {"a": ValueNotifier(0)}),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(texts: ArabicTexts(), filters: PickerFilter.all, adjustments: true),
+    );
+    expectNoEnglish(tester);
+    expect(find.text(const ArabicTexts().adjust), findsOneWidget);
   });
 
   testWidgets("ltr keeps the close icon on the left", (tester) async {
