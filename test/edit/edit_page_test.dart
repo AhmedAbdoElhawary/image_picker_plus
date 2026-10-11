@@ -15,6 +15,7 @@ import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 import '../fakes/fake_gallery_service.dart';
 import '../fakes/pump_picker.dart';
@@ -23,7 +24,7 @@ void main() {
   final a = fakeItem("a");
   final b = fakeItem("b");
   final v = fakeItem("v", type: MediaType.video);
-  const settings = PickerSettings(maxSelection: 5, filters: true);
+  const settings = PickerSettings(maxSelection: 5, filters: PickerFilter.all);
 
   // the gallery or camera owns these, the page only shares them
   Map<String, ValueNotifier<int>> filtersOf(List<MediaItem> items) => {
@@ -88,7 +89,7 @@ void main() {
     await pumpPicker(
       tester,
       EditPage(items: [a, b], onAdd: () => adds++),
-      settings: const PickerSettings(maxSelection: 3, filters: true),
+      settings: const PickerSettings(maxSelection: 3, filters: PickerFilter.all),
     );
     await tester.tap(find.byIcon(Icons.add_rounded));
     expect(adds, 1);
@@ -107,7 +108,7 @@ void main() {
     await pumpPicker(
       tester,
       EditPage(items: [a], onAdd: () {}),
-      settings: const PickerSettings(filters: true),
+      settings: const PickerSettings(filters: PickerFilter.all),
     );
     expect(find.byType(ReorderStrip), findsNothing);
   });
@@ -116,7 +117,7 @@ void main() {
     await pumpPicker(
       tester,
       EditPage(items: [a, b], onAdd: () {}),
-      settings: const PickerSettings(maxSelection: 2, filters: true),
+      settings: const PickerSettings(maxSelection: 2, filters: PickerFilter.all),
     );
     expect(find.byIcon(Icons.add_rounded), findsNothing);
   });
