@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -41,13 +41,30 @@ ImageProvider fileImage(String path) => FileImage(File(path));
 /// read by the engine, the file never gets copied through dart on the main thread.
 Future<ui.ImmutableBuffer> imageBuffer(XFile file) => ui.ImmutableBuffer.fromFilePath(file.path);
 
+/// the engine decodes natively and only at the size [targetSize] asks for. the descriptor is
+/// disposed here, instantiateImageCodecWithSize leaves it holding the encoded photo until a gc.
+Future<ui.Image> decodeImage(XFile file, ui.TargetImageSizeCallback targetSize) async {
+  final buffer = await imageBuffer(file);
+  final descriptor = await ui.ImageDescriptor.encoded(buffer);
+  try {
+    final size = targetSize(descriptor.width, descriptor.height);
+    final codec = await descriptor.instantiateCodec(targetWidth: size.width, targetHeight: size.height);
+    try {
+      return (await codec.getNextFrame()).image;
+    } finally {
+      codec.dispose();
+    }
+  } finally {
+    descriptor.dispose();
+    buffer.dispose();
+  }
+}
+
 VideoHandle? videoPlayer(String path) => _FileVideo(VideoPlayerController.file(File(path)));
 
-/// one core stays for the gpu draws, a few strips encode at once on the rest.
-final int _workers = max(1, min(4, Platform.numberOfProcessors - 1));
-
-/// a few strips drawn and encoded at once, so the encode uses that many cores
-/// and only a few mb of pixels are ever out of the gpu.
+/// a strip is drawn, encoded and appended, one at a time. the encode runs here and not in an
+/// isolate on purpose: sending a strip over copies its pixels, and a few strips in flight were
+/// 30 mb of them for a 12 mp photo. this is slower and the export is what the memory is for.
 Future<Uint8List> encodeJpeg(
   Future<ByteData> Function(int top, int rows) draw,
   int width,
@@ -55,30 +72,20 @@ Future<Uint8List> encodeJpeg(
   int quality,
 ) async {
   final rows = jpegStripRows(width);
-  final strips = List.filled((height + rows - 1) ~/ rows, Uint8List(0));
-  var next = 0;
-  Future<void> worker() async {
-    while (next < strips.length) {
-      final index = next++;
-      final top = index * rows;
-      final strip = min(rows, height - top);
-      strips[index] = await _encodeStrip(await draw(top, strip), width, strip, quality);
-    }
+  final count = (height + rows - 1) ~/ rows;
+  final encoder = JpegStripEncoder(width, quality);
+  // every strip is copied in as it comes, so the encoder's buffer can take the next one
+  final jpeg = BytesBuilder()..add(jpegHeader(width, height, quality, count > 1 ? rows : null));
+  for (var index = 0; index < count; index++) {
+    final top = index * rows;
+    final strip = min(rows, height - top);
+    if (index > 0) jpeg.add(restartMarker(index - 1));
+    final pixels = await draw(top, strip);
+    jpeg.add(encoder.encode(pixels.buffer.asUint8List(pixels.offsetInBytes, pixels.lengthInBytes), strip));
   }
-
-  await Future.wait([for (var i = 0; i < _workers; i++) worker()]);
-  return joinJpeg(strips, width, height, quality, rows);
+  jpeg.add(jpegEnd);
+  return jpeg.takeBytes();
 }
-
-/// its own function, a closure in encodeJpeg would carry draw and its image to the isolate.
-Future<Uint8List> _encodeStrip(ByteData pixels, int width, int height, int quality) => Isolate.run(
-  () => encodeJpegStrip(
-    pixels.buffer.asUint8List(pixels.offsetInBytes, pixels.lengthInBytes),
-    width,
-    height,
-    quality,
-  ),
-);
 
 /// the engine encodes it off the dart thread.
 Future<Uint8List> encodePng(ui.Image image) async {
