@@ -124,6 +124,13 @@ class _GalleryGridState extends State<GalleryGrid> {
                     itemBuilder: (context, index) {
                       if (index >= items.length) return ColoredBox(color: scope.theme.surface);
                       final item = items[index];
+                      void toRow() {
+                        // no top padding when the preview is beside or off, nothing to go under
+                        if (padding.top > 0 && controller.preview.value == item) {
+                          _scrollTo(index ~/ columns * (cellHeight + PickerLayout.gap));
+                        }
+                      }
+
                       return GalleryCell(
                         key: ValueKey(item.id),
                         item: item,
@@ -131,12 +138,13 @@ class _GalleryGridState extends State<GalleryGrid> {
                         size: size,
                         onTap: () {
                           widget.onTap(item);
-                          // no top padding when the preview is beside or off, nothing to go under
-                          if (padding.top > 0 && controller.preview.value == item) {
-                            _scrollTo(index ~/ columns * (cellHeight + PickerLayout.gap));
-                          }
+                          toRow();
                         },
-                        onLongPress: () => widget.onLongPress(item),
+                        // the first long press shows it too, it starts the count
+                        onLongPress: () {
+                          widget.onLongPress(item);
+                          toRow();
+                        },
                       );
                     },
                   ),
