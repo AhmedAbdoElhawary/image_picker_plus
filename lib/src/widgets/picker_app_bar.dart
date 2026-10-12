@@ -35,9 +35,9 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   IconData getIcon(BuildContext context) => closeIcon == CloseButtonEnum.back
-      ? defaultTargetPlatform == TargetPlatform.android
-            ? Icons.arrow_back_rounded
-            : Icons.arrow_back_ios_rounded
+      ? defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS
+            ? Icons.arrow_back_ios_rounded
+            : Icons.arrow_back_rounded
       : Icons.close_rounded;
   @override
   Widget build(BuildContext context) {
