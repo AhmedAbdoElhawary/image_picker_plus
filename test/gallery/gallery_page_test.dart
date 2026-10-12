@@ -150,6 +150,24 @@ void main() {
       expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/0", "/fake/4", "/fake/7"]);
     });
 
+    testWidgets("the last one can't be taken off while adding", (tester) async {
+      await pumpPicker(
+        tester,
+        const PickerHome(),
+        fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
+        settings: editing,
+      );
+      await tester.tap(find.text("Next"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(cell("0"));
+      await tester.pump();
+      expect(find.text("Keep at least 1 item to add more"), findsOneWidget);
+      expect(find.descendant(of: cell("0"), matching: find.text("1")), findsOneWidget);
+    });
+
     testWidgets("back while adding drops the new ones and opens the edit page again", (tester) async {
       Object? result;
       await openEdit(tester, onResult: (r) => result = r);
@@ -629,6 +647,27 @@ void main() {
 
     await tester.tap(cell("30"));
     await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(MediaPreview)).dy, top);
+    expect(
+      tester.getTopLeft(cell("30")).dy,
+      closeTo(tester.getBottomLeft(find.byType(MediaPreview)).dy + PickerLayout.gap, 0.5),
+    );
+  });
+
+  testWidgets("the first long press puts its row right under the preview too", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      fakes: Fakes(gallery: FakeGalleryService.withItems(80)),
+      settings: const PickerSettings(maxSelection: 5),
+    );
+    final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
+    await tester.drag(find.byType(GridView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(cell("30"));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: cell("30"), matching: find.text("1")), findsOneWidget);
     expect(tester.getTopLeft(find.byType(MediaPreview)).dy, top);
     expect(
       tester.getTopLeft(cell("30")).dy,
