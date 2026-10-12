@@ -26,7 +26,8 @@ abstract final class ImagePickerPlus {
   /// null when the user closes the picker.
   /// on web call it straight from the tap, an await before it makes the browser block the file picker.
   /// [selected] opens with an earlier pick selected, in that order and with its edits.
-  /// on web and desktop it skips the system picker and opens the edit page with them.
+  /// with editing on it opens the edit page with them, the gallery only opens from its plus.
+  /// on web and desktop it skips the system picker.
   static Future<List<PickedItem>?> pick(
     BuildContext context, {
     PickerSettings settings = const PickerSettings(),
