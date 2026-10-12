@@ -30,6 +30,10 @@ class PickerLayout {
   static const double cardMaxHeight = 900;
   static const double cardMargin = 24;
 
+  /// the edit page overflows below this, it asks for a bigger window instead.
+  static const double editMinWidth = 280;
+  static const double editMinHeight = 300;
+
   factory PickerLayout.of(BuildContext context) => PickerLayout.forSize(MediaQuery.sizeOf(context));
 
   factory PickerLayout.forSize(Size size) {
