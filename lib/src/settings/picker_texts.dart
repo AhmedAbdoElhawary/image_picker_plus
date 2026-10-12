@@ -18,6 +18,9 @@ class PickerTexts {
   /// next in the gallery when it's opened from the edit page to add more.
   final String add;
 
+  /// the last selected item tapped off while adding more.
+  final String minAdd;
+
   /// finishes the pick.
   final String done;
 
@@ -177,6 +180,9 @@ class PickerTexts {
   /// puts a slider back at 0.
   final String reset;
 
+  /// the slider of how much of the picked filter is applied.
+  final String strength;
+
   /// one name per filter, in the same order.
   final List<String> filterNames;
 
@@ -193,6 +199,7 @@ class PickerTexts {
     this.video = "Video",
     this.next = "Next",
     this.add = "Add",
+    this.minAdd = "Keep at least 1 item to add more",
     this.done = "Done",
     this.close = "Close",
     this.recent = "Recent",
@@ -247,6 +254,7 @@ class PickerTexts {
     this.saturation = "Saturation",
     this.warmth = "Warmth",
     this.reset = "Reset",
+    this.strength = "Strength",
     this.filterNames = const [
       "Normal",
       "Warm",
