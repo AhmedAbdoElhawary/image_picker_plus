@@ -23,6 +23,7 @@ List<String> strings(PickerTexts texts) => [
   texts.manageAccess,
   texts.maxReached,
   texts.videoNotEditable,
+  texts.windowTooSmall,
   texts.notSupported,
   texts.crop,
   texts.original,
@@ -61,9 +62,12 @@ List<String> strings(PickerTexts texts) => [
   texts.saturation,
   texts.warmth,
   texts.reset,
+  texts.strength,
   ...texts.filterNames,
-  ...texts.months,
 ];
+
+/// words these languages really use as they are in english.
+const loanwords = {"Video", "Text", "Original", "Normal", "Sepia", "Flash", "Color"};
 
 void main() {
   const english = PickerTexts();
@@ -77,9 +81,14 @@ void main() {
       final own = strings(texts);
       final base = strings(english);
       for (var i = 0; i < base.length; i++) {
-        expect(own[i], isNot(base[i]), reason: "\"${base[i]}\" is still english in $code");
+        if (!loanwords.contains(own[i])) {
+          expect(own[i], isNot(base[i]), reason: "\"${base[i]}\" is still english in $code");
+        }
         expect(own[i].trim(), isNotEmpty);
       }
+      // german shares some month names with english, so only the whole list is checked
+      expect(texts.months, isNot(english.months), reason: "the months are still english in $code");
+      expect(texts.months.every((month) => month.trim().isNotEmpty), isTrue);
     });
 
     test("$code keeps the placeholders", () {
