@@ -136,6 +136,7 @@ class _FilesFlowState extends State<FilesFlow> {
         initial: _initial,
         crops: _edits.crops,
         filterIndexes: _edits.filterIndexes,
+        filterStrengths: _edits.filterStrengths,
         markups: _edits.markups,
         adjustments: _edits.adjustments,
         onBack: _repick,
