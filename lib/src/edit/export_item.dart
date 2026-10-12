@@ -54,7 +54,7 @@ Future<PickedItem?> exportItem({
   final picked = await services.image.export(
     source,
     edit,
-    composeMatrix(filterMatrix(filters, edit.filterIndex), edit.adjustments),
+    composeMatrix(filterMatrix(filters, edit.filterIndex, strength: edit.filterStrength), edit.adjustments),
     output,
     cacheKey: edited ? cacheKey : null,
   );
