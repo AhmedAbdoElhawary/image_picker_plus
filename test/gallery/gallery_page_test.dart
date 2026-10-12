@@ -597,6 +597,33 @@ void main() {
     expect(find.text("1:1"), findsOneWidget);
   });
 
+  testWidgets("going to the camera closes the ratio menu", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      settings: const PickerSettings(
+        source: PickerSource.both,
+        cropRatios: [CropRatio.square, CropRatio.portrait],
+      ),
+      disableAnimations: false,
+    );
+    await tester.tap(find.text("1:1"));
+    await tester.pumpAndSettle();
+    expect(find.text("4:5"), findsOneWidget);
+    await tester.tap(find.text("Photo"));
+    // the closing fade lost its place on the hidden gallery and showed at the top
+    await tester.pump();
+    expect(find.text("4:5", skipOffstage: false), findsNothing);
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Gallery"));
+    await tester.pumpAndSettle();
+    expect(find.text("4:5"), findsNothing);
+    await tester.tap(find.text("1:1"));
+    await tester.pumpAndSettle();
+    expect(find.text("4:5"), findsOneWidget);
+  });
+
   testWidgets("no preview: no crop view, and the edit page crops at the first ratio", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(10));
     await pumpPicker(
