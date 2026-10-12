@@ -11,20 +11,19 @@ class OrientationButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = PickerScope.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _RoundButton(
-          icon: Icons.rotate_90_degrees_ccw_rounded,
-          label: PickerScope.of(context).texts.rotate,
-          onTap: controller.rotate,
-        ),
-        const SizedBox(width: 6.5),
-        _RoundButton(
-          icon: Icons.flip_rounded,
-          label: PickerScope.of(context).texts.flip,
-          onTap: controller.flip,
-        ),
+        if (scope.settings.rotate)
+          _RoundButton(
+            icon: Icons.rotate_90_degrees_ccw_rounded,
+            label: scope.texts.rotate,
+            onTap: controller.rotate,
+          ),
+        if (scope.settings.rotate && scope.settings.flip) const SizedBox(width: 6.5),
+        if (scope.settings.flip)
+          _RoundButton(icon: Icons.flip_rounded, label: scope.texts.flip, onTap: controller.flip),
       ],
     );
   }
