@@ -1,6 +1,5 @@
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
 
-// TODO(ahmed): read through the arabic, a wrong word here ships to every arabic app.
 /// every text in arabic. pass any one by name to change just that one.
 class ArabicTexts extends PickerTexts {
   /// pass any text by name to change only that one.
@@ -10,6 +9,7 @@ class ArabicTexts extends PickerTexts {
     super.video = "فيديو",
     super.next = "التالي",
     super.add = "إضافة",
+    super.minAdd = "أبقِ عنصرًا واحدًا على الأقل لإضافة المزيد",
     super.done = "تم",
     super.close = "إغلاق",
     super.recent = "الأحدث",
@@ -63,6 +63,7 @@ class ArabicTexts extends PickerTexts {
     super.saturation = "التشبع",
     super.warmth = "الدفء",
     super.reset = "إعادة ضبط",
+    super.strength = "الشدة",
     super.filterNames = const [
       "عادي",
       "دافئ",
