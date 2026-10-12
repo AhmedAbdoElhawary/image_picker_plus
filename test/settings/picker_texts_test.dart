@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/settings/languages/arabic_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/chinese_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/german_texts.dart';
 import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
 
@@ -89,6 +91,8 @@ void main() {
     testWidgets("matches the language code, english for the rest", (tester) async {
       expect(await textsIn(tester, const Locale("ar")), isA<ArabicTexts>());
       expect(await textsIn(tester, const Locale("ar", "EG")), isA<ArabicTexts>());
+      expect(await textsIn(tester, const Locale("zh", "CN")), isA<ChineseTexts>());
+      expect(await textsIn(tester, const Locale("de")), isA<GermanTexts>());
       expect((await textsIn(tester, const Locale("fr"))).done, "Done");
       expect((await textsIn(tester, null)).done, "Done");
     });
@@ -98,6 +102,6 @@ void main() {
     const texts = ArabicTexts(done: "خلاص");
     expect(texts.done, "خلاص");
     expect(texts.gallery, const ArabicTexts().gallery);
-    expect(PickerTexts.languages.keys, ["en", "ar"]);
+    expect(PickerTexts.languages.keys, ["en", "ar", "zh", "ja", "hi", "es", "de", "tr", "ru"]);
   });
 }
