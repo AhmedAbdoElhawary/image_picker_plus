@@ -19,10 +19,11 @@ abstract class CameraService {
   /// false when the microphone was denied and videos have no sound.
   bool get hasMicrophone;
 
-  /// width / height of the preview in portrait.
+  /// width / height of the camera image held wide.
   double get aspectRatio;
 
-  Widget preview();
+  /// the camera image, tall or wide by [portrait]. [child] covers it at the same size.
+  Widget preview({required bool portrait, Widget? child});
 
   Future<void> switchCamera();
 
