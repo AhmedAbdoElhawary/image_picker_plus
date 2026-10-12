@@ -132,6 +132,18 @@ void main() {
     expect(controller.preview.value?.id, "0");
   });
 
+  test("a new photo and a new album show after a gallery change", () async {
+    final gallery = FakeGalleryService.withItems(3);
+    final controller = controllerFor(gallery);
+    await controller.init();
+    gallery.data["all"]!.insert(0, fakeItem("new"));
+    gallery.data["Download"] = [fakeItem("new")];
+    gallery.emitChange();
+    await pumpEventQueue();
+    expect(controller.items.value.first.id, "new");
+    expect(controller.albums.value.map((album) => (album.name, album.count)), [("all", 4), ("Download", 1)]);
+  });
+
   test("an old page result is dropped after an album switch", () async {
     final gallery = FakeGalleryService(
       data: {
