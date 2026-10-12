@@ -49,6 +49,9 @@ class _PickerHomeState extends State<PickerHome> {
   /// the gallery hides under a loading box until the edit page covers it or the plus needs it.
   bool _hidden = false;
 
+  /// the edit page is fully over the picker, so the camera under it is let go.
+  bool _editing = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -101,12 +104,22 @@ class _PickerHomeState extends State<PickerHome> {
 
   Future<void> _open(EditPage page) async {
     final scope = PickerScope.of(context);
-    final items = await Navigator.of(
-      context,
-    ).push<List<PickedItem>>(PickerRoute(context: context, builder: (_) => scope.wrap(page)));
+    final route = PickerRoute<List<PickedItem>>(context: context, builder: (_) => scope.wrap(page));
+    final pushed = Navigator.of(context).push(route);
+    // only once it's in, the camera going earlier leaves a blank behind the fade
+    void covered(AnimationStatus status) {
+      if (!status.isCompleted) return;
+      route.animation!.removeStatusListener(covered);
+      if (mounted) setState(() => _editing = true);
+    }
+
+    route.animation!.addStatusListener(covered);
+    covered(route.animation!.status);
+    final items = await pushed;
     if (!mounted) return;
     if (items != null) return Navigator.of(context).pop(items);
-    if (_direct && !_gallery!.adding.value) Navigator.of(context).pop();
+    if (_direct && !_gallery!.adding.value) return Navigator.of(context).pop();
+    setState(() => _editing = false);
   }
 
   Future<void> _edit() {
@@ -122,6 +135,7 @@ class _PickerHomeState extends State<PickerHome> {
         initial: selection.firstWhere((item) => !before.contains(item), orElse: () => selection.first),
         crops: gallery.crops,
         filterIndexes: gallery.filterIndexes,
+        filterStrengths: gallery.filterStrengths,
         markups: gallery.markups,
         adjustments: gallery.adjustments,
         onAdd: _add,
@@ -184,6 +198,7 @@ class _PickerHomeState extends State<PickerHome> {
         items: [item],
         crops: taken.crops,
         filterIndexes: taken.filterIndexes,
+        filterStrengths: taken.filterStrengths,
         markups: taken.markups,
         adjustments: taken.adjustments,
         onAdd: () {
@@ -229,7 +244,7 @@ class _PickerHomeState extends State<PickerHome> {
                             ),
                           // the camera is built only while shown, so it's released when leaving.
                           // no fade, two camera pages at once fight over the one camera
-                          if (current != PickerTab.gallery)
+                          if (current != PickerTab.gallery && !_editing)
                             SizedBox(
                               height: MediaQuery.sizeOf(context).height - (PickerLayout.pickerTabsHeight),
                               child: CameraPage(
@@ -244,7 +259,11 @@ class _PickerHomeState extends State<PickerHome> {
                       ),
                     ),
                     if (tabs.length > 1)
-                      PickerTabs(tabs: tabs, current: current, onChanged: (tab) => setState(() => _current = tab)),
+                      PickerTabs(
+                        tabs: tabs,
+                        current: current,
+                        onChanged: (tab) => setState(() => _current = tab),
+                      ),
                   ],
                 ),
               ),
