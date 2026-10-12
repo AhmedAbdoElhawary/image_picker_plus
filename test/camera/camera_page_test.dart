@@ -3,6 +3,7 @@ import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/camera/camera_controls.dart';
+import 'package:image_picker_plus/src/camera/camera_page.dart';
 import 'package:image_picker_plus/src/camera/camera_tools.dart';
 import 'package:image_picker_plus/src/camera/capture_button.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
@@ -182,6 +183,25 @@ void main() {
     await tester.tap(find.byType(CaptureButton));
     await tester.pumpAndSettle();
     expect(find.byType(EditPage), findsOneWidget);
+  });
+
+  testWidgets("the camera is let go under the edit page and opens again on back", (tester) async {
+    final fakes = Fakes();
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      fakes: fakes,
+      settings: const PickerSettings(source: PickerSource.camera, filters: PickerFilter.all),
+    );
+    await tester.tap(find.byType(CaptureButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(CameraPage, skipOffstage: false), findsNothing);
+    expect(fakes.camera.disposeCalls, 1);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+    expect(find.byType(CameraPage), findsOneWidget);
+    expect(fakes.camera.initCalls, 2);
   });
 
   testWidgets("a photo with crop opens the edit page with the ratio button", (tester) async {
