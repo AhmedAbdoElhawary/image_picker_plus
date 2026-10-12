@@ -10,6 +10,7 @@ import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item_view.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_painter.dart';
 import 'package:image_picker_plus/src/edit/markup/pen_controls.dart';
 import 'package:image_picker_plus/src/models/edit_state.dart';
 
@@ -53,46 +54,67 @@ class MarkupCanvas extends StatelessWidget {
     final imageAspect = orientation?.imageAspect ?? (item.height == 0 ? 1.0 : item.width / item.height);
     Widget canvas = AspectRatio(
       aspectRatio: imageAspect * crop.width / crop.height,
-      child: CroppedImage(
-        rect: crop,
-        child: LayoutBuilder(
-          builder: (context, whole) {
-            final size = whole.biggest;
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                FilteredImage(
-                  item: item,
-                  filter: controller.filterIndexes[item.id],
-                  adjustments: controller.adjustments[item.id],
-                  crop: null,
-                  orientation: orientation,
-                  markup: null,
-                ),
-                MarkupLayer(controller: markup, moving: moving, hidden: editingFrom, active: active),
-                if (drawing)
-                  _Pen(size: size, markup: markup, active: active, pen: pen, erasing: erasing)
-                else
-                  ValueListenableBuilder<List<MarkupItem>>(
-                    valueListenable: markup,
-                    builder: (context, items, _) => Stack(
-                      children: [
-                        for (final mark in items)
-                          if (mark is! StrokeMark && mark != editingFrom)
-                            MarkupItemView(
-                              item: mark,
-                              size: size,
-                              onTap: mark is TextMark ? () => onTapText(mark) : null,
-                              onMove: (to, pointer) => onMove(mark, to, pointer),
-                              onEnd: (to, pointer) => onEnd(mark, to, pointer),
-                            ),
-                      ],
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: [
+          CroppedImage(
+            rect: crop,
+            child: LayoutBuilder(
+              builder: (context, whole) {
+                final size = whole.biggest;
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    FilteredImage(
+                      item: item,
+                      filter: controller.filterIndexes[item.id],
+                      strength: controller.filterStrengths[item.id],
+                      adjustments: controller.adjustments[item.id],
+                      crop: null,
+                      orientation: orientation,
+                      markup: null,
                     ),
-                  ),
-              ],
-            );
-          },
-        ),
+                    MarkupLayer(controller: markup, moving: moving, hidden: editingFrom, active: active),
+                    if (drawing)
+                      _Pen(size: size, markup: markup, active: active, pen: pen, erasing: erasing)
+                    else
+                      ValueListenableBuilder<List<MarkupItem>>(
+                        valueListenable: markup,
+                        builder: (context, items, _) => Stack(
+                          children: [
+                            for (final mark in items)
+                              if (mark is! StrokeMark && mark != editingFrom)
+                                MarkupItemView(
+                                  item: mark,
+                                  size: size,
+                                  onTap: mark is TextMark ? () => onTapText(mark) : null,
+                                  onMove: (to, pointer) => onMove(mark, to, pointer),
+                                  onEnd: (to, pointer) => onEnd(mark, to, pointer),
+                                ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+          // not clipped, a text dragged to the delete button stays seen past the image
+          CroppedImage(
+            rect: crop,
+            clip: false,
+            child: IgnorePointer(
+              child: ValueListenableBuilder<(MarkupItem, MarkupItem)?>(
+                valueListenable: moving,
+                builder: (context, moving, _) => CustomPaint(
+                  size: Size.infinite,
+                  painter: MarkupPainter(items: [?moving?.$2]),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
     canvas = Hero(
@@ -104,6 +126,7 @@ class MarkupCanvas extends StatelessWidget {
           child: FilteredImage(
             item: item,
             filter: controller.filterIndexes[item.id],
+            strength: controller.filterStrengths[item.id],
             adjustments: controller.adjustments[item.id],
             crop: null,
             orientation: orientation,
