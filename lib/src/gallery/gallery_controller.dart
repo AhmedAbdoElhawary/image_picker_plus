@@ -52,6 +52,7 @@ class GalleryController {
   final ImageEdits edits = ImageEdits();
   Map<String, CropController> get crops => edits.crops;
   Map<String, ValueNotifier<int>> get filterIndexes => edits.filterIndexes;
+  Map<String, ValueNotifier<double>> get filterStrengths => edits.filterStrengths;
   Map<String, MarkupController> get markups => edits.markups;
   Map<String, ValueNotifier<Adjustments>> get adjustments => edits.adjustments;
 
