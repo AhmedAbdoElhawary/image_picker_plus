@@ -25,6 +25,20 @@ class _RatioButtonState extends State<RatioButton> with SingleTickerProviderStat
   late final AnimationController _open = AnimationController(vsync: this);
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // the gallery goes offstage on the camera tab, the menu would stay floating at the top.
+    // it can't be hidden while the gallery builds, so after the frame
+    if (!TickerMode.valuesOf(context).enabled && _menu.isShowing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _open.value = 0;
+        _menu.hide();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _open.dispose();
     super.dispose();
@@ -62,14 +76,16 @@ class _RatioButtonState extends State<RatioButton> with SingleTickerProviderStat
         link: _link,
         child: OverlayPortal(
           controller: _menu,
-          overlayChildBuilder: (overlayContext) => _RatioMenu(
-            controller: controller,
-            animation: _open,
-            link: _link,
-            tapGroup: _tapGroup,
-            above: _opensAbove(overlayContext, scope.settings.cropRatios.length),
-            onPick: _pick,
-          ),
+          overlayChildBuilder: (overlayContext) => TickerMode.valuesOf(overlayContext).enabled
+              ? _RatioMenu(
+                  controller: controller,
+                  animation: _open,
+                  link: _link,
+                  tapGroup: _tapGroup,
+                  above: _opensAbove(overlayContext, scope.settings.cropRatios.length),
+                  onPick: _pick,
+                )
+              : const SizedBox.shrink(),
           child: Selector<CropRatio>(
             listenable: controller,
             select: () => controller.ratio,
