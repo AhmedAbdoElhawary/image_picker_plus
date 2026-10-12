@@ -1,7 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/settings/languages/arabic_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/chinese_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/german_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/hindi_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/japanese_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/russian_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/spanish_texts.dart';
+import 'package:image_picker_plus/src/settings/languages/turkish_texts.dart';
 
-/// every text the picker shows, english by default. [ArabicTexts] ships too.
+/// every text the picker shows, english by default. the other shipped languages are in [languages].
 class PickerTexts {
   /// the gallery tab.
   final String gallery;
@@ -65,6 +72,9 @@ class PickerTexts {
 
   /// a video on the edit page.
   final String videoNotEditable;
+
+  /// the edit page in a window too small for it.
+  final String windowTooSmall;
 
   /// a source this platform doesn't have.
   final String notSupported;
@@ -216,6 +226,7 @@ class PickerTexts {
     this.manageAccess = "Manage access",
     this.maxReached = "You can select up to {max} items",
     this.videoNotEditable = "Videos can only be reordered",
+    this.windowTooSmall = "Make the window bigger to edit",
     this.notSupported = "This platform is not supported yet",
     this.crop = "Crop",
     this.original = "Original",
@@ -289,7 +300,17 @@ class PickerTexts {
   });
 
   /// the shipped languages by language code. a new language is one file and one line here.
-  static const Map<String, PickerTexts> languages = {"en": PickerTexts(), "ar": ArabicTexts()};
+  static const Map<String, PickerTexts> languages = {
+    "en": PickerTexts(),
+    "ar": ArabicTexts(),
+    "zh": ChineseTexts(),
+    "ja": JapaneseTexts(),
+    "hi": HindiTexts(),
+    "es": SpanishTexts(),
+    "de": GermanTexts(),
+    "tr": TurkishTexts(),
+    "ru": RussianTexts(),
+  };
 
   /// the shipped language of the app's locale, english when it isn't shipped or there's no locale.
   static PickerTexts of(BuildContext context) =>
