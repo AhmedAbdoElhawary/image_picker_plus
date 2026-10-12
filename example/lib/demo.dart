@@ -244,7 +244,7 @@ class _DemoState extends State<Demo> {
       final json = kIsWeb ? _savedOnWeb : (_savedFile.existsSync() ? await _savedFile.readAsString() : null);
       if (json == null) return _tell("Nothing saved yet");
       items.value = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)];
-      _tell("Loaded ${items.value.length} items, change photos opens them with their edits");
+      _tell("Loaded ${items.value.length} items, edit opens them with their edits");
     } catch (error) {
       _tell("Couldn't load: $error");
     }
@@ -383,13 +383,11 @@ class _DemoState extends State<Demo> {
                   alignment: WrapAlignment.center,
                   spacing: 8,
                   children: [
-                    if (items.isNotEmpty)
-                      OutlinedButton(
-                        onPressed: () => _pick(selected: items),
-                        child: const Text("Change photos"),
-                      ),
-                    if (items.isNotEmpty) OutlinedButton(onPressed: _save, child: const Text("Save")),
-                    OutlinedButton(onPressed: _load, child: const Text("Load")),
+                    if (items.isNotEmpty) ...[
+                      OutlinedButton(onPressed: () => _pick(selected: items), child: const Text("Edit")),
+                      OutlinedButton(onPressed: _save, child: const Text("Save")),
+                    ] else
+                      OutlinedButton(onPressed: _load, child: const Text("Load")),
                   ],
                 ),
                 _Results(items),
