@@ -48,6 +48,12 @@ class PickerSettings {
   /// empty means no crop.
   final List<CropRatio> cropRatios;
 
+  /// the rotate left button under the crop.
+  final bool rotate;
+
+  /// the flip button under the crop.
+  final bool flip;
+
   /// false hides the gallery preview, the crop is then only on the edit page at the image's own ratio.
   final bool showPreview;
 
@@ -97,6 +103,8 @@ class PickerSettings {
     this.mediaType = MediaType.image,
     this.maxSelection = 1,
     this.cropRatios = CropRatio.all,
+    this.rotate = true,
+    this.flip = true,
     this.showPreview = true,
     this.resizePreview = true,
     this.gridColumns,
