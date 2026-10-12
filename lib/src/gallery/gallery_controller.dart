@@ -162,7 +162,7 @@ class GalleryController {
     }
   }
 
-  /// reloads the same number of pages and drops selected items that are gone.
+  /// reloads the albums and the same number of pages, and drops selected items that are gone.
   Future<void> reload() async {
     final current = album.value;
     if (current == null || _disposed) return;
@@ -172,6 +172,10 @@ class GalleryController {
     final fresh = <MediaItem>[];
     var end = false;
     try {
+      // the first download or screenshot makes a new album, and the counts change
+      final list = await service.albums(settings.mediaType);
+      if (_disposed || generation != _generation) return;
+      albums.value = list;
       for (var page = 0; page < pages && !end; page++) {
         final list = await service.items(current, page: page, size: restSize);
         if (_disposed || generation != _generation) return;
