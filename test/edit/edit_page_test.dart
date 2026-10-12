@@ -77,6 +77,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets("a window too small asks to be bigger instead of overflowing", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a, b], filterIndexes: filtersOf([a, b])),
+      settings: const PickerSettings(maxSelection: 5, filters: PickerFilter.all, adjustments: true),
+      size: const Size(250, 280),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text("Make the window bigger to edit"), findsOneWidget);
+    expect(find.byType(EditTools), findsNothing);
+
+    tester.view.physicalSize = const Size(400, 800);
+    await tester.pumpAndSettle();
+    expect(find.text("Make the window bigger to edit"), findsNothing);
+    expect(find.byType(EditTools), findsOneWidget);
+  });
+
   testWidgets("a video shows the note and the filters are off", (tester) async {
     await pumpPicker(
       tester,
