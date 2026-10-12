@@ -12,6 +12,7 @@ import 'package:image_picker_plus/src/settings/picker_filter.dart';
 class FilteredImage extends StatelessWidget {
   final MediaItem item;
   final ValueNotifier<int>? filter;
+  final ValueNotifier<double>? strength;
   final ValueNotifier<Adjustments>? adjustments;
   final CropController? crop;
 
@@ -24,6 +25,7 @@ class FilteredImage extends StatelessWidget {
     required this.filter,
     required this.crop,
     required this.markup,
+    this.strength,
     this.adjustments,
     this.orientation,
     super.key,
@@ -37,11 +39,15 @@ class FilteredImage extends StatelessWidget {
     final filtered = filter == null && adjustments == null
         ? image
         : ListenableBuilder(
-            listenable: Listenable.merge([filter, adjustments]),
+            listenable: Listenable.merge([filter, strength, adjustments]),
             builder: (context, image) => ColorFiltered(
               colorFilter: ColorFilter.matrix(
                 composeMatrix(
-                  filterMatrix(PickerScope.of(context).settings.filters, filter?.value ?? 0),
+                  filterMatrix(
+                    PickerScope.of(context).settings.filters,
+                    filter?.value ?? 0,
+                    strength: strength?.value ?? 1,
+                  ),
                   adjustments?.value ?? Adjustments.neutral,
                 ),
               ),
