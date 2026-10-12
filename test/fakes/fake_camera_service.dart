@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
@@ -6,6 +8,12 @@ import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 class FakeCameraService implements CameraService {
   CameraFailure? failure;
+
+  /// thrown by [init] when set, like a plugin error that isn't a [CameraException].
+  Object? error;
+
+  /// thrown by [takePhoto] when set.
+  Object? photoError;
   int cameras;
   bool flash;
   bool mic;
@@ -19,6 +27,14 @@ class FakeCameraService implements CameraService {
   bool? lastFlash;
   Offset? lastFocus;
   bool recording = false;
+  @override
+  double minZoom = 1;
+  @override
+  double maxZoom = 8;
+  final List<double> zoomCalls = [];
+
+  /// when set, [setZoom] waits for it, like a slow camera.
+  Completer<void>? zoomGate;
 
   FakeCameraService({this.failure, this.cameras = 2, this.flash = true, this.mic = true});
 
@@ -26,6 +42,7 @@ class FakeCameraService implements CameraService {
   Future<int> init({bool front = false}) async {
     initCalls++;
     if (failure != null) throw CameraException(failure!);
+    if (error != null) throw error!;
     return cameras;
   }
 
@@ -33,10 +50,19 @@ class FakeCameraService implements CameraService {
   bool get hasMicrophone => mic;
 
   @override
-  double get aspectRatio => 3 / 4;
+  double get aspectRatio => 4 / 3;
 
   @override
-  Widget preview() => const SizedBox.expand(key: Key("fake-preview"));
+  Widget preview({required bool portrait, Widget? child}) => AspectRatio(
+    aspectRatio: portrait ? 3 / 4 : 4 / 3,
+    child: Stack(
+      fit: StackFit.expand,
+      children: [
+        const SizedBox(key: Key("fake-preview")),
+        ?child,
+      ],
+    ),
+  );
 
   @override
   Future<void> switchCamera() async => switchCalls++;
@@ -51,8 +77,10 @@ class FakeCameraService implements CameraService {
   bool get hasFlash => flash;
 
   @override
-  Future<PickedItem> takePhoto() async =>
-      PickedItem(file: XFile(photoPath), type: MediaType.image, width: 300, height: 400, edited: false);
+  Future<PickedItem> takePhoto() async {
+    if (photoError != null) throw photoError!;
+    return PickedItem(file: XFile(photoPath), type: MediaType.image, width: 300, height: 400, edited: false);
+  }
 
   @override
   Future<void> startVideo() async => recording = true;
@@ -67,6 +95,12 @@ class FakeCameraService implements CameraService {
       height: 0,
       edited: false,
     );
+  }
+
+  @override
+  Future<void> setZoom(double level) async {
+    zoomCalls.add(level);
+    await zoomGate?.future;
   }
 
   @override

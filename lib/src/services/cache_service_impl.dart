@@ -11,6 +11,9 @@ class CacheServiceImpl implements CacheService {
   // listing the folder on every write is slow, so the total is kept after one scan
   int? _total;
 
+  /// two writes of the same key never share a temp file.
+  int _temps = 0;
+
   CacheServiceImpl({Directory? root, required this.maxBytes}) : root = root ?? defaultRoot;
 
   static Directory get defaultRoot => Directory("${Directory.systemTemp.path}/image_picker_plus_cache");
@@ -36,7 +39,10 @@ class CacheServiceImpl implements CacheService {
       await root.create(recursive: true);
       final file = _file(key);
       final old = await file.exists() ? await file.length() : 0;
-      await file.writeAsBytes(bytes, flush: true);
+      // written aside then moved, a read or a kill mid write would keep a cut image forever
+      final temp = File("${file.path}.${_temps++}.tmp");
+      await temp.writeAsBytes(bytes, flush: true);
+      await temp.rename(file.path);
       _total = (_total ?? await _scan()) - old + bytes.length;
       if (_total! > maxBytes) await _evict();
     } on FileSystemException {

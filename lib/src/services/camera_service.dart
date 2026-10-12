@@ -19,10 +19,11 @@ abstract class CameraService {
   /// false when the microphone was denied and videos have no sound.
   bool get hasMicrophone;
 
-  /// width / height of the preview in portrait.
+  /// width / height of the camera image held wide.
   double get aspectRatio;
 
-  Widget preview();
+  /// the camera image, tall or wide by [portrait]. [child] covers it at the same size.
+  Widget preview({required bool portrait, Widget? child});
 
   Future<void> switchCamera();
 
@@ -32,6 +33,14 @@ abstract class CameraService {
   Future<void> focus(Offset point);
 
   bool get hasFlash;
+
+  double get minZoom;
+
+  /// capped at 10, past that a phone's digital zoom is mostly noise.
+  double get maxZoom;
+
+  /// clamped to the range, never throws for a level outside it.
+  Future<void> setZoom(double level);
 
   Future<PickedItem> takePhoto();
 

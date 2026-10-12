@@ -4,12 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
+import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/edit/image_edits.dart';
 
 import '../fakes/fake_gallery_service.dart';
+import '../fakes/pump_picker.dart';
 
 void main() {
   GalleryController controllerFor(FakeGalleryService gallery, {int max = 1}) => GalleryController(
@@ -24,18 +28,19 @@ void main() {
     return controller;
   }
 
-  test("shows the first page, then loads the rest 20 at a time to the end", () async {
-    final gallery = FakeGalleryService.withItems(50);
+  test("shows the first 20, then loads the rest 500 at a time to the end", () async {
+    final gallery = FakeGalleryService.withItems(1100);
     final controller = controllerFor(gallery);
     await controller.init();
-    expect(gallery.pageCalls.first, ("all", 0));
+    expect(gallery.pageCalls.first, ("all", 0, 20));
     expect(controller.state.value, GalleryState.ready);
     expect(controller.preview.value?.id, "0");
     expect(controller.selection.value.map((e) => e.id), ["0"]);
 
     await pumpEventQueue();
-    expect(gallery.pageCalls, [("all", 0), ("all", 1), ("all", 2)]);
-    expect(controller.items.value.length, 50);
+    expect(gallery.pageCalls, [("all", 0, 20), ("all", 0, 500), ("all", 1, 500), ("all", 2, 500)]);
+    expect(controller.items.value.length, 1100);
+    expect(controller.items.value.last.id, "1099");
     expect(controller.ended.value, isTrue);
   });
 
@@ -127,6 +132,18 @@ void main() {
     expect(controller.preview.value?.id, "0");
   });
 
+  test("a new photo and a new album show after a gallery change", () async {
+    final gallery = FakeGalleryService.withItems(3);
+    final controller = controllerFor(gallery);
+    await controller.init();
+    gallery.data["all"]!.insert(0, fakeItem("new"));
+    gallery.data["Download"] = [fakeItem("new")];
+    gallery.emitChange();
+    await pumpEventQueue();
+    expect(controller.items.value.first.id, "new");
+    expect(controller.albums.value.map((album) => (album.name, album.count)), [("all", 4), ("Download", 1)]);
+  });
+
   test("an old page result is dropped after an album switch", () async {
     final gallery = FakeGalleryService(
       data: {
@@ -163,6 +180,17 @@ void main() {
     final noAlbums = controllerFor(FakeGalleryService(data: {}));
     await noAlbums.init();
     expect(noAlbums.state.value, GalleryState.empty);
+  });
+
+  test("a failed load fails instead of loading forever, and init again loads it", () async {
+    final gallery = FakeGalleryService.withItems(5)..error = StateError("plugin");
+    final controller = controllerFor(gallery);
+    await controller.init();
+    expect(controller.state.value, GalleryState.failed);
+    gallery.error = null;
+    await controller.init();
+    expect(controller.state.value, GalleryState.ready);
+    expect(controller.items.value.length, 5);
   });
 
   test("a tap replaces the item until counting starts, even with a max over 1", () async {
@@ -219,7 +247,9 @@ void main() {
     final photo = fakeItem("photo");
     final crop = CropController(imageAspect: 1, ratio: CropRatio.square);
     final filterIndex = ValueNotifier(2);
-    controller.selectTaken(photo, crop: crop, filterIndex: filterIndex);
+    final taken = ImageEdits()..put("photo", crop: crop, filterIndex: filterIndex);
+    controller.selectTaken(photo, taken);
+    expect(taken.crops, isEmpty);
     expect(controller.selection.value, [photo]);
     expect(controller.crops["photo"], same(crop));
     expect(controller.filterIndexes["photo"], same(filterIndex));
@@ -230,9 +260,112 @@ void main() {
     final controller = await counting(gallery, max: 3);
     controller.toggle(controller.items.value[7]);
     controller.toggle(controller.items.value[3]);
-    final picked = await controller.pickedItems();
+    final picked = await controller.pickedItems(Fakes(gallery: gallery).services);
     expect(picked.map((e) => e.file.path), ["/fake/0", "/fake/7", "/fake/3"]);
     expect(picked.every((e) => !e.edited), isTrue);
+    controller.dispose();
+  });
+
+  group("preselection", () {
+    GalleryController preselected(FakeGalleryService gallery, List<String> ids, {int max = 5}) {
+      final items = gallery.data["all"]!;
+      return GalleryController(
+        service: gallery,
+        settings: PickerSettings(maxSelection: max),
+        preselect: () async =>
+            Preselection(items: [for (final id in ids) items.firstWhere((e) => e.id == id)]),
+      );
+    }
+
+    test("opens with the items selected and the first one shown, counting more", () async {
+      final gallery = FakeGalleryService.withItems(30);
+      final controller = preselected(gallery, ["7", "2"]);
+      await controller.init();
+      expect(controller.selection.value.map((e) => e.id), ["7", "2"]);
+      expect(controller.preview.value?.id, "7");
+      expect(controller.multi.value, isTrue);
+      controller.toggle(controller.items.value[4]);
+      expect(controller.selection.value.map((e) => e.id), ["7", "2", "4"]);
+      controller.dispose();
+    });
+
+    test("one item with single selection is the one shown, not the album's first", () async {
+      final gallery = FakeGalleryService.withItems(30);
+      final controller = preselected(gallery, ["9"], max: 1);
+      await controller.init();
+      expect(controller.preview.value?.id, "9");
+      expect(controller.selection.value.map((e) => e.id), ["9"]);
+      expect(controller.multi.value, isFalse);
+      controller.dispose();
+    });
+
+    test("isn't looked up when access is denied", () async {
+      final gallery = FakeGalleryService.withItems(3, access: GalleryAccess.denied);
+      var calls = 0;
+      final controller = GalleryController(
+        service: gallery,
+        settings: const PickerSettings(),
+        preselect: () async {
+          calls++;
+          return const Preselection();
+        },
+      );
+      await controller.init();
+      expect(calls, 0);
+      expect(controller.state.value, GalleryState.denied);
+      controller.dispose();
+    });
+
+    test("an empty preselection opens like new", () async {
+      final gallery = FakeGalleryService.withItems(5);
+      final controller = preselected(gallery, []);
+      await controller.init();
+      expect(controller.selection.value.map((e) => e.id), ["0"]);
+      controller.dispose();
+    });
+  });
+
+  test("markups follow the selection and go when an item leaves it", () async {
+    final gallery = FakeGalleryService.withItems(10);
+    final controller = GalleryController(
+      service: gallery,
+      settings: const PickerSettings(maxSelection: 3, markup: MarkupOptions(drawing: true)),
+    );
+    await controller.init();
+    controller.startMulti(controller.preview.value);
+    controller.toggle(controller.items.value[4]);
+    expect(controller.markups.keys, ["0", "4"]);
+    final markup = controller.markups["4"]!;
+    // a second tap on the shown one unselects it
+    controller.toggle(controller.items.value[4]);
+    expect(controller.markups.keys, ["0"]);
+    expect(() => markup.addListener(() {}), throwsFlutterError);
+    controller.dispose();
+  });
+
+  test("sliders follow the selection like markups, only when they're on", () async {
+    final controller = GalleryController(
+      service: FakeGalleryService.withItems(10),
+      settings: const PickerSettings(maxSelection: 3, adjustments: true),
+    );
+    await controller.init();
+    controller.startMulti(controller.preview.value);
+    controller.toggle(controller.items.value[4]);
+    expect(controller.adjustments.keys, ["0", "4"]);
+    final sliders = controller.adjustments["4"]!;
+    controller.toggle(controller.items.value[4]);
+    expect(controller.adjustments.keys, ["0"]);
+    expect(() => sliders.addListener(() {}), throwsFlutterError);
+    controller.dispose();
+  });
+
+  test("no markups when markup is off", () async {
+    final controller = GalleryController(
+      service: FakeGalleryService.withItems(3),
+      settings: const PickerSettings(),
+    );
+    await controller.init();
+    expect(controller.markups, isEmpty);
     controller.dispose();
   });
 }

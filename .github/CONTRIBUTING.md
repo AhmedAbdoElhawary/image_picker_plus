@@ -58,6 +58,14 @@ cd example
 flutter drive --profile --driver=test_driver/perf_driver.dart --target=integration_test/gallery_scroll_test.dart
 ```
 
+If it touches the export, check its time and memory the same way. The second test is a tight crop
+of a 50 MP photo, the most memory an export can take:
+
+```
+cd example
+flutter drive --profile --driver=test_driver/perf_driver.dart --target=integration_test/export_test.dart
+```
+
 ## Releasing
 
 This part is for me, but here it is so it's not a secret:

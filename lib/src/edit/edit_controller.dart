@@ -1,16 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
-import 'package:image_picker_plus/src/core/x_file.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
-import 'package:image_picker_plus/src/services/image_service.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 class EditController {
   final PickerServices services;
   final OutputOptions output;
+
+  /// the strip's looks after Normal, what a filter index points into.
+  final List<PickerFilter> filters;
 
   /// in the order they'll be returned.
   final ValueNotifier<List<MediaItem>> items;
@@ -19,18 +25,33 @@ class EditController {
   /// an image has no crop when cropping is off, and no filter when filters are off.
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
+  final Map<String, ValueNotifier<double>> filterStrengths;
+
+  /// per image id like the crops, empty when markup is off.
+  final Map<String, MarkupController> markups;
+  final Map<String, ValueNotifier<Adjustments>> adjustments;
+
+  /// the markup mode on the current image, null when not in it.
+  final ValueNotifier<MarkupTool?> tool = ValueNotifier(null);
   final ValueNotifier<MediaItem> current;
   final ValueNotifier<bool> exporting = ValueNotifier(false);
 
   EditController({
     required this.services,
     required this.output,
+    this.filters = const [],
     required List<MediaItem> items,
     MediaItem? initial,
     this.crops = const {},
     this.filterIndexes = const {},
+    this.filterStrengths = const {},
+    this.markups = const {},
+    this.adjustments = const {},
   }) : items = ValueNotifier(items),
-       current = ValueNotifier(initial ?? items.first);
+       current = ValueNotifier(initial ?? items.first) {
+    // a mode belongs to one image, moving on leaves it
+    current.addListener(() => tool.value = null);
+  }
 
   /// null for videos.
   EditState? stateOf(MediaItem item) {
@@ -40,10 +61,21 @@ class EditController {
       cropRect: crop?.value ?? EditState.full,
       ratio: crop?.ratio,
       filterIndex: filterIndexes[item.id]?.value ?? 0,
+      filterStrength: filterStrengths[item.id]?.value ?? 1,
+      markup: markups[item.id]?.value ?? const [],
+      turns: crop?.turns ?? 0,
+      flipped: crop?.flipped ?? false,
+      adjustments: adjustments[item.id]?.value ?? Adjustments.neutral,
     );
   }
 
-  void setFilter(int index) => filterIndexes[current.value.id]?.value = index;
+  /// a new filter starts at full strength.
+  void setFilter(int index) {
+    final id = current.value.id;
+    if (filterIndexes[id]?.value == index) return;
+    filterIndexes[id]?.value = index;
+    filterStrengths[id]?.value = 1;
+  }
 
   void reorder(int oldIndex, int newIndex) {
     final list = [...items.value];
@@ -63,35 +95,32 @@ class EditController {
     }
   }
 
-  /// null when the gallery has no file for it anymore.
-  Future<PickedItem?> _export(MediaItem item) async {
-    final path = item.path;
+  Future<PickedItem?> _export(MediaItem item) {
     final state = stateOf(item);
-    final edited = state != null && state.edited;
-    final file = path != null ? XFile(path) : await services.gallery!.file(item, editable: edited);
-    if (file == null) return null;
-    if (state == null || !edited) {
-      return PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false);
-    }
-    return services.image.export(
-      file,
-      state,
-      filters[state.filterIndex],
-      output,
-      cacheKey: _cacheKey(item, state),
+    return exportItem(
+      services: services,
+      output: output,
+      filters: filters,
+      item: item,
+      state: state,
+      cacheKey: state == null ? null : _cacheKey(item, state),
     );
   }
 
   String _cacheKey(MediaItem item, EditState state) {
     final rect = state.cropRect;
     final crop = [rect.left, rect.top, rect.width, rect.height].map((v) => v.toStringAsFixed(4)).join(",");
+    final adjust = state.adjustments;
     return "edit:${item.id}:${item.modified.millisecondsSinceEpoch}:$crop:${state.filterIndex}"
-        ":${output.quality}:${output.maxWidth}x${output.maxHeight}";
+        ":${state.filterStrength}:${state.turns}:${state.flipped}"
+        ":${adjust.brightness},${adjust.contrast},${adjust.saturation},${adjust.warmth}"
+        ":${output.format.name}:${output.quality}:${output.maxWidth}x${output.maxHeight}:${output.maxBytes}";
   }
 
   void dispose() {
     items.dispose();
     current.dispose();
     exporting.dispose();
+    tool.dispose();
   }
 }

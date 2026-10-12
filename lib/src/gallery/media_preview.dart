@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_layer.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
-import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
+import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/select_button.dart';
 import 'package:image_picker_plus/src/gallery/video_preview.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
@@ -28,11 +31,14 @@ class MediaPreview extends StatelessWidget {
     final preview = ColoredBox(
       color: scope.theme.scrim,
       // the selection too, a shown item that gets deselected loses its crop
-      child: ListenableBuilder(
+      child: Selector<(MediaItem?, CropController?, MarkupController?)>(
         listenable: Listenable.merge([controller.preview, controller.selection]),
-        builder: (context, _) {
+        select: () {
           final item = controller.preview.value;
-          final crop = item == null ? null : controller.crops[item.id];
+          return (item, controller.crops[item?.id], controller.markups[item?.id]);
+        },
+        builder: (context, shown, _) {
+          final (item, crop, markup) = shown;
           return AnimatedSwitcher(
             duration: PickerDurations.of(context).short,
             child: item == null
@@ -45,7 +51,15 @@ class MediaPreview extends StatelessWidget {
                     children: [
                       CropView(
                         controller: crop,
-                        image: PreviewImage(item: item, fit: BoxFit.fill, crop: crop),
+                        image: markup == null
+                            ? PreviewImage(item: item, fit: BoxFit.fill, crop: crop)
+                            : Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  PreviewImage(item: item, fit: BoxFit.fill, crop: crop),
+                                  MarkupLayer(controller: markup),
+                                ],
+                              ),
                       ),
                       if (scope.settings.cropRatios.length > 1)
                         PositionedDirectional(
@@ -82,18 +96,22 @@ class PreviewImage extends StatelessWidget {
   /// set inside a crop view, it lays the image out bigger while zoomed in.
   final CropController? crop;
 
-  const PreviewImage({required this.item, this.fit = BoxFit.contain, this.crop, super.key});
+  /// the turns and flip to show the image with, [crop] when null.
+  final CropController? orientation;
+
+  const PreviewImage({required this.item, this.fit = BoxFit.contain, this.crop, this.orientation, super.key});
 
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
-    return LayoutBuilder(
+    final orientation = this.orientation ?? crop;
+    final image = LayoutBuilder(
       builder: (context, constraints) {
         final size = scope.settings.resizePreview
             ? _size(constraints.biggest / (crop?.zoom ?? 1), MediaQuery.devicePixelRatioOf(context))
             : MediaPreview.imageSize;
         return Image(
-          image: mediaImage(item, size, gallery: scope.services.gallery, cache: scope.services.cache),
+          image: mediaImage(item, size, gallery: scope.services.gallery),
           fit: fit,
           gaplessPlayback: true,
           width: double.infinity,
@@ -102,6 +120,17 @@ class PreviewImage extends StatelessWidget {
               Center(child: Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted)),
         );
       },
+    );
+    if (orientation == null) return image;
+    // the box is the image as shown, the file is laid out turned back inside it
+    return Selector<(int, bool)>(
+      listenable: orientation,
+      select: () => (orientation.turns, orientation.flipped),
+      builder: (context, shown, image) => RotatedBox(
+        quarterTurns: -shown.$1,
+        child: Transform.flip(flipX: shown.$2, child: image),
+      ),
+      child: image,
     );
   }
 

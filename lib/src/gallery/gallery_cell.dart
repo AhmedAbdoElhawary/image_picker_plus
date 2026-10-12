@@ -5,7 +5,6 @@ import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
-import 'package:image_picker_plus/src/widgets/loading_box.dart';
 
 class GalleryCell extends StatelessWidget {
   final MediaItem item;
@@ -13,6 +12,7 @@ class GalleryCell extends StatelessWidget {
 
   /// thumbnail size in pixels.
   final int size;
+
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -32,44 +32,43 @@ class GalleryCell extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
-      child: Selector<int>(
+      // a selection change rebuilds only these two selectors, the image stays as is
+      child: Selector<bool>(
         listenable: controller.selection,
-        select: () => controller.orderOf(item),
-        builder: (context, order, _) => Semantics(
+        select: () => controller.orderOf(item) > 0,
+        builder: (context, selected, child) => Semantics(
           button: true,
-          selected: order > 0,
+          selected: selected,
           label: item.isVideo ? scope.texts.video : scope.texts.photo,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ColoredBox(
-                color: scope.theme.surface,
-                child: Image(
-                  image: AssetThumbnail(
-                    item,
-                    size,
-                    gallery: scope.services.gallery!,
-                    cache: scope.services.cache,
-                  ),
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  frameBuilder: (context, child, frame, sync) =>
-                      frame == null && !sync ? const LoadingBox() : child,
-                  errorBuilder: (context, error, stack) =>
-                      Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
+          child: child,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColoredBox(
+              color: scope.theme.surface,
+              child: Image(
+                image: AssetThumbnail(item, size, gallery: scope.services.gallery!),
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                errorBuilder: (context, error, stack) =>
+                    Icon(Icons.broken_image_outlined, color: scope.theme.onSurfaceMuted),
+              ),
+            ),
+            _PreviewDim(controller: controller, item: item),
+            if (item.isVideo) _Duration(item.duration),
+            if (controller.settings.multi)
+              ValueListenableBuilder<bool>(
+                valueListenable: controller.multi,
+                builder: (context, multi, child) =>
+                    AnimatedOpacity(opacity: multi ? 1 : 0, duration: durations.short, child: child),
+                child: Selector<int>(
+                  listenable: controller.selection,
+                  select: () => controller.orderOf(item),
+                  builder: (context, order, _) => _OrderBadge(order),
                 ),
               ),
-              _PreviewDim(controller: controller, item: item),
-              if (item.isVideo) _Duration(item.duration),
-              if (controller.settings.multi)
-                ValueListenableBuilder<bool>(
-                  valueListenable: controller.multi,
-                  builder: (context, multi, child) =>
-                      AnimatedOpacity(opacity: multi ? 1 : 0, duration: durations.short, child: child),
-                  child: _OrderBadge(order),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -105,7 +104,8 @@ class _OrderBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = PickerScope.of(context).theme;
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
     final selected = order > 0;
     return Align(
       alignment: AlignmentDirectional.topEnd,
@@ -125,7 +125,7 @@ class _OrderBadge extends StatelessWidget {
             ),
             child: selected
                 ? Text(
-                    "$order",
+                    scope.texts.number(order),
                     textScaler: TextScaler.noScaling,
                     style: TextStyle(color: theme.onAccent, fontSize: 12, fontWeight: FontWeight.w600),
                   )
@@ -144,7 +144,8 @@ class _Duration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = PickerScope.of(context).theme;
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
     final minutes = duration.inMinutes;
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, "0");
     return Align(
@@ -152,7 +153,7 @@ class _Duration extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsetsDirectional.all(6),
         child: Text(
-          "$minutes:$seconds",
+          scope.texts.number("$minutes:$seconds"),
           textScaler: TextScaler.noScaling,
           style: TextStyle(
             color: theme.onAccent,

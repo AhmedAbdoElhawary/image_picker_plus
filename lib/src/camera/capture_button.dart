@@ -19,6 +19,7 @@ class CaptureButton extends StatelessWidget {
     final scope = PickerScope.of(context);
     final theme = scope.theme;
     final durations = PickerDurations.of(context);
+    final color = recording ? theme.recording : theme.onSurface;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -35,12 +36,12 @@ class CaptureButton extends StatelessWidget {
               padding: EdgeInsetsDirectional.all(recording ? 20 : 2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: theme.onSurface, width: 4),
+                border: Border.all(color: color, width: 4),
               ),
               child: AnimatedContainer(
                 duration: durations.medium,
                 decoration: BoxDecoration(
-                  color: theme.onSurface,
+                  color: color,
                   borderRadius: BorderRadius.circular(recording ? 6 : size),
                 ),
               ),
@@ -93,17 +94,24 @@ class _TimerState extends State<_Timer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = PickerScope.of(context).theme;
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
     final seconds = (_seconds % 60).toString().padLeft(2, "0");
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(bottom: 8),
-      child: Opacity(
-        opacity: widget.running ? 1 : 0,
-        child: Text(
-          "${_seconds ~/ 60}:$seconds",
-          style: TextStyle(color: theme.onSurface, fontFeatures: const [FontFeature.tabularFigures()]),
-        ),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SizeTransition(sizeFactor: animation, child: child),
       ),
+      child: widget.running
+          ? Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: 8),
+              child: Text(
+                scope.texts.number("${_seconds ~/ 60}:$seconds"),
+                style: TextStyle(color: theme.onSurface, fontFeatures: const [FontFeature.tabularFigures()]),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

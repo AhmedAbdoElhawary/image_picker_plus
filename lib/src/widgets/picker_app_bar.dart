@@ -1,25 +1,28 @@
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/widgets/back_button.dart';
 
+enum CloseButtonEnum { back, close }
+
 class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
   final VoidCallback? onClose;
-  final IconData closeIcon;
+  final CloseButtonEnum closeIcon;
   final Widget? action;
   final Color? color;
   const PickerAppBar({
     this.title,
     this.color,
     this.onClose,
-    this.closeIcon = Icons.close_rounded,
+    this.closeIcon = CloseButtonEnum.back,
     this.action,
     super.key,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(56);
+  Size get preferredSize => const Size.fromHeight(PickerLayout.appBarHeight);
   Widget getCloseIcon(BuildContext context) {
     final scope = PickerScope.of(context);
     final theme = scope.theme;
@@ -27,17 +30,22 @@ class PickerAppBar extends StatelessWidget implements PreferredSizeWidget {
     return IconButton(
       onPressed: onClose,
       tooltip: scope.texts.close,
-      icon: Icon(closeIcon, color: theme.onSurface, size: 28),
+      icon: Icon(getIcon(context), color: theme.onSurface, size: 28),
     );
   }
 
+  IconData getIcon(BuildContext context) => closeIcon == CloseButtonEnum.back
+      ? defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS
+            ? Icons.arrow_back_ios_rounded
+            : Icons.arrow_back_rounded
+      : Icons.close_rounded;
   @override
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final theme = scope.theme;
 
     if (action == null && title == null && onClose != null) {
-      return CustomBackButton(onClose: onClose, color: color, closeIcon: closeIcon);
+      return CustomCloseButton(onClose: onClose, color: color, closeIcon: getIcon(context));
     }
     return Material(
       color: color ?? theme.background,

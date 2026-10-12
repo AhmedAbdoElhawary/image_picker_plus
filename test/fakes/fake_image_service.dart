@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:image_picker_plus/src/core/x_file.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/image_service.dart';
 import 'package:image_picker_plus/src/settings/output_options.dart';
@@ -9,7 +10,12 @@ import 'package:image_picker_plus/src/settings/picker_settings.dart';
 class FakeImageService implements ImageService {
   final List<(String, EditState)> calls = [];
   final List<String?> keys = [];
+  final List<OutputOptions> outputs = [];
+  final List<List<double>> matrices = [];
   bool fail = false;
+
+  /// copied into every result, like an image that couldn't fit maxBytes.
+  bool overLimit = false;
   Completer<void>? gate;
 
   @override
@@ -24,12 +30,15 @@ class FakeImageService implements ImageService {
     if (fail) throw Exception("export failed");
     calls.add((source.path, state));
     keys.add(cacheKey);
+    outputs.add(output);
+    matrices.add(colorMatrix);
     return PickedItem(
       file: XFile("${source.path}.edited.jpg"),
       type: MediaType.image,
       width: 100,
       height: 100,
       edited: true,
+      overLimit: overLimit,
     );
   }
 }

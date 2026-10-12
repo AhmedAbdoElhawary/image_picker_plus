@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
+import 'package:image_picker_plus/src/models/edit_state.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 
 void main() {
@@ -55,5 +56,75 @@ void main() {
     final rect = crop.value;
     crop.ratio = CropRatio.square;
     expect(crop.value, rect);
+  });
+
+  group("rotate and flip", () {
+    EditState stateOf(CropController crop) =>
+        EditState(cropRect: crop.value, turns: crop.turns, flipped: crop.flipped);
+
+    test("four turns and two flips of a fresh crop are back where they started", () {
+      for (final ratio in [CropRatio.square, CropRatio.portrait, CropRatio.original]) {
+        final crop = CropController(imageAspect: 1.5, ratio: ratio);
+        final start = crop.value;
+        for (var i = 0; i < 4; i++) {
+          crop.rotate();
+        }
+        crop
+          ..flip()
+          ..flip();
+        expect((crop.turns, crop.flipped), (0, false));
+        expect(crop.value.left, closeTo(start.left, 1e-9));
+        expect(crop.value.width, closeTo(start.width, 1e-9));
+        expect(stateOf(crop).edited, EditState(cropRect: start).edited);
+      }
+    });
+
+    test("a turn swaps the shown aspect, a square crop turns with the image", () {
+      final crop = CropController(imageAspect: 2, ratio: CropRatio.square)..pan(const Offset(-1, 0));
+      expect(crop.value.left, 0);
+      crop.rotate();
+      expect(crop.imageAspect, 0.5);
+      expect(crop.sourceAspect, 2);
+      // the left half of a wide image is the bottom half once turned counter clockwise
+      expect(crop.value.top, closeTo(0.5, 1e-9));
+      expect(crop.value.width * crop.imageAspect / crop.value.height, closeTo(1, 1e-9));
+    });
+
+    test("a turn with another ratio gives its biggest centred crop", () {
+      final crop = CropController(imageAspect: 1.5, ratio: CropRatio.portrait)..pan(const Offset(-1, 0));
+      crop.rotate();
+      expect(crop.value.center.dx, closeTo(0.5, 1e-9));
+      expect(crop.value.center.dy, closeTo(0.5, 1e-9));
+      expect(crop.value.width * crop.imageAspect / crop.value.height, closeTo(0.8, 1e-9));
+    });
+
+    test("a flip mirrors the crop and turns the other way", () {
+      final crop = CropController(imageAspect: 2, ratio: CropRatio.square)..pan(const Offset(-1, 0));
+      crop
+        ..rotate()
+        ..flip();
+      expect((crop.turns, crop.flipped), (3, true));
+      final mirrored = CropController(imageAspect: 2, ratio: CropRatio.square)
+        ..pan(const Offset(-1, 0))
+        ..flip();
+      expect(mirrored.value.right, closeTo(1, 1e-9));
+    });
+
+    test("listeners and onOrient hear every move, with the aspect before it", () {
+      final crop = CropController(imageAspect: 1, ratio: CropRatio.original);
+      final moves = <(bool, double)>[];
+      var heard = 0;
+      crop
+        ..addListener(() => heard++)
+        ..onOrient = ((flip, aspect) => moves.add((flip, aspect)))
+        ..rotate()
+        ..flip();
+      expect(heard, 2);
+      expect(moves, [(false, 1.0), (true, 1.0)]);
+    });
+
+    test("restored turns are kept in range", () {
+      expect(CropController(imageAspect: 1, ratio: CropRatio.square, turns: 6).turns, 2);
+    });
   });
 }

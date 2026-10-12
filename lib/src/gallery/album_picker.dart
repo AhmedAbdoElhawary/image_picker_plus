@@ -3,6 +3,7 @@ import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/models/album.dart';
+import 'package:image_picker_plus/src/widgets/picker_popup.dart';
 
 class AlbumPicker extends StatelessWidget {
   final GalleryController controller;
@@ -41,13 +42,19 @@ class AlbumPicker extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     final scope = PickerScope.of(context);
-    final picked = await showModalBottomSheet<Album>(
-      context: context,
-      backgroundColor: scope.theme.background,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (_) => scope.wrap(_AlbumList(controller: controller)),
-    );
+    final list = _AlbumList(controller: controller);
+    final picked = PickerLayout.of(context).popups
+        ? await showDialog<Album>(
+            context: context,
+            builder: (_) => scope.wrap(PickerPopup(color: scope.theme.background, child: list)),
+          )
+        : await showModalBottomSheet<Album>(
+            context: context,
+            backgroundColor: scope.theme.background,
+            showDragHandle: true,
+            isScrollControlled: true,
+            builder: (_) => scope.wrap(list),
+          );
     if (picked != null && picked != controller.album.value) await controller.switchAlbum(picked);
   }
 }
@@ -65,6 +72,8 @@ class _AlbumList extends StatelessWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
       child: ListView.separated(
+        // a few albums make a short sheet or popup, not an empty tall one
+        shrinkWrap: true,
         itemCount: albums.length,
         itemBuilder: (context, index) => _AlbumTile(album: albums[index], controller: controller),
         separatorBuilder: (context, index) =>
@@ -101,7 +110,7 @@ class _AlbumTile extends StatelessWidget {
         ),
       ),
       trailing: Text(
-        "${album.count}",
+        scope.texts.number(album.count),
         style: TextStyle(
           color: selected ? scope.theme.accent : scope.theme.onSurfaceMuted,
           fontWeight: FontWeight.w600,

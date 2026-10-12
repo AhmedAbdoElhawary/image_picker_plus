@@ -38,8 +38,8 @@ class MessageView extends StatelessWidget {
                       FilledButton(
                         onPressed: onAction,
                         style: FilledButton.styleFrom(
-                          backgroundColor: theme.accent,
-                          foregroundColor: theme.onAccent,
+                          backgroundColor: theme.onAccent,
+                          foregroundColor: theme.background,
                           minimumSize: const Size(0, PickerLayout.minTouch),
                         ),
                         child: Text(actionText!),
@@ -49,7 +49,7 @@ class MessageView extends StatelessWidget {
                 ),
               ),
             ),
-            if (onClose != null) CustomBackButton(onClose: onClose),
+            if (onClose != null) CustomCloseButton(onClose: onClose),
           ],
         ),
       ),

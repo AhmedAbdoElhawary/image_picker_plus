@@ -16,6 +16,7 @@ dependencies:
     path: ../
   video_player: ^2.14.1
   cupertino_icons: ^2.0.0
+  gal: ^2.3.3
 
 dev_dependencies:
   flutter_test:

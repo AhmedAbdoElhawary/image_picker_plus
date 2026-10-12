@@ -24,10 +24,28 @@ class _VideoPreviewState extends State<VideoPreview> {
   VideoHandle? _player;
   bool _failed = false;
 
+  /// paused because a page or tab covered it, it plays again when shown.
+  bool _pausedHidden = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_player == null && !_failed) _load();
+    _followTicker();
+  }
+
+  /// covered by a page or a tab the ticker stops, then the video stops decoding too.
+  void _followTicker() {
+    final player = _player;
+    if (player == null || !player.isInitialized) return;
+    final shown = TickerMode.valuesOf(context).enabled;
+    if (!shown && player.isPlaying) {
+      _pausedHidden = true;
+      player.pause();
+    } else if (shown && _pausedHidden) {
+      _pausedHidden = false;
+      player.play();
+    }
   }
 
   Future<void> _load() async {
@@ -42,7 +60,13 @@ class _VideoPreviewState extends State<VideoPreview> {
     _player = player;
     try {
       await player.initialize(muted: widget.autoplay);
-      if (widget.autoplay) await player.play();
+      if (widget.autoplay) {
+        if (mounted && TickerMode.valuesOf(context).enabled) {
+          await player.play();
+        } else {
+          _pausedHidden = true;
+        }
+      }
     } catch (_) {
       if (mounted) setState(() => _failed = true);
       return;

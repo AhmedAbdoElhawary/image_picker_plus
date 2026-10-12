@@ -14,7 +14,10 @@ class CropView extends StatefulWidget {
   final CropController controller;
   final Widget image;
 
-  const CropView({required this.controller, required this.image, super.key});
+  /// the window flies to the markup page with it.
+  final Object? heroTag;
+
+  const CropView({required this.controller, required this.image, this.heroTag, super.key});
 
   @override
   State<CropView> createState() => _CropViewState();
@@ -97,25 +100,28 @@ class _CropViewState extends State<CropView> with SingleTickerProviderStateMixin
                   children: [
                     Positioned.fromRect(
                       rect: window,
-                      child: ColoredBox(
-                        color: scope.theme.surface,
-                        child: ListenableBuilder(
-                          listenable: Listenable.merge([controller, _overscroll]),
-                          builder: (context, image) {
-                            final rect = controller.value;
-                            final overscroll = _overscroll.value;
-                            return CroppedImage(
-                              rect: rect.shift(
-                                Offset(
-                                  _rubber(overscroll.dx, rect.width),
-                                  _rubber(overscroll.dy, rect.height),
+                      child: _Hero(
+                        tag: widget.heroTag,
+                        child: ColoredBox(
+                          color: scope.theme.surface,
+                          child: ListenableBuilder(
+                            listenable: Listenable.merge([controller, _overscroll]),
+                            builder: (context, image) {
+                              final rect = controller.value;
+                              final overscroll = _overscroll.value;
+                              return CroppedImage(
+                                rect: rect.shift(
+                                  Offset(
+                                    _rubber(overscroll.dx, rect.width),
+                                    _rubber(overscroll.dy, rect.height),
+                                  ),
                                 ),
-                              ),
-                              clip: false,
-                              child: image!,
-                            );
-                          },
-                          child: widget.image,
+                                clip: false,
+                                child: image!,
+                              );
+                            },
+                            child: widget.image,
+                          ),
                         ),
                       ),
                     ),
@@ -167,5 +173,18 @@ class _CropViewState extends State<CropView> with SingleTickerProviderStateMixin
       width = height * aspect;
     }
     return Rect.fromCenter(center: box.center(Offset.zero), width: width, height: height);
+  }
+}
+
+class _Hero extends StatelessWidget {
+  final Object? tag;
+  final Widget child;
+
+  const _Hero({required this.tag, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final tag = this.tag;
+    return tag == null ? child : Hero(tag: tag, child: child);
   }
 }

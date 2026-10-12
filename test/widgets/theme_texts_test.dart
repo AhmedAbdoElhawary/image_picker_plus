@@ -8,6 +8,7 @@ import 'package:image_picker_plus/src/settings/picker_settings.dart';
 import 'package:image_picker_plus/src/settings/picker_texts.dart';
 import 'package:image_picker_plus/src/settings/picker_theme.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 import '../fakes/fake_camera_service.dart';
 import '../fakes/fake_gallery_service.dart';
@@ -24,7 +25,7 @@ void main() {
     scrim: Color(0x88000000),
   );
   const texts = PickerTexts(next: "Weiter", done: "Fertig", noCamera: "Keine Kamera");
-  const settings = PickerSettings(theme: custom, texts: texts, filters: true);
+  const settings = PickerSettings(theme: custom, texts: texts, filters: PickerFilter.all);
 
   Color? background(WidgetTester tester) =>
       tester.widget<Scaffold>(find.byType(Scaffold).last).backgroundColor;
@@ -43,7 +44,12 @@ void main() {
     await pumpPicker(
       tester,
       const PickerHome(),
-      settings: const PickerSettings(source: PickerSource.camera, theme: custom, texts: texts, filters: true),
+      settings: const PickerSettings(
+        source: PickerSource.camera,
+        theme: custom,
+        texts: texts,
+        filters: PickerFilter.all,
+      ),
       fakes: Fakes(camera: FakeCameraService(failure: CameraFailure.noCamera)),
     );
     expect(find.text("Keine Kamera"), findsOneWidget);
@@ -64,6 +70,8 @@ void main() {
     final hits = <String>[];
     for (final file in Directory("lib/src").listSync(recursive: true).whereType<File>()) {
       if (file.path.endsWith("picker_theme.dart")) continue;
+      // the colors people draw with and the saved jpeg's background, not the picker's look
+      if (file.path.endsWith("markup_options.dart") || file.path.endsWith("output_options.dart")) continue;
       final lines = file.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         if (RegExp(r'\bColors\.(?!transparent\b)|Color\(0x').hasMatch(lines[i])) {

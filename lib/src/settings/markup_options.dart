@@ -1,0 +1,44 @@
+import 'package:flutter/painting.dart';
+
+/// text, emojis and drawing on images, all off by default.
+class MarkupOptions {
+  /// add, edit, move and delete text.
+  final bool text;
+
+  /// the popular emojis from their own button, they move and delete like text.
+  final bool emojis;
+
+  /// freehand pen with undo, redo and an eraser.
+  final bool drawing;
+
+  /// font families the app registers, the user can switch a text between the app's font and these.
+  /// empty shows no font control.
+  final List<String> fonts;
+
+  /// for text and the pen, at least one.
+  final List<Color> colors;
+
+  /// every tool off by default.
+  const MarkupOptions({
+    this.text = false,
+    this.emojis = false,
+    this.drawing = false,
+    this.fonts = const [],
+    this.colors = defaultColors,
+  });
+
+  /// what people draw with, not the picker's theme, so it doesn't follow light and dark.
+  static const List<Color> defaultColors = [
+    Color(0xFFFFFFFF),
+    Color(0xFF000000),
+    Color(0xFFE53935),
+    Color(0xFFFB8C00),
+    Color(0xFFFDD835),
+    Color(0xFF43A047),
+    Color(0xFF1E88E5),
+    Color(0xFF8E24AA),
+  ];
+
+  /// true when any tool is on.
+  bool get enabled => text || emojis || drawing;
+}

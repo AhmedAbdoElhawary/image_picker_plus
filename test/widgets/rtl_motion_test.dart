@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/settings/languages/arabic_texts.dart';
+import 'package:image_picker_plus/src/settings/markup_options.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_texts.dart';
 import 'package:image_picker_plus/src/widgets/picker_home.dart';
 
+import '../fakes/fake_gallery_service.dart';
 import '../fakes/pump_picker.dart';
 
 void main() {
@@ -20,6 +27,48 @@ void main() {
       find.descendant(of: find.byKey(const ValueKey("0")), matching: find.text("1")),
     );
     expect(badge.dx, lessThan(cell.center.dx));
+  });
+
+  /// no text on screen is one of the english defaults.
+  void expectNoEnglish(WidgetTester tester) {
+    const english = PickerTexts();
+    final shown = tester.widgetList<Text>(find.byType(Text)).map((text) => text.data).nonNulls.toSet();
+    final words = {
+      english.gallery,
+      english.done,
+      english.recent,
+      english.crop,
+      english.next,
+      english.rotate,
+      english.flip,
+      english.filters,
+      english.adjust,
+      english.brightness,
+      ...english.filterNames,
+    };
+    expect(shown.intersection(words), isEmpty);
+  }
+
+  testWidgets("arabic texts leave no english in the gallery", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(maxSelection: 3, texts: ArabicTexts()),
+    );
+    expectNoEnglish(tester);
+    expect(find.text(const ArabicTexts().recent), findsWidgets);
+  });
+
+  testWidgets("arabic texts leave no english on the edit page", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [fakeItem("a")], filterIndexes: {"a": ValueNotifier(0)}),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(texts: ArabicTexts(), filters: PickerFilter.all, adjustments: true),
+    );
+    expectNoEnglish(tester);
+    expect(find.text(const ArabicTexts().adjust), findsOneWidget);
   });
 
   testWidgets("ltr keeps the close icon on the left", (tester) async {
@@ -47,5 +96,31 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(tester.hasRunningAnimations, isTrue);
+  });
+
+  testWidgets("rtl puts the timer and grid at the top left and keeps the zoom row centred", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(source: PickerSource.camera, cropRatios: []),
+    );
+    expect(tester.getCenter(find.byTooltip("Timer")).dx, lessThan(200));
+    expect(tester.getCenter(find.byTooltip("Grid")).dx, lessThan(200));
+    expect(tester.getCenter(find.text("2x")).dx, closeTo(200, 30));
+  });
+
+  testWidgets("markup buttons follow rtl", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [fakeItem("a")], markups: {"a": MarkupController()}),
+      direction: TextDirection.rtl,
+      settings: const PickerSettings(markup: MarkupOptions(text: true, drawing: true)),
+    );
+    // the bar's back is on the right in rtl, the tools sit left of it
+    expect(
+      tester.getCenter(find.byTooltip("Text")).dx,
+      lessThan(tester.getCenter(find.byIcon(Icons.arrow_back_rounded)).dx),
+    );
   });
 }

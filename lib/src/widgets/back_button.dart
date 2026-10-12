@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 
-class CustomBackButton extends StatelessWidget {
+class CustomCloseButton extends StatelessWidget {
   final VoidCallback? onClose;
   final IconData closeIcon;
   final Color? color;
-  const CustomBackButton({this.color, this.onClose, this.closeIcon = Icons.close_rounded, super.key});
+  const CustomCloseButton({this.color, this.onClose, this.closeIcon = Icons.close_rounded, super.key});
 
   @override
   Widget build(BuildContext context) {

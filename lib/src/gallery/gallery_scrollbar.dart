@@ -6,10 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/core/selector.dart';
 
 /// a draggable thumb on the end side with the date beside it, shown only while scrolling.
 class GalleryScrollbar extends StatefulWidget {
   final ScrollController controller;
+
+  /// true while the thumb is moving, the grid holds new thumbnails back until it stops.
+  final ValueNotifier<bool> moving;
 
   /// the grid's padding over the first row, where the preview sits.
   final double top;
@@ -23,6 +27,7 @@ class GalleryScrollbar extends StatefulWidget {
 
   const GalleryScrollbar({
     required this.controller,
+    required this.moving,
     required this.top,
     required this.collapse,
     required this.label,
@@ -37,9 +42,13 @@ class GalleryScrollbar extends StatefulWidget {
 class _GalleryScrollbarState extends State<GalleryScrollbar> {
   static const Duration _hideDelay = Duration(seconds: 1);
 
+  /// holding the thumb still this long loads what's under it.
+  static const Duration _settleDelay = Duration(milliseconds: 150);
+
   final ValueNotifier<bool> _visible = ValueNotifier(false);
   final ValueNotifier<bool> _dragging = ValueNotifier(false);
   Timer? _hide;
+  Timer? _settle;
 
   // made once, the grid rebuilds this on every page it loads
   late final Listenable _changes = Listenable.merge([widget.controller, widget.collapse, _dragging]);
@@ -47,6 +56,7 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
   @override
   void dispose() {
     _hide?.cancel();
+    _settle?.cancel();
     _visible.dispose();
     _dragging.dispose();
     super.dispose();
@@ -74,7 +84,39 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
 
   void _endDrag() {
     _dragging.value = false;
+    _stopMoving();
     _hideLater();
+  }
+
+  void _moved() {
+    widget.moving.value = true;
+    _settle?.cancel();
+    _settle = Timer(_settleDelay, _stopMoving);
+  }
+
+  void _stopMoving() {
+    _settle?.cancel();
+    if (!widget.moving.value) return;
+    widget.moving.value = false;
+    // the held back thumbnails only check again on a frame
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  double get _top => max(0.0, widget.top - widget.collapse.value);
+
+  /// how far the thumb can move, null when there's nothing to scroll.
+  double? get _track {
+    final controller = widget.controller;
+    if (!controller.hasClients) return null;
+    final position = controller.position;
+    if (!position.hasContentDimensions || position.maxScrollExtent <= 0) return null;
+    final track = position.viewportDimension - _top - PickerLayout.minTouch;
+    return track > 0 ? track : null;
+  }
+
+  double get _fraction {
+    final position = widget.controller.position;
+    return (position.pixels / position.maxScrollExtent).clamp(0.0, 1.0);
   }
 
   @override
@@ -85,49 +127,50 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
       child: Stack(
         children: [
           widget.child,
+          // every scroll frame moves it, only a new month or a grab builds the thumb again
           ListenableBuilder(
             listenable: _changes,
-            builder: (context, _) {
-              if (!controller.hasClients) return const SizedBox.shrink();
-              final position = controller.position;
-              if (!position.hasContentDimensions || position.maxScrollExtent <= 0) {
-                return const SizedBox.shrink();
-              }
-              final top = max(0.0, widget.top - widget.collapse.value);
-              final track = position.viewportDimension - top - PickerLayout.minTouch;
-              if (track <= 0) return const SizedBox.shrink();
-              final fraction = (position.pixels / position.maxScrollExtent).clamp(0.0, 1.0);
-              return PositionedDirectional(
-                end: 0,
-                top: top + fraction * track,
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: _visible,
-                  builder: (context, visible, child) => IgnorePointer(
-                    ignoring: !visible,
-                    child: AnimatedOpacity(
-                      opacity: visible ? 1 : 0,
-                      duration: PickerDurations.of(context).medium,
-                      child: child,
-                    ),
-                  ),
-                  child: GestureDetector(
-                    onVerticalDragStart: (_) {
-                      _dragging.value = true;
-                      _show();
-                    },
-                    onVerticalDragUpdate: (details) => controller.jumpTo(
-                      (position.pixels + details.delta.dy / track * position.maxScrollExtent).clamp(
-                        0,
-                        position.maxScrollExtent,
-                      ),
-                    ),
-                    onVerticalDragEnd: (_) => _endDrag(),
-                    onVerticalDragCancel: _endDrag,
-                    child: _Thumb(label: widget.label(fraction), held: _dragging.value),
-                  ),
-                ),
-              );
+            builder: (context, thumb) {
+              final track = _track;
+              if (track == null) return const SizedBox.shrink();
+              return PositionedDirectional(end: 0, top: _top + _fraction * track, child: thumb!);
             },
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _visible,
+              builder: (context, visible, child) => IgnorePointer(
+                ignoring: !visible,
+                child: AnimatedOpacity(
+                  opacity: visible ? 1 : 0,
+                  duration: PickerDurations.of(context).medium,
+                  child: child,
+                ),
+              ),
+              child: GestureDetector(
+                onVerticalDragStart: (_) {
+                  _dragging.value = true;
+                  _show();
+                },
+                onVerticalDragUpdate: (details) {
+                  final track = _track;
+                  if (track == null) return;
+                  final position = controller.position;
+                  _moved();
+                  controller.jumpTo(
+                    (position.pixels + details.delta.dy / track * position.maxScrollExtent).clamp(
+                      0,
+                      position.maxScrollExtent,
+                    ),
+                  );
+                },
+                onVerticalDragEnd: (_) => _endDrag(),
+                onVerticalDragCancel: _endDrag,
+                child: Selector<(String?, bool)>(
+                  listenable: _changes,
+                  select: () => (_track == null ? null : widget.label(_fraction), _dragging.value),
+                  builder: (context, thumb, _) => _Thumb(label: thumb.$1, held: thumb.$2),
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -9,6 +9,7 @@ import 'package:image_picker_plus/src/gallery/ratio_button.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
+import 'package:image_picker_plus/src/settings/picker_filter.dart';
 
 import '../fakes/fake_files_service.dart';
 import '../fakes/pump_picker.dart';
@@ -17,7 +18,7 @@ void main() {
   const settings = PickerSettings(
     maxSelection: 5,
     cropRatios: [CropRatio.square, CropRatio.portrait],
-    filters: true,
+    filters: PickerFilter.all,
   );
 
   Future<Fakes> open(
@@ -55,7 +56,7 @@ void main() {
     await open(
       tester,
       FakeFilesService.files(1),
-      settings: const PickerSettings(filters: true),
+      settings: const PickerSettings(filters: PickerFilter.all),
       onResult: (r) => result = r,
     );
     await tester.tap(find.text("Done"));
@@ -179,7 +180,7 @@ void main() {
     final fakes = await open(
       tester,
       files,
-      settings: const PickerSettings(maxSelection: 5, mediaType: MediaType.all, filters: true),
+      settings: const PickerSettings(maxSelection: 5, mediaType: MediaType.all, filters: PickerFilter.all),
       onResult: (r) => result = r,
     );
     expect(find.text("Videos can only be reordered"), findsOneWidget);

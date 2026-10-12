@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
+import 'package:image_picker_plus/src/core/haptic_feedback.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/core/selector.dart';
 import 'package:image_picker_plus/src/gallery/album_picker.dart';
+import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
 import 'package:image_picker_plus/src/gallery/gallery_grid.dart';
 import 'package:image_picker_plus/src/gallery/gallery_layout.dart';
@@ -31,7 +31,6 @@ class GalleryPage extends StatefulWidget {
 
 class _GalleryPageState extends State<GalleryPage> {
   final ValueNotifier<bool> _finishing = ValueNotifier(false);
-  late final Listenable _changes = Listenable.merge([widget.controller.state, widget.controller.adding]);
 
   @override
   void initState() {
@@ -46,11 +45,20 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   void _onTap(MediaItem item) {
-    if (widget.controller.toggle(item)) return;
+    final controller = widget.controller;
     final scope = PickerScope.of(context);
+    final selection = controller.selection.value;
+    // a tap on the shown one takes it out, adding with nothing selected would empty the edit page
+    final last = selection.length == 1 && selection.first == item && controller.preview.value == item;
+    if (controller.adding.value && last) return _tell(scope.texts.minAdd);
+    if (controller.toggle(item)) return;
+    _tell(scope.texts.maxReachedFor(scope.settings.maxSelection));
+  }
+
+  void _tell(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(scope.texts.maxReachedFor(scope.settings.maxSelection))));
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _onLongPress(MediaItem item) {
@@ -58,7 +66,8 @@ class _GalleryPageState extends State<GalleryPage> {
     if (!controller.settings.multi) return;
     if (controller.multi.value) return _onTap(item);
     // the strongest built in ones, vibrate on ios is a long buzz not a tap
-    defaultTargetPlatform == TargetPlatform.iOS ? HapticFeedback.heavyImpact() : HapticFeedback.vibrate();
+    customHapticFeedback();
+
     controller.startMulti(item);
   }
 
@@ -70,7 +79,9 @@ class _GalleryPageState extends State<GalleryPage> {
       return;
     }
     _finishing.value = true;
-    final items = await controller.pickedItems();
+    final services = PickerScope.of(context).services;
+    await freeMediaImages();
+    final items = await controller.pickedItems(services);
     if (!mounted) return;
     _finishing.value = false;
     Navigator.of(context).pop(items);
@@ -80,23 +91,36 @@ class _GalleryPageState extends State<GalleryPage> {
   Widget build(BuildContext context) {
     final scope = PickerScope.of(context);
     final controller = widget.controller;
-    return ListenableBuilder(
-      listenable: _changes,
-      builder: (context, _) {
-        final state = controller.state.value;
-        final adding = controller.adding.value;
+    return ValueListenableBuilder<GalleryState>(
+      valueListenable: controller.state,
+      builder: (context, state, _) {
         return Scaffold(
           key: const ValueKey(GalleryState.ready),
           backgroundColor: scope.theme.background,
-          appBar: PickerAppBar(
-            title: AlbumPicker(controller: controller),
-            closeIcon: adding ? Icons.arrow_back_rounded : Icons.close_rounded,
-            onClose: widget.onClose,
-            action: AnimatedSwitcher(
-              duration: PickerDurations.of(context).medium,
-              child: state == GalleryState.ready
-                  ? _NextButton(controller: controller, busy: _finishing, adding: adding, onPressed: _next)
-                  : const SizedBox.shrink(),
+          // only the bar follows adding, the grid under it isn't built again
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(PickerLayout.appBarHeight),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: controller.adding,
+              builder: (context, adding, _) => PickerAppBar(
+                // an empty album keeps it, so another album can be picked
+                title: state == GalleryState.loading || controller.albums.value.isNotEmpty
+                    ? AlbumPicker(controller: controller)
+                    : null,
+                closeIcon: adding ? CloseButtonEnum.back : CloseButtonEnum.close,
+                onClose: widget.onClose,
+                action: AnimatedSwitcher(
+                  duration: PickerDurations.of(context).medium,
+                  child: state == GalleryState.ready
+                      ? _NextButton(
+                          controller: controller,
+                          busy: _finishing,
+                          adding: adding,
+                          onPressed: _next,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
             ),
           ),
           body: AnimatedSwitcher(
@@ -111,6 +135,12 @@ class _GalleryPageState extends State<GalleryPage> {
               GalleryState.empty => MessageView(
                 scope.texts.noImages,
                 key: const ValueKey(GalleryState.empty),
+              ),
+              GalleryState.failed => MessageView(
+                scope.texts.somethingWentWrong,
+                key: const ValueKey(GalleryState.failed),
+                actionText: scope.texts.tryAgain,
+                onAction: controller.init,
               ),
               _ => Column(
                 children: [

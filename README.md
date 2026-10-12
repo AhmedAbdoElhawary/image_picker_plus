@@ -2,7 +2,7 @@
 
 <p align="center">
   A gallery and camera picker that lives inside your app.<br>
-  Pick images and videos, crop it, add filters them, reorder them, and get the files back.<br>
+  Pick images and videos, crop them, add filters, reorder them, and get the files back.<br>
   In your theme and your language, on mobile, web and desktop.
 </p>
 
@@ -15,16 +15,21 @@
   <img src="https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-blue" alt="platforms" />
 </p>
 
-# SnapShots
-###  [Color glitching from the compression of the GIF, not the app]
+# Snapshots
 
-| Pick, crop, filter and reorder | Camera | Video |
+This is just a sample, try the package to see all of it 🚀
+
+| Gallery | Filters | Adjustments |
 |:---:|:---:|:---:|
-| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/gallery.gif" width="220" alt="pick, crop, filter and reorder" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/camera.gif" width="220" alt="camera" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/video_img.jpeg" width="220" alt="recording a video" /> |
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/gallery.jpg" width="220" alt="gallery with the ratio menu" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/filters.jpg" width="220" alt="filters on the edit screen" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/adjust2.jpg" width="220" alt="adjustment sliders on the edit screen" /> |
 
-| MacOS | Web
+| Crop | Camera | Video |
+|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/crop.jpg" width="220" alt="crop in the preview with multi selection" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/camera.jpg" width="220" alt="camera" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/video.jpg" width="220" alt="video" /> |
+
+| Phone landscape | macOS and web |
 |:---:|:---:|
-| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/macos.gif" width="410" alt="edit screen on macOS" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="410" alt="edit screen on web" /> |
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/landscape2.jpg" width="340" alt="phone in landscape" /><br><img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/landscape1.jpg" width="340" alt="phone in landscape" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="490" alt="edit screen on macOS and web" /> |
 
 # Why
 
@@ -35,9 +40,9 @@ image_picker_plus shows the gallery inside your app instead, so it follows your 
 # Features
 
 - Gallery with albums newest first, a preview, and a scrollbar with the month while scrolling. A tap picks one, a long press or the select button picks many up to a limit.
-- Crop in the preview with the ratios you allow, then filters and reorder before returning. The plus on the edit screen adds more from the gallery, photo or video tab.
+- Crop in the preview with the ratios you allow, rotate and flip, then filters, sliders and reorder before returning. The plus on the edit screen adds more from the gallery, photo or video tab.
 - Camera tabs for photo and video, with front/rear, flash and tap to focus.
-- Light and dark themes, your own colors and texts, RTL, and layouts for phones and tablets.
+- Light and dark themes, your own colors and texts, 9 languages built in, RTL, and layouts for phones and tablets.
 - Optional disk cache for a faster reopen.
 - **No native code** of its own, so there's nothing to set up besides the permissions.
 
@@ -137,7 +142,7 @@ final items = await ImagePickerPlus.pick(
     mediaType: MediaType.all,
     maxSelection: 10,
     cropRatios: [CropRatio.square, CropRatio.portrait],
-    filters: true,
+    filters: PickerFilter.all,
     output: OutputOptions(quality: 85, maxWidth: 2048),
     cache: PickerCache(enabled: true),
   ),
@@ -151,6 +156,12 @@ for (final item in items) {
 
 `items` keeps the order the user picked, or the order they set on the edit screen.
 
+The [example app](https://github.com/AhmedAbdoElhawary/image_picker_plus/blob/main/example/lib/demo.dart) has a switch for every setting:
+
+|  |  |  |  |
+|:---:|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main1.jpg" width="250" alt="example app" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main2.jpg" width="250" alt="example app" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main3.jpg" width="250" alt="example app" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main4.jpg" width="250" alt="example app" /> |
+
 ## Settings
 
 | Setting | Default | |
@@ -159,20 +170,63 @@ for (final item in items) {
 | `mediaType` | `MediaType.image` | `image`, `video` or `all` |
 | `maxSelection` | `1` | `1` is single selection. above 1, counting starts on a long press or the select button |
 | `cropRatios` | `CropRatio.all` | the ratios the user can pick, `[]` means no crop. `CropRatio.all` is original, square, portrait (4:5) and landscape (16:9), or pass your own like `CropRatio(3, 2)`. Only these show in the ratio menu |
-| `showPreview` | `true` | `false` hides the preview above the grid. The crop is then only on the edit screen, at the image's own ratio |
+| `rotate` | `true` | the rotate left button under the crop on the edit screen |
+| `flip` | `true` | the flip button under the crop on the edit screen |
+| `showPreview` | `true` | `false` hides the preview above the grid. The crop is then only on the edit screen |
 | `resizePreview` | `true` | decodes the preview and edit images at the size they're shown. `false` decodes them at 1080 pixels, more memory but sharper when zooming the crop |
 | `gridColumns` | `null` | images per row, `null` follows the screen width (4, 6 or 8) |
 | `gridCellAspectRatio` | `1` | width / height of a grid cell, `0.5` is twice as tall as wide |
-| `filters` | `false` | shows the filters on the edit screen |
-| `output` | `OutputOptions()` | JPEG quality (90) and optional max width and height for edited images |
+| `filters` | `[]` | the filter strip on the edit screen, `PickerFilter.all` for the shipped ones or your own, see below. `[]` hides it |
+| `adjustments` | `false` | brightness, contrast, saturation and warmth sliders on the edit screen |
+| `output` | `OutputOptions()` | `format` (JPEG or PNG), JPEG `quality` (90), and optional `maxWidth`, `maxHeight` and `maxBytes` for every returned image. An edited image is 2048 pixels on its long side at most unless `maxWidth` or `maxHeight` asks for more |
 | `theme` | `null` | `null` uses `PickerTheme.dark()`, or follows the app brightness with `PickerTheme.light()` / `PickerTheme.dark()` when `alwaysDarkTheme` is `false` |
 | `alwaysDarkTheme` | `true` | `false` follows the app brightness. A custom `theme` wins over it |
-| `texts` | `PickerTexts()` | every text the picker shows, English by default |
+| `texts` | `PickerTexts()` | every text the picker shows, English by default. `PickerTexts.of(context)` follows the app's language |
 | `cache` | `PickerCache()` | off by default, see below |
+| `markup` | `MarkupOptions()` | text, emojis and drawing on the edit screen, off by default, see below |
+| `camera` | `CameraOptions()` | zoom buttons, timer, grid and an overlay for the camera tabs, see below |
+| `useRootNavigator` | `false` | `false` opens the picker on the nearest navigator, so a tab bar or nested shell stays visible over it |
 
-When there's no crop and no filters, next returns the picked items right away. Otherwise next opens the edit screen.
+When there's no crop, no filters, no sliders and no markup, next returns the picked items right away. Otherwise next opens the edit screen.
 
-Edited images are returned as new JPEG files with no metadata. Items that weren't edited, and all videos, are returned as the original file.
+The edit screen has rotate left and flip buttons under the image, for images only. Turn each off with `rotate: false` or `flip: false`. Text, drawings and emojis turn with the photo, and a flip moves them without mirroring the letters.
+
+Edited images are returned as new JPEG files with no metadata, or PNG with `OutputOptions(format: OutputFormat.png)`. PNG keeps transparency and ignores `quality`. A JPEG gets white where the image was see through. Items that weren't edited, and all videos, are returned as the original file.
+
+A photo is decoded at 16 MP at most while exporting, so a phone with little memory can export one from a big sensor. A crop tight enough to want more than that comes back at the size the cap gives, not upscaled to it.
+
+An export holds about 8 bytes for every pixel of the image it writes, so the output size is what decides its memory. With no `maxWidth` or `maxHeight` an edited image is written at up to 2048 pixels on its long side, about 65 MB while it runs. Ask for more with `maxWidth` when you need it, and know what it costs: 4096 pixels is four times the pixels and about 100 MB. PNG takes nearly twice as much as JPEG, the engine's PNG encoder needs the whole image at once.
+
+The output limits hold for every image, edited or not. An image over `maxWidth`, `maxHeight` or `maxBytes` comes back as a smaller JPEG, with `edited` still `false` and the untouched file in `original`. For `maxBytes` the quality goes down first, to 50 at the lowest, then the size. A PNG has no quality, so only its size goes down. If it still can't fit, the smallest try comes back with `overLimit: true`. Videos are never re-encoded.
+
+## What comes back
+
+| Field | |
+|-------|---|
+| `file` | the file to use, the original or the new JPEG |
+| `original` | the untouched source, the same as `file` when nothing was re-encoded |
+| `type`, `width`, `height` | of `file` |
+| `edited` | the user cropped, turned, flipped, filtered, adjusted or marked it up |
+| `id` | the gallery id, `null` for camera photos and files from the system picker |
+| `edit` | the crop, ratio, turns, flip, filter, sliders and markup, `null` for videos |
+| `overLimit` | still over `maxBytes` after every try |
+
+## Change photos
+
+Pass an earlier result back as `selected` and the picker opens with those items selected, in the same order, with their crops, turns, filters and sliders. With editing on it opens the edit screen with them, the gallery only shows from its plus. On web and desktop it skips the system picker.
+
+```dart
+final items = await ImagePickerPlus.pick(context, settings: settings, selected: lastPick);
+```
+
+To keep it between app launches, save the maps and read them back:
+
+```dart
+final json = jsonEncode([for (final item in items) item.toMap()]);
+final lastPick = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)];
+```
+
+Items that are gone by then are skipped with a message. On web, picked files only live as long as the page, so after a reload they're skipped too.
 
 ## Theme and texts
 
@@ -186,20 +240,122 @@ PickerSettings(
     accent: Color(0xFFFF7A00),
     onAccent: Color(0xFFFFFFFF),
     scrim: Color(0xB3000000),
-    // behind the edit card on web and desktop, optional
     barrier: Color(0x99000000),
+    recording: Color(0xFFFF3B30),
   ),
-  texts: const PickerTexts(next: "Weiter", done: "Fertig"),
+  texts: const PickerTexts(next: "Suivant", done: "Terminé"),
 )
 ```
 
+English, Arabic, Chinese (simplified), Japanese, Hindi, Spanish, German, Turkish and Russian ship with the package. The picker stays English unless you ask:
+
+```dart
+PickerSettings(texts: PickerTexts.of(context))          // the app's language, English when it isn't shipped
+PickerSettings(texts: const ArabicTexts())              // always Arabic
+PickerSettings(texts: const ArabicTexts(done: "تم")) // Arabic with one text changed
+```
+
+| Language | Code | Class |
+| --- | --- | --- |
+| English | `en` | `PickerTexts` |
+| Arabic | `ar` | `ArabicTexts` |
+| Chinese (simplified) | `zh` | `ChineseTexts` |
+| Japanese | `ja` | `JapaneseTexts` |
+| Hindi | `hi` | `HindiTexts` |
+| Spanish | `es` | `SpanishTexts` |
+| German | `de` | `GermanTexts` |
+| Turkish | `tr` | `TurkishTexts` |
+| Russian | `ru` | `RussianTexts` |
+
+A new language is one file in `lib/src/settings/languages/` with a `PickerTexts` subclass, one line in `PickerTexts.languages` and one export in `lib/image_picker_plus.dart`. A test fails when it leaves a text in English.
+
+| Arabic | Chinese | German |
+|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/arabic.jpg" width="220" alt="picker in Arabic" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/chinese.jpg" width="220" alt="picker in Chinese" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/german.jpg" width="220" alt="picker in German" /> |
+
+## Filters and sliders
+
+`PickerFilter.all` is the 13 shipped looks. Your own are a name and a 5x4 color matrix, the same one `ColorFilter.matrix` takes. The strip always starts with "Normal", which is no filter.
+
+```dart
+PickerSettings(
+  filters: [
+    PickerFilter(name: "Brand", matrix: [
+      1.1, 0, 0, 0, 10, //
+      0, 1, 0, 0, 0, //
+      0, 0, 0.9, 0, -10, //
+      0, 0, 0, 1, 0, //
+    ]),
+  ],
+  adjustments: true,
+)
+```
+
+A matrix that isn't 20 values throws when `pick` is called. A picked filter gets a strength slider under the tabs, it starts full and each new filter starts full again. With `adjustments` on, the edit screen has brightness, contrast, saturation and warmth sliders, on top of the filter. With both on, a switch picks between them. Every slider back at 0 and Normal is no edit, so the original comes back.
+
+## Markup
+
+The edit screen can add text, emojis and freehand drawing on images. Each one turns on by itself, everything is off by default.
+
+```dart
+PickerSettings(
+  markup: MarkupOptions(
+    text: true,
+    emojis: true,
+    drawing: true,
+    fonts: ["Lobster", "RobotoMono"],
+  ),
+)
+```
+
+Text and emojis move with one finger, and scale and turn with two. The second finger can be anywhere on the screen once the first is on the item. On desktop it's the mouse wheel and shift + wheel. Dropping one on the bin at the bottom removes it. Drawing has three sizes, an eraser for whole lines, and undo and redo (also Ctrl or Cmd + Z). Two fingers zoom while drawing.
+
+With `emojis` on, the emoji button opens the popular emojis. They're plain Unicode, so they look like the phone's own. Fonts come from your app, nothing ships with the package. `fonts` are family names your pubspec already registers, the text uses the app's font when it's empty. `colors` replaces the palette.
+
+Markup is drawn into the saved image at its full size, on top of the crop and filter, and the filter never colors it. An image whose markup was all removed comes back untouched. Markup is part of `edit`, so it comes back with `selected`, but the undo history doesn't.
+
+## Camera
+
+The camera tabs have pinch zoom, quick zoom buttons, a 3 and 10 second timer and a rule of thirds grid, all on by default. `CameraOptions` turns each one off, starts with the grid on, or draws your own overlay over the preview, like a frame for an ID card. The overlay gets the preview's size, never ends up in the photo or video, and doesn't take taps, so focus and zoom still work through it.
+
+```dart
+PickerSettings(
+  source: PickerSource.camera,
+  camera: CameraOptions(
+    gridOn: true,
+    overlay: (context, size) => Center(
+      child: Container(
+        width: size.width * 0.85,
+        height: size.width * 0.85 / 1.586, // id card
+        decoration: BoxDecoration(border: Border.all(color: Colors.white, width: 2)),
+      ),
+    ),
+  ),
+)
+```
+
+Zoom goes up to 10x. The 0.5x button only shows where the phone gives the ultra wide as a zoom level, which most Android phones with one do. iPhones list it as its own camera, so there it's reached with the switch camera button.
+
 ## Caching
 
-With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` thumbnails and edited images are kept on disk in the app's temp folder, and the oldest go first when it's over `maxBytes`. When caching is off nothing is saved, and an old cache folder is removed on the next open. Caching is only on Android and iOS.
+With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` edited images are kept on disk in the app's temp folder, and the oldest go first when it's over `maxBytes`. When caching is off nothing is saved, and an old cache folder is removed on the next open. Caching is only on Android and iOS.
 
 ```dart
 await ImagePickerPlus.clearCache();
 ```
+
+# Migrating from 1.x
+
+| 1.x | 2.0.0 |
+|-----|-------|
+| `filters: true` | `filters: PickerFilter.all` |
+| `filters: false` | `filters: []`, the default |
+| edited images are always `.jpg` | `.jpg` by default, `.png` with `OutputOptions(format: OutputFormat.png)` |
+| see through parts of an edited image come out black | white in a JPEG, kept in a PNG |
+| an edited image is up to 4096 pixels on its long side | up to 2048, pass `maxWidth` or `maxHeight` for more |
+| `maxWidth` and `maxHeight` only shrink edited images | they shrink every image, the untouched file is in `original` |
+
+Everything else in 2.0.0 is new. The rotate and flip buttons and the camera's zoom buttons, timer and grid show by default, turn them off with `rotate: false`, `flip: false` and `CameraOptions`. The rest is off by default, see the [changelog](CHANGELOG.md).
 
 # Migrating from 0.6.0
 

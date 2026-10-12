@@ -16,6 +16,10 @@ class CameraServiceImpl implements CameraService {
   cam.CameraController? _controller;
   int _index = 0;
   bool _microphone = true;
+  double _minZoom = 1;
+  double _maxZoom = 1;
+
+  static const double maxZoomCap = 10;
 
   cam.CameraController get _camera => _controller!;
 
@@ -40,7 +44,13 @@ class CameraServiceImpl implements CameraService {
         throw _failure(error);
       }
     }
+    await _readZoom();
     return _cameras.length;
+  }
+
+  Future<void> _readZoom() async {
+    _minZoom = await _camera.getMinZoomLevel();
+    _maxZoom = max(_minZoom, min(await _camera.getMaxZoomLevel(), maxZoomCap));
   }
 
   Future<cam.CameraController> _open({required bool audio}) async {
@@ -48,7 +58,8 @@ class CameraServiceImpl implements CameraService {
     try {
       await controller.initialize();
     } catch (_) {
-      await controller.dispose();
+      // camerax can throw again closing a camera that never opened, that would hide the first error
+      await controller.dispose().catchError((Object _) {});
       rethrow;
     }
     return controller;
@@ -61,15 +72,21 @@ class CameraServiceImpl implements CameraService {
   bool get hasMicrophone => _microphone;
 
   @override
-  double get aspectRatio => 1 / _camera.value.aspectRatio;
+  double get aspectRatio => _camera.value.aspectRatio;
 
+  // the plugin turns its box by the sensor, which is wrong on an open foldable or a locked app.
+  // a tight box makes its ratio give way
   @override
-  Widget preview() => cam.CameraPreview(_camera);
+  Widget preview({required bool portrait, Widget? child}) => AspectRatio(
+    aspectRatio: portrait ? 1 / aspectRatio : aspectRatio,
+    child: cam.CameraPreview(_camera, child: child),
+  );
 
   @override
   Future<void> switchCamera() async {
     _index = (_index + 1) % _cameras.length;
     await _camera.setDescription(_cameras[_index]);
+    await _readZoom();
   }
 
   @override
@@ -77,12 +94,18 @@ class CameraServiceImpl implements CameraService {
 
   @override
   Future<void> focus(Offset point) async {
-    final value = _camera.value;
-    if (value.focusPointSupported) {
-      await _camera.setFocusMode(cam.FocusMode.auto);
-      await _camera.setFocusPoint(point);
-    }
-    if (value.exposurePointSupported) await _camera.setExposurePoint(point);
+    // the page can let the camera go while a focus is still going
+    final camera = _controller;
+    if (camera == null) return;
+    final value = camera.value;
+    // some android cameras say they support focus points then reject every one
+    try {
+      if (value.focusPointSupported) {
+        await camera.setFocusMode(cam.FocusMode.auto);
+        await camera.setFocusPoint(point);
+      }
+      if (value.exposurePointSupported) await camera.setExposurePoint(point);
+    } on cam.CameraException catch (_) {}
   }
 
   // the camera plugin can't tell, but phones only have a flash on the back
@@ -90,9 +113,22 @@ class CameraServiceImpl implements CameraService {
   bool get hasFlash => _cameras[_index].lensDirection == cam.CameraLensDirection.back;
 
   @override
+  double get minZoom => _minZoom;
+
+  @override
+  double get maxZoom => _maxZoom;
+
+  @override
+  Future<void> setZoom(double level) async {
+    // a pinch keeps zooming after an await, when the page may have let the camera go
+    await _controller?.setZoomLevel(level.clamp(_minZoom, _maxZoom));
+  }
+
+  @override
   Future<PickedItem> takePhoto() async {
     final file = await _camera.takePicture();
-    final buffer = await ui.ImmutableBuffer.fromUint8List(await file.readAsBytes());
+    // read by the engine, the photo never gets copied into dart memory just for its size
+    final buffer = await ui.ImmutableBuffer.fromFilePath(file.path);
     final descriptor = await ui.ImageDescriptor.encoded(buffer);
     final item = PickedItem(
       file: file,
@@ -133,7 +169,8 @@ class CameraServiceImpl implements CameraService {
   Future<void> dispose() async {
     final controller = _controller;
     _controller = null;
-    if (controller != null) _closing = controller.dispose();
+    // a failed close would make every camera opened after it fail too
+    if (controller != null) _closing = controller.dispose().catchError((Object _) {});
     await _closing;
   }
 }

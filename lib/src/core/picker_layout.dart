@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 class PickerLayout {
@@ -6,7 +7,10 @@ class PickerLayout {
   /// preview next to the grid instead of above it.
   final bool previewBeside;
 
-  const PickerLayout._(this.columns, this.previewBeside);
+  /// sheets open as popups, on tablets, open foldables and wide web and desktop windows.
+  final bool popups;
+
+  const PickerLayout._(this.columns, this.previewBeside, this.popups);
 
   static const double gap = 1;
   static const double padding = 16;
@@ -15,6 +19,10 @@ class PickerLayout {
   static const double minTouch = 48;
   static const double minButtonTouchHeight = 30;
   static const double pickerTabsHeight = 52;
+  static const double appBarHeight = 56;
+
+  /// a shortest side from this up is a tablet or an open foldable.
+  static const double tabletSide = 600;
 
   /// the edit page on web and desktop is a card from this width up.
   static const double cardBreakpoint = 600;
@@ -22,12 +30,23 @@ class PickerLayout {
   static const double cardMaxHeight = 900;
   static const double cardMargin = 24;
 
+  /// the edit page overflows below this, it asks for a bigger window instead.
+  static const double editMinWidth = 280;
+  static const double editMinHeight = 300;
+
   factory PickerLayout.of(BuildContext context) => PickerLayout.forSize(MediaQuery.sizeOf(context));
 
   factory PickerLayout.forSize(Size size) {
     final width = size.width;
     final columns = width < 600 ? 4 : (width < 1024 ? 6 : 8);
     final beside = width >= 1024 || (width >= 600 && width > size.height);
-    return PickerLayout._(columns, beside);
+    final desktop =
+        kIsWeb ||
+        switch (defaultTargetPlatform) {
+          TargetPlatform.macOS || TargetPlatform.windows || TargetPlatform.linux => true,
+          _ => false,
+        };
+    final popups = size.shortestSide >= tabletSide || (desktop && width >= tabletSide);
+    return PickerLayout._(columns, beside, popups);
   }
 }

@@ -41,5 +41,9 @@ example/macos/
 example/windows/
 example/web/
 
-# gifs for the README, linked from github so they are not in the package
-snapshots/
+# the README links its images from github, only the pubspec screenshots go in the package
+snapshots/*
+!snapshots/gallery.jpg
+!snapshots/crop.jpg
+!snapshots/camera.jpg
+!snapshots/web.png

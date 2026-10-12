@@ -34,11 +34,22 @@ class FakeGalleryService implements GalleryService {
   final List<Album> albumList;
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
-  final List<(String, int)> pageCalls = [];
+  /// album id, page and size of every [items] call.
+  final List<(String, int, int)> pageCalls = [];
   int thumbnailCalls = 0;
   int openSettingsCalls = 0;
   int manageCalls = 0;
+  int itemCalls = 0;
+
+  /// ids [item] returns null for, like a deleted photo.
+  final Set<String> gone = {};
+
+  /// every [file] call, with its editable flag.
+  final List<(String, bool)> fileCalls = [];
   Completer<void>? itemsGate;
+
+  /// thrown by [albums] when set.
+  Object? error;
 
   FakeGalleryService({this.access = GalleryAccess.full, Map<String, List<MediaItem>>? data})
     : data = data ?? {"all": List.generate(200, (i) => fakeItem("$i"))},
@@ -53,13 +64,16 @@ class FakeGalleryService implements GalleryService {
   Future<GalleryAccess> requestAccess() async => access;
 
   @override
-  Future<List<Album>> albums(MediaType type) async => [
-    for (final entry in data.entries) Album(id: entry.key, name: entry.key, count: entry.value.length),
-  ];
+  Future<List<Album>> albums(MediaType type) async {
+    if (error != null) throw error!;
+    return [
+      for (final entry in data.entries) Album(id: entry.key, name: entry.key, count: entry.value.length),
+    ];
+  }
 
   @override
   Future<List<MediaItem>> items(Album album, {required int page, required int size}) async {
-    pageCalls.add((album.id, page));
+    pageCalls.add((album.id, page, size));
     await itemsGate?.future;
     final all = data[album.id] ?? const [];
     final start = page * size;
@@ -74,8 +88,22 @@ class FakeGalleryService implements GalleryService {
   }
 
   @override
-  Future<XFile?> file(MediaItem item, {bool editable = false}) async =>
-      XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
+  Future<MediaItem?> item(String id) async {
+    itemCalls++;
+    if (gone.contains(id)) return null;
+    for (final items in data.values) {
+      for (final item in items) {
+        if (item.id == id) return item;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<XFile?> file(MediaItem item, {bool editable = false}) async {
+    fileCalls.add((item.id, editable));
+    return XFile.fromData(tinyPng, path: "/fake/${item.id}", name: item.id);
+  }
 
   @override
   Stream<void> get changes => _changes.stream;

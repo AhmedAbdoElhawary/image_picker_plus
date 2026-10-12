@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
+import 'package:image_picker_plus/src/core/edit_frame.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_controller.dart';
-import 'package:image_picker_plus/src/edit/filter_strip.dart';
-import 'package:image_picker_plus/src/edit/filters.dart';
+import 'package:image_picker_plus/src/edit/edit_tools.dart';
+import 'package:image_picker_plus/src/edit/exporting_overlay.dart';
+import 'package:image_picker_plus/src/edit/filtered_image.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_buttons.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
+import 'package:image_picker_plus/src/edit/orientation_buttons.dart';
 import 'package:image_picker_plus/src/edit/reorder_strip.dart';
-import 'package:image_picker_plus/src/gallery/media_preview.dart';
+import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/ratio_button.dart';
 import 'package:image_picker_plus/src/gallery/video_preview.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/widgets/picker_app_bar.dart';
 
@@ -19,6 +26,9 @@ class EditPage extends StatefulWidget {
   final List<MediaItem> items;
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
+  final Map<String, ValueNotifier<double>> filterStrengths;
+  final Map<String, MarkupController> markups;
+  final Map<String, ValueNotifier<Adjustments>> adjustments;
 
   /// null pops, the system picker flow picks again instead.
   final VoidCallback? onBack;
@@ -36,6 +46,9 @@ class EditPage extends StatefulWidget {
     required this.items,
     this.crops = const {},
     this.filterIndexes = const {},
+    this.filterStrengths = const {},
+    this.markups = const {},
+    this.adjustments = const {},
     this.onBack,
     this.initial,
     this.onAdd,
@@ -50,6 +63,13 @@ class EditPage extends StatefulWidget {
 class _EditPageState extends State<EditPage> {
   EditController? _controller;
 
+  /// the tools switch inside the markup page, only the first one opens it.
+  bool _markupOpen = false;
+
+  // a rotation moves them between the column and the row, they keep the crop and the picked tab
+  final GlobalKey _item = GlobalKey();
+  final GlobalKey _tools = GlobalKey();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -58,11 +78,16 @@ class _EditPageState extends State<EditPage> {
     _controller = EditController(
       services: scope.services,
       output: scope.settings.output,
+      filters: scope.settings.filters,
       items: widget.items,
       initial: widget.initial,
       crops: widget.crops,
       filterIndexes: widget.filterIndexes,
+      filterStrengths: widget.filterStrengths,
+      markups: widget.markups,
+      adjustments: widget.adjustments,
     );
+    _controller!.tool.addListener(_onTool);
     final onReorder = widget.onReorder;
     final items = _controller!.items;
     if (onReorder != null) items.addListener(() => onReorder(items.value));
@@ -74,11 +99,38 @@ class _EditPageState extends State<EditPage> {
     super.dispose();
   }
 
+  void _onTool() {
+    if (_controller!.tool.value != null && !_markupOpen) _openMarkup();
+  }
+
+  /// a page of its own, so the image flies to it as a hero.
+  Future<void> _openMarkup() async {
+    final controller = _controller!;
+    final scope = PickerScope.of(context);
+    final duration = PickerDurations.of(context).medium;
+    // in a card the markup is a card too, over this one
+    final card = context.findAncestorWidgetOfExactType<EditFrame>() != null;
+    final page = MarkupView(controller: controller);
+    _markupOpen = true;
+    await Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        opaque: !card,
+        pageBuilder: (_, _, _) => scope.wrap(card ? EditFrame(child: page) : page),
+        transitionDuration: duration,
+        reverseTransitionDuration: duration,
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(opacity: animation, child: child),
+      ),
+    );
+    _markupOpen = false;
+    if (mounted) controller.tool.value = null;
+  }
+
   Future<void> _done() async {
     final controller = _controller!;
     if (controller.exporting.value) return;
     final texts = PickerScope.of(context).texts;
     try {
+      await freeMediaImages();
       final items = await controller.export();
       if (mounted) Navigator.of(context).pop(items);
     } catch (_) {
@@ -101,7 +153,14 @@ class _EditPageState extends State<EditPage> {
     final scope = PickerScope.of(context);
     final controller = _controller!;
     final back = widget.onBack ?? () => Navigator.of(context).pop();
-    return _ExportingOverlay(
+    final item = _CurrentItem(key: _item, controller: controller);
+    final tools = [
+      EditTools(key: _tools, controller: controller),
+      if (widget.items.length > 1 ||
+          (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
+        ReorderStrip(controller: controller, onAdd: widget.onAdd),
+    ];
+    return ExportingOverlay(
       controller: controller,
       child: CallbackShortcuts(
         bindings: {
@@ -110,39 +169,89 @@ class _EditPageState extends State<EditPage> {
         },
         child: Focus(
           autofocus: true,
-          child: Scaffold(
-            backgroundColor: scope.theme.background,
-            appBar: PickerAppBar(
-              title: const SizedBox.shrink(),
-              closeIcon: Icons.arrow_back_rounded,
-              onClose: back,
-              action: TextButton(
-                onPressed: _done,
-                style: TextButton.styleFrom(
-                  foregroundColor: scope.theme.accent,
-                  minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < PickerLayout.editMinWidth ||
+                  constraints.maxHeight < PickerLayout.editMinHeight) {
+                return _TooSmall(text: scope.texts.windowTooSmall);
+              }
+              return Scaffold(
+                backgroundColor: scope.theme.background,
+                appBar: PickerAppBar(
+                  title: MarkupButtons(controller: controller),
+                  onClose: back,
+                  action: TextButton(
+                    onPressed: _done,
+                    style: TextButton.styleFrom(
+                      foregroundColor: scope.theme.accent,
+                      minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
+                    ),
+                    child: Text(
+                      scope.texts.done,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: scope.theme.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  scope.texts.done,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
+                body: SafeArea(
+                  top: false,
+                  // beside like the gallery, on wide and landscape screens
+                  child: PickerLayout.of(context).previewBeside
+                      ? Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
+                                child: item,
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ...tools,
+                                  const SizedBox(height: PickerLayout.padding / 2),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            Expanded(child: item),
+                            ...tools,
+                            const SizedBox(height: PickerLayout.padding / 2),
+                          ],
+                        ),
                 ),
-              ),
-            ),
-            body: SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  Expanded(child: _CurrentItem(controller: controller)),
-                  if (scope.settings.filters) FilterStrip(controller: controller),
-                  if (widget.items.length > 1 ||
-                      (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
-                    ReorderStrip(controller: controller, onAdd: widget.onAdd),
-                  const SizedBox(height: PickerLayout.padding / 2),
-                ],
-              ),
-            ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TooSmall extends StatelessWidget {
+  final String text;
+
+  const _TooSmall({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PickerScope.of(context);
+    return Scaffold(
+      backgroundColor: scope.theme.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: scope.theme.onSurfaceMuted, fontWeight: FontWeight.w500),
           ),
         ),
       ),
@@ -153,7 +262,7 @@ class _EditPageState extends State<EditPage> {
 class _CurrentItem extends StatelessWidget {
   final EditController controller;
 
-  const _CurrentItem({required this.controller});
+  const _CurrentItem({required this.controller, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +271,15 @@ class _CurrentItem extends StatelessWidget {
       valueListenable: controller.current,
       builder: (context, item, _) {
         final crop = controller.crops[item.id];
-        final image = _FilteredImage(item: item, filter: controller.filterIndexes[item.id], crop: crop);
+        final markup = controller.markups[item.id];
+        final image = FilteredImage(
+          item: item,
+          filter: controller.filterIndexes[item.id],
+          strength: controller.filterStrengths[item.id],
+          adjustments: controller.adjustments[item.id],
+          crop: crop,
+          markup: markup,
+        );
         final Widget child;
         if (item.isVideo) {
           child = Column(
@@ -182,13 +299,19 @@ class _CurrentItem extends StatelessWidget {
           child = Stack(
             key: ObjectKey(item),
             children: [
-              CropView(controller: crop, image: image),
-              // a taken or picked file has no gallery preview to pick the ratio in, so it's picked here
-              if (item.path != null && scope.settings.cropRatios.length > 1)
+              CropView(controller: crop, image: image, heroTag: markup),
+              if (scope.settings.cropRatios.length > 1)
                 PositionedDirectional(
                   start: PickerLayout.padding,
                   bottom: PickerLayout.ratioButtonBottomPadding,
                   child: RatioButton(controller: crop),
+                ),
+              if (scope.settings.rotate || scope.settings.flip)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: PickerLayout.ratioButtonBottomPadding,
+                  child: Center(child: OrientationButtons(controller: crop)),
                 ),
             ],
           );
@@ -196,7 +319,10 @@ class _CurrentItem extends StatelessWidget {
           final aspect = item.width / item.height;
           child = Center(
             key: ObjectKey(item),
-            child: AspectRatio(aspectRatio: aspect.isFinite && aspect > 0 ? aspect : 1, child: image),
+            child: AspectRatio(
+              aspectRatio: aspect.isFinite && aspect > 0 ? aspect : 1,
+              child: markup == null ? image : Hero(tag: markup, child: image),
+            ),
           );
         }
         return Padding(
@@ -204,117 +330,6 @@ class _CurrentItem extends StatelessWidget {
           child: AnimatedSwitcher(duration: PickerDurations.of(context).short, child: child),
         );
       },
-    );
-  }
-}
-
-/// only this rebuilds when the filter changes, not the crop around it.
-class _FilteredImage extends StatelessWidget {
-  final MediaItem item;
-  final ValueNotifier<int>? filter;
-  final CropController? crop;
-
-  const _FilteredImage({required this.item, required this.filter, required this.crop});
-
-  @override
-  Widget build(BuildContext context) {
-    final image = PreviewImage(item: item, fit: BoxFit.fill, crop: crop);
-    final filter = this.filter;
-    if (filter == null) return image;
-    return ValueListenableBuilder<int>(
-      valueListenable: filter,
-      builder: (context, index, image) =>
-          ColorFiltered(colorFilter: ColorFilter.matrix(filters[index]), child: image),
-      child: image,
-    );
-  }
-}
-
-/// over everything in the root overlay, also over the app bar and the wide card,
-/// and the page under it takes no taps, back or keys while saving.
-class _ExportingOverlay extends StatefulWidget {
-  final EditController controller;
-  final Widget child;
-
-  const _ExportingOverlay({required this.controller, required this.child});
-
-  @override
-  State<_ExportingOverlay> createState() => _ExportingOverlayState();
-}
-
-class _ExportingOverlayState extends State<_ExportingOverlay> {
-  final OverlayPortalController _portal = OverlayPortalController();
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.exporting.addListener(_toggle);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.exporting.removeListener(_toggle);
-    super.dispose();
-  }
-
-  void _toggle() => widget.controller.exporting.value ? _portal.show() : _portal.hide();
-
-  @override
-  Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _portal,
-      overlayLocation: OverlayChildLocation.rootOverlay,
-      overlayChildBuilder: (context) => const _ProcessingPopup(),
-      child: ValueListenableBuilder<bool>(
-        valueListenable: widget.controller.exporting,
-        builder: (context, exporting, child) => PopScope(
-          canPop: !exporting,
-          // takes the focus off the page, so esc, enter and the strips do nothing
-          child: ExcludeFocus(excluding: exporting, child: child!),
-        ),
-        child: widget.child,
-      ),
-    );
-  }
-}
-
-class _ProcessingPopup extends StatelessWidget {
-  const _ProcessingPopup();
-
-  @override
-  Widget build(BuildContext context) {
-    final scope = PickerScope.of(context);
-    return Positioned.fill(
-      child: ColoredBox(
-        color: scope.theme.barrier,
-        child: Center(
-          // material for the text style, the overlay is above the page's scaffold
-          child: Material(
-            color: scope.theme.surface,
-            borderRadius: BorderRadius.circular(5),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 30, vertical: 15),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // it spins every frame, alone it doesn't repaint the popup with it
-                  RepaintBoundary(
-                    child: SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: scope.theme.onSurface),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    scope.texts.processing,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

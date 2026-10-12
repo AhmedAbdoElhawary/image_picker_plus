@@ -42,6 +42,16 @@ class GalleryServiceImpl implements GalleryService {
   }
 
   @override
+  Future<MediaItem?> item(String id) async {
+    try {
+      final asset = await _asset(id);
+      return asset == null ? null : _toItem(asset);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
   Future<Uint8List?> thumbnail(MediaItem item, int size) async {
     final asset = await _asset(item.id);
     if (asset == null) return null;
@@ -107,10 +117,12 @@ class GalleryServiceImpl implements GalleryService {
     );
   }
 
-  // android sorts by id without an order, and the size check drops items with no size saved
+  // android sorts by id without an order, and the size check drops items with no size saved.
+  // the default date filter ends at the time it was made, so photos taken after never show
   static final FilterOptionGroup _filter = FilterOptionGroup(
     imageOption: const FilterOption(sizeConstraint: SizeConstraint(ignoreSize: true)),
     videoOption: const FilterOption(sizeConstraint: SizeConstraint(ignoreSize: true)),
+    createTimeCond: DateTimeCond.def().copyWith(ignore: true),
     orders: const [OrderOption(type: OrderOptionType.createDate, asc: false)],
   );
 

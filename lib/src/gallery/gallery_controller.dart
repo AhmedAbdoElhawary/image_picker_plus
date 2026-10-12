@@ -1,18 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/crop_controller.dart';
+import 'package:image_picker_plus/src/edit/export_item.dart';
+import 'package:image_picker_plus/src/edit/image_edits.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
+import 'package:image_picker_plus/src/gallery/preselection.dart';
+import 'package:image_picker_plus/src/models/adjustments.dart';
 import 'package:image_picker_plus/src/models/album.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
-import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
-enum GalleryState { loading, ready, denied, empty }
+enum GalleryState { loading, ready, denied, empty, failed }
 
 class GalleryController {
   static const int pageSize = 20;
+
+  /// the pages after the first, big since each one builds the grid again.
+  static const int restSize = 500;
 
   final GalleryService service;
   final PickerSettings settings;
@@ -32,6 +40,7 @@ class GalleryController {
   /// opened again from the edit page's plus, next adds to what's there.
   final ValueNotifier<bool> adding = ValueNotifier(false);
 
+  /// pages of [restSize] loaded.
   int _page = 0;
   bool _disposed = false;
 
@@ -39,48 +48,58 @@ class GalleryController {
   int _generation = 0;
   StreamSubscription<void>? _changes;
 
-  /// one crop and filter per selected image, kept while it stays selected.
-  /// the edit page shares them, so going back shows what was changed there.
-  final Map<String, CropController> crops = {};
-  final Map<String, ValueNotifier<int>> filterIndexes = {};
+  /// the edits of each selected image, kept while it stays selected.
+  final ImageEdits edits = ImageEdits();
+  Map<String, CropController> get crops => edits.crops;
+  Map<String, ValueNotifier<int>> get filterIndexes => edits.filterIndexes;
+  Map<String, ValueNotifier<double>> get filterStrengths => edits.filterStrengths;
+  Map<String, MarkupController> get markups => edits.markups;
+  Map<String, ValueNotifier<Adjustments>> get adjustments => edits.adjustments;
 
-  GalleryController({required this.service, required this.settings}) {
+  /// finds an earlier pick again, run only after access is given since lookups fail without it.
+  final Future<Preselection> Function()? preselect;
+
+  /// the first album load keeps the preselection instead of selecting its first item.
+  bool _preselected = false;
+
+  GalleryController({required this.service, required this.settings, this.preselect}) {
     selection.addListener(_syncEdits);
   }
 
   void _syncEdits() {
-    final ids = {for (final item in selection.value) item.id};
-    crops.removeWhere((id, crop) {
-      if (ids.contains(id)) return false;
-      crop.dispose();
-      return true;
-    });
-    filterIndexes.removeWhere((id, filter) {
-      if (ids.contains(id)) return false;
-      filter.dispose();
-      return true;
-    });
-    for (final item in selection.value) {
-      if (item.isVideo) continue;
-      if (settings.cropRatios.isNotEmpty && !crops.containsKey(item.id)) {
-        final aspect = item.height == 0 ? 1.0 : item.width / item.height;
-        // no preview means no ratio picker, so the edit page crops at the image's own ratio
-        final ratio = settings.showPreview ? settings.cropRatios.first : CropRatio.original;
-        crops[item.id] = CropController(imageAspect: aspect, ratio: ratio);
+    edits.keep({for (final item in selection.value) item.id});
+    edits.prepare(selection.value, settings);
+  }
+
+  /// runs again from the retry after a failure.
+  Future<void> init() async {
+    state.value = GalleryState.loading;
+    try {
+      access.value = await service.requestAccess();
+      if (_disposed) return;
+      if (access.value == GalleryAccess.denied) {
+        state.value = GalleryState.denied;
+        return;
       }
-      if (settings.filters) filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
+      // a retry doesn't listen or preselect again
+      if (_changes == null) {
+        _changes = service.changes.listen((_) => reload());
+        final preselect = this.preselect;
+        if (preselect != null) {
+          final preselection = await preselect();
+          if (_disposed) return;
+          _preselect(preselection);
+        }
+      }
+      await _loadAlbums();
+    } catch (_) {
+      _fail(_generation);
     }
   }
 
-  Future<void> init() async {
-    access.value = await service.requestAccess();
-    if (_disposed) return;
-    if (access.value == GalleryAccess.denied) {
-      state.value = GalleryState.denied;
-      return;
-    }
-    _changes = service.changes.listen((_) => reload());
-    await _loadAlbums();
+  /// a stale load failing doesn't hide the newer one.
+  void _fail(int generation) {
+    if (!_disposed && generation == _generation) state.value = GalleryState.failed;
   }
 
   Future<void> _loadAlbums() async {
@@ -103,35 +122,48 @@ class GalleryController {
     items.value = const [];
     ended.value = false;
     _page = 0;
-    await _loadPage(next, generation);
+    final List<MediaItem> page;
+    try {
+      page = await service.items(next, page: 0, size: pageSize);
+    } catch (_) {
+      _fail(generation);
+      return;
+    }
     if (_disposed || generation != _generation) return;
+    items.value = page;
+    if (page.length < pageSize) ended.value = true;
     if (items.value.isEmpty) {
       state.value = GalleryState.empty;
       return;
     }
     state.value = GalleryState.ready;
-    final first = items.value.first;
-    preview.value = first;
-    if (!multi.value) selection.value = [first];
+    if (_preselected) {
+      _preselected = false;
+    } else {
+      final first = items.value.first;
+      preview.value = first;
+      if (!multi.value) selection.value = [first];
+    }
     unawaited(_loadRest(next, generation));
-  }
-
-  Future<void> _loadPage(Album current, int generation) async {
-    final page = await service.items(current, page: _page, size: pageSize);
-    if (_disposed || generation != _generation) return;
-    _page++;
-    items.value = [...items.value, ...page];
-    if (page.length < pageSize) ended.value = true;
   }
 
   /// stops when the album changes or reloads, they start their own.
   Future<void> _loadRest(Album current, int generation) async {
-    while (!_disposed && generation == _generation && !ended.value) {
-      await _loadPage(current, generation);
+    try {
+      while (!_disposed && generation == _generation && !ended.value) {
+        final page = await service.items(current, page: _page, size: restSize);
+        if (_disposed || generation != _generation) return;
+        // the first big page has the small first one in it, so it takes its place
+        items.value = _page == 0 ? page : [...items.value, ...page];
+        _page++;
+        if (page.length < restSize) ended.value = true;
+      }
+    } catch (_) {
+      _fail(generation);
     }
   }
 
-  /// reloads the same number of pages and drops selected items that are gone.
+  /// reloads the albums and the same number of pages, and drops selected items that are gone.
   Future<void> reload() async {
     final current = album.value;
     if (current == null || _disposed) return;
@@ -140,11 +172,20 @@ class GalleryController {
     final generation = ++_generation;
     final fresh = <MediaItem>[];
     var end = false;
-    for (var page = 0; page < pages && !end; page++) {
-      final list = await service.items(current, page: page, size: pageSize);
+    try {
+      // the first download or screenshot makes a new album, and the counts change
+      final list = await service.albums(settings.mediaType);
       if (_disposed || generation != _generation) return;
-      fresh.addAll(list);
-      end = list.length < pageSize;
+      albums.value = list;
+      for (var page = 0; page < pages && !end; page++) {
+        final list = await service.items(current, page: page, size: restSize);
+        if (_disposed || generation != _generation) return;
+        fresh.addAll(list);
+        end = list.length < restSize;
+      }
+    } catch (_) {
+      _fail(generation);
+      return;
     }
     final now = fresh.toSet();
     _page = pages;
@@ -159,6 +200,17 @@ class GalleryController {
     }
     state.value = fresh.isEmpty ? GalleryState.empty : GalleryState.ready;
     unawaited(_loadRest(current, generation));
+  }
+
+  void _preselect(Preselection preselection) {
+    final items = preselection.items;
+    if (items.isEmpty) return;
+    _preselected = true;
+    // no preview means no ratio picker, so only the image's own ratio is there
+    preselection.restore(edits, settings: settings, ratios: settings.cropRatios);
+    multi.value = settings.multi;
+    selection.value = items;
+    preview.value = items.first;
   }
 
   /// false when the max is reached and the item wasn't added.
@@ -203,33 +255,26 @@ class GalleryController {
   }
 
   /// a photo from the camera page becomes the only selected one, with the edits made on it there.
-  void selectTaken(MediaItem item, {CropController? crop, ValueNotifier<int>? filterIndex}) {
-    if (crop != null) crops[item.id] = crop;
-    if (filterIndex != null) filterIndexes[item.id] = filterIndex;
+  void selectTaken(MediaItem item, ImageEdits taken) {
+    edits.addAll(taken);
     selection.value = [item];
   }
 
   /// 1 based order in the selection, 0 when not selected.
   int orderOf(MediaItem item) => selection.value.indexOf(item) + 1;
 
-  Future<List<PickedItem>> pickedItems() async {
-    final picked = <PickedItem>[];
-    for (final item in selection.value) {
-      final file = await service.file(item);
-      if (file == null) continue;
-      picked.add(
-        PickedItem(file: file, type: item.type, width: item.width, height: item.height, edited: false),
-      );
-    }
-    return picked;
+  /// for when editing is off, the output limits still apply.
+  Future<List<PickedItem>> pickedItems(PickerServices services) async {
+    final picked = await Future.wait(
+      selection.value.map((item) => exportItem(services: services, output: settings.output, item: item)),
+    );
+    return picked.nonNulls.toList();
   }
 
   void dispose() {
     _disposed = true;
     _changes?.cancel();
-    for (final notifier in [...crops.values, ...filterIndexes.values]) {
-      notifier.dispose();
-    }
+    edits.dispose();
     for (final notifier in [state, access, albums, album, items, selection, preview, ended, multi, adding]) {
       notifier.dispose();
     }

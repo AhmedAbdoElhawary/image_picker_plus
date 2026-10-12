@@ -35,21 +35,39 @@ class _LoadingBoxState extends State<LoadingBox> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final theme = PickerScope.of(context).theme;
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final x = _controller.value * 3 - 1.5;
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment(x - 1, 0),
-              end: Alignment(x + 1, 0),
-              colors: [theme.surface, Color.lerp(theme.surface, theme.background, 0.6)!, theme.surface],
-            ),
-          ),
-          child: const SizedBox.expand(),
-        );
-      },
+    // painted from the animation, a grid full of these would rebuild every frame otherwise
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _BandPainter(
+        animation: _controller,
+        color: theme.surface,
+        band: Color.lerp(theme.surface, theme.background, 0.6)!,
+      ),
     );
   }
+}
+
+class _BandPainter extends CustomPainter {
+  final Animation<double> animation;
+  final Color color;
+  final Color band;
+
+  _BandPainter({required this.animation, required this.color, required this.band})
+    : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final x = animation.value * 3 - 1.5;
+    final rect = Offset.zero & size;
+    final gradient = LinearGradient(
+      begin: Alignment(x - 1, 0),
+      end: Alignment(x + 1, 0),
+      colors: [color, band, color],
+    );
+    canvas.drawRect(rect, Paint()..shader = gradient.createShader(rect));
+  }
+
+  @override
+  bool shouldRepaint(_BandPainter old) =>
+      old.animation != animation || old.color != color || old.band != band;
 }
