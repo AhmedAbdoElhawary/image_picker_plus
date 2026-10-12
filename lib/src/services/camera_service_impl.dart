@@ -94,14 +94,17 @@ class CameraServiceImpl implements CameraService {
 
   @override
   Future<void> focus(Offset point) async {
-    final value = _camera.value;
+    // the page can let the camera go while a focus is still going
+    final camera = _controller;
+    if (camera == null) return;
+    final value = camera.value;
     // some android cameras say they support focus points then reject every one
     try {
       if (value.focusPointSupported) {
-        await _camera.setFocusMode(cam.FocusMode.auto);
-        await _camera.setFocusPoint(point);
+        await camera.setFocusMode(cam.FocusMode.auto);
+        await camera.setFocusPoint(point);
       }
-      if (value.exposurePointSupported) await _camera.setExposurePoint(point);
+      if (value.exposurePointSupported) await camera.setExposurePoint(point);
     } on cam.CameraException catch (_) {}
   }
 
@@ -116,7 +119,10 @@ class CameraServiceImpl implements CameraService {
   double get maxZoom => _maxZoom;
 
   @override
-  Future<void> setZoom(double level) => _camera.setZoomLevel(level.clamp(_minZoom, _maxZoom));
+  Future<void> setZoom(double level) async {
+    // a pinch keeps zooming after an await, when the page may have let the camera go
+    await _controller?.setZoomLevel(level.clamp(_minZoom, _maxZoom));
+  }
 
   @override
   Future<PickedItem> takePhoto() async {
