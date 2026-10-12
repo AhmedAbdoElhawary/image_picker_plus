@@ -109,6 +109,7 @@ class _DemoState extends State<Demo> {
   final ValueNotifier<ThemeChoice> theme = ValueNotifier(ThemeChoice.app);
   final ValueNotifier<bool> alwaysDarkTheme = ValueNotifier(true);
   final ValueNotifier<TextsChoice> texts = ValueNotifier(TextsChoice.english);
+  final ValueNotifier<bool> easternArabicNumerals = ValueNotifier(false);
   final ValueNotifier<bool> cache = ValueNotifier(false);
 
   final ValueNotifier<bool> text = ValueNotifier(true);
@@ -149,6 +150,7 @@ class _DemoState extends State<Demo> {
       theme,
       alwaysDarkTheme,
       texts,
+      easternArabicNumerals,
       cache,
       text,
       emojis,
@@ -198,8 +200,8 @@ class _DemoState extends State<Demo> {
         theme: theme.value == ThemeChoice.custom ? customTheme : null,
         alwaysDarkTheme: alwaysDarkTheme.value,
         texts: switch (texts.value) {
-          TextsChoice.english => const PickerTexts(),
-          TextsChoice.arabic => const ArabicTexts(),
+          TextsChoice.english => PickerTexts(easternArabicNumerals: easternArabicNumerals.value),
+          TextsChoice.arabic => ArabicTexts(easternArabicNumerals: easternArabicNumerals.value),
           TextsChoice.app => PickerTexts.of(context),
         },
         cache: PickerCache(enabled: cache.value, maxBytes: cacheMb.value * 1024 * 1024),
@@ -345,6 +347,11 @@ class _DemoState extends State<Demo> {
             notifier: alwaysDarkTheme,
           ),
           _Choice<TextsChoice>(label: "Picker texts", notifier: texts, values: TextsChoice.values),
+          _Switch(
+            title: "Eastern Arabic numerals",
+            subtitle: "english and arabic texts, app follows the locale",
+            notifier: easternArabicNumerals,
+          ),
           _Switch(title: "Cache", notifier: cache),
           _Choice<int>(
             label: "Cache max size",
