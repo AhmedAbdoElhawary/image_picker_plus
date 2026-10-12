@@ -1,5 +1,8 @@
+import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_plus/src/camera/camera_controls.dart';
 import 'package:image_picker_plus/src/camera/camera_tools.dart';
 import 'package:image_picker_plus/src/camera/capture_button.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
@@ -39,6 +42,102 @@ void main() {
     expect(find.text("Allow camera access to continue"), findsOneWidget);
     await tester.tap(find.text("Open settings"));
     expect(fakes.gallery.openSettingsCalls, 1);
+  });
+
+  testWidgets("landscape puts grid, flash, shutter, switch and timer in one column beside the preview", (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      settings: const PickerSettings(source: PickerSource.both),
+      size: const Size(740, 360),
+    );
+    await tester.tap(find.text("Photo"));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final column = [
+      GridButton,
+      FlashButton,
+      CaptureButton,
+      SwitchCameraButton,
+      TimerButton,
+    ].map((type) => tester.getCenter(find.byType(type))).toList();
+    for (var i = 1; i < column.length; i++) {
+      expect(column[i].dx, closeTo(column[0].dx, 1));
+      expect(column[i].dy, greaterThan(column[i - 1].dy));
+    }
+    expect(column[0].dx, greaterThan(tester.getCenter(find.byKey(const Key("fake-preview"))).dx));
+  });
+
+  testWidgets("a short phone on its side fits the column while recording", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      settings: const PickerSettings(source: PickerSource.camera, mediaType: MediaType.video),
+      size: const Size(740, 360),
+      textScale: 1.5,
+    );
+    await tester.tap(find.byType(CaptureButton));
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
+
+  // the camera sits on one half of an open foldable, so the image has that half's shape
+  for (final (name, fold, tall) in [
+    ("a fold across shows the image tall", const Rect.fromLTRB(420, 0, 420, 700), true),
+    ("a fold along shows the image wide", const Rect.fromLTRB(0, 350, 840, 350), false),
+  ]) {
+    testWidgets(name, (tester) async {
+      await pumpPicker(
+        tester,
+        const PickerHome(),
+        settings: camera,
+        size: const Size(840, 700),
+        displayFeatures: [
+          DisplayFeature(bounds: fold, type: DisplayFeatureType.fold, state: DisplayFeatureState.postureFlat),
+        ],
+      );
+      final size = tester.getSize(find.byKey(const Key("fake-preview")));
+      expect(size.height > size.width, tall);
+    });
+  }
+
+  testWidgets("a wide screen covers the space and cuts the photo to what was seen", (tester) async {
+    final fakes = Fakes();
+    Object? result;
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      fakes: fakes,
+      settings: const PickerSettings(source: PickerSource.camera, cropRatios: []),
+      size: const Size(800, 400),
+      onResult: (r) => result = r,
+    );
+    final preview = tester.getSize(find.byKey(const Key("fake-preview")));
+    expect(preview.width, greaterThanOrEqualTo(800));
+    await tester.tap(find.byType(CaptureButton));
+    await tester.pumpAndSettle();
+    final cut = fakes.image.calls.single.$2.cropRect;
+    // the 3:4 photo is cut to the wide space, its full width and a middle band of its height
+    expect((cut.left, cut.width), (0, 1));
+    expect(cut.height, lessThan(0.5));
+    expect(cut.center.dy, closeTo(0.5, 0.001));
+    expect((result! as List<PickedItem>).single.file.path, "/fake/photo.jpg.edited.jpg");
+  });
+
+  testWidgets("a phone held up fits the preview and keeps the whole photo", (tester) async {
+    final fakes = Fakes();
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      fakes: fakes,
+      settings: const PickerSettings(source: PickerSource.camera, cropRatios: []),
+    );
+    expect(tester.getSize(find.byKey(const Key("fake-preview"))).width, lessThanOrEqualTo(400));
+    await tester.tap(find.byType(CaptureButton));
+    await tester.pumpAndSettle();
+    expect(fakes.image.calls, isEmpty);
   });
 
   testWidgets("a plugin error shows try again, which opens the camera", (tester) async {
