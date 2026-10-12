@@ -149,5 +149,10 @@ class PickerFilter {
 }
 
 /// the matrix of strip [index] in [filters], 0 is Normal and so is an index past the end.
-List<double> filterMatrix(List<PickerFilter> filters, int index) =>
-    index > 0 && index <= filters.length ? filters[index - 1].matrix : PickerFilter.identity;
+/// [strength] 0 is no filter and 1 the full one.
+List<double> filterMatrix(List<PickerFilter> filters, int index, {double strength = 1}) {
+  final matrix = index > 0 && index <= filters.length ? filters[index - 1].matrix : PickerFilter.identity;
+  if (strength == 1) return matrix;
+  const identity = PickerFilter.identity;
+  return [for (var i = 0; i < 20; i++) identity[i] + (matrix[i] - identity[i]) * strength];
+}
