@@ -12,6 +12,7 @@ import 'package:image_picker_plus/src/settings/picker_settings.dart';
 class ImageEdits {
   final Map<String, CropController> crops = {};
   final Map<String, ValueNotifier<int>> filterIndexes = {};
+  final Map<String, ValueNotifier<double>> filterStrengths = {};
   final Map<String, MarkupController> markups = {};
   final Map<String, ValueNotifier<Adjustments>> adjustments = {};
 
@@ -27,7 +28,10 @@ class ImageEdits {
           crop: CropController(imageAspect: aspect, ratio: ratio ?? settings.cropRatios.first),
         );
       }
-      if (settings.filters.isNotEmpty) filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
+      if (settings.filters.isNotEmpty) {
+        filterIndexes.putIfAbsent(item.id, () => ValueNotifier(0));
+        filterStrengths.putIfAbsent(item.id, () => ValueNotifier(1));
+      }
       if (settings.adjustments) adjustments.putIfAbsent(item.id, () => ValueNotifier(Adjustments.neutral));
       if (settings.markup.enabled) markups.putIfAbsent(item.id, MarkupController.new);
     }
@@ -38,6 +42,7 @@ class ImageEdits {
     String id, {
     CropController? crop,
     ValueNotifier<int>? filterIndex,
+    ValueNotifier<double>? filterStrength,
     MarkupController? markup,
     ValueNotifier<Adjustments>? adjustment,
   }) {
@@ -48,6 +53,7 @@ class ImageEdits {
           markups[id]?.transform(flip ? flipItem : (item) => rotateItem(item, aspectBefore));
     }
     if (filterIndex != null) filterIndexes[id] = filterIndex;
+    if (filterStrength != null) filterStrengths[id] = filterStrength;
     if (markup != null) markups[id] = markup;
     if (adjustment != null) adjustments[id] = adjustment;
   }
@@ -57,6 +63,7 @@ class ImageEdits {
     for (final id in {
       ...other.crops.keys,
       ...other.filterIndexes.keys,
+      ...other.filterStrengths.keys,
       ...other.markups.keys,
       ...other.adjustments.keys,
     }) {
@@ -64,18 +71,31 @@ class ImageEdits {
         id,
         crop: other.crops[id],
         filterIndex: other.filterIndexes[id],
+        filterStrength: other.filterStrengths[id],
         markup: other.markups[id],
         adjustment: other.adjustments[id],
       );
     }
-    for (final map in [other.crops, other.filterIndexes, other.markups, other.adjustments]) {
+    for (final map in [
+      other.crops,
+      other.filterIndexes,
+      other.filterStrengths,
+      other.markups,
+      other.adjustments,
+    ]) {
       map.clear();
     }
   }
 
   /// disposes and drops the edits of every image not in [ids].
   void keep(Set<String> ids) {
-    for (final map in <Map<String, ChangeNotifier>>[crops, filterIndexes, markups, adjustments]) {
+    for (final map in <Map<String, ChangeNotifier>>[
+      crops,
+      filterIndexes,
+      filterStrengths,
+      markups,
+      adjustments,
+    ]) {
       map.removeWhere((id, notifier) {
         if (ids.contains(id)) return false;
         notifier.dispose();
