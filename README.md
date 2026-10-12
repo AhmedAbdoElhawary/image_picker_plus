@@ -2,7 +2,7 @@
 
 <p align="center">
   A gallery and camera picker that lives inside your app.<br>
-  Pick images and videos, crop it, add filters them, reorder them, and get the files back.<br>
+  Pick images and videos, crop them, add filters, reorder them, and get the files back.<br>
   In your theme and your language, on mobile, web and desktop.
 </p>
 
@@ -16,19 +16,20 @@
 </p>
 
 # Snapshots
-##  [This is just a sample; try the package to see all the functionalities 🚀]
+
+This is just a sample, try the package to see all of it 🚀
 
 | Gallery | Filters | Adjustments |
 |:---:|:---:|:---:|
-| <img src="snapshots/gallery.jpg" width="220" alt="pick, crop, filter and reorder" /> | <img src="snapshots/filters.jpg" width="220" alt="camera" /> | <img src="snapshots/adjust2.jpg" width="220" alt="recording a video" /> |
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/gallery.jpg" width="220" alt="gallery with the ratio menu" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/filters.jpg" width="220" alt="filters on the edit screen" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/adjust2.jpg" width="220" alt="adjustment sliders on the edit screen" /> |
 
 | Crop | Camera | Video |
 |:---:|:---:|:---:|
-| <img src="snapshots/crop.jpg" width="220" alt="pick, crop, filter and reorder" /> | <img src="snapshots/camera.jpg" width="220" alt="camera" /> | <img src="snapshots/video.jpg" width="220" alt="recording a video" /> |
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/crop.jpg" width="220" alt="crop in the preview with multi selection" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/camera.jpg" width="220" alt="camera" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/video.jpg" width="220" alt="video" /> |
 
-| Phone Landscape | Web |
+| Phone landscape | macOS and web |
 |:---:|:---:|
-| <img src="snapshots/landscape2.jpg" width="340" alt="edit screen on macOS" /><br><img src="snapshots/landscape1.jpg" width="340" alt="edit screen on web" /> | <img src="snapshots/web.png" width="490" alt="edit screen on web" /> |
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/landscape2.jpg" width="340" alt="phone in landscape" /><br><img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/landscape1.jpg" width="340" alt="phone in landscape" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="490" alt="edit screen on macOS and web" /> |
 
 # Why
 
@@ -41,7 +42,7 @@ image_picker_plus shows the gallery inside your app instead, so it follows your 
 - Gallery with albums newest first, a preview, and a scrollbar with the month while scrolling. A tap picks one, a long press or the select button picks many up to a limit.
 - Crop in the preview with the ratios you allow, rotate and flip, then filters, sliders and reorder before returning. The plus on the edit screen adds more from the gallery, photo or video tab.
 - Camera tabs for photo and video, with front/rear, flash and tap to focus.
-- Light and dark themes, your own colors and texts, English and Arabic built in, RTL, and layouts for phones and tablets.
+- Light and dark themes, your own colors and texts, 9 languages built in, RTL, and layouts for phones and tablets.
 - Optional disk cache for a faster reopen.
 - **No native code** of its own, so there's nothing to set up besides the permissions.
 
@@ -155,11 +156,11 @@ for (final item in items) {
 
 `items` keeps the order the user picked, or the order they set on the edit screen.
 
-### You can see the main app to see the usage:
+The [example app](https://github.com/AhmedAbdoElhawary/image_picker_plus/blob/main/example/lib/demo.dart) has a switch for every setting:
 
 |  |  |  |  |
 |:---:|:---:|:---:|:---:|
-| <img src="snapshots/main1.jpg" width="250" alt="pick, crop, filter and reorder" /> | <img src="snapshots/main2.jpg" width="250" alt="camera" /> | <img src="snapshots/main3.jpg" width="250" alt="recording a video" /> | <img src="snapshots/main4.jpg" width="250" alt="recording a video" /> |
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main1.jpg" width="250" alt="example app" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main2.jpg" width="250" alt="example app" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main3.jpg" width="250" alt="example app" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/main4.jpg" width="250" alt="example app" /> |
 
 ## Settings
 
@@ -184,6 +185,7 @@ for (final item in items) {
 | `cache` | `PickerCache()` | off by default, see below |
 | `markup` | `MarkupOptions()` | text, emojis and drawing on the edit screen, off by default, see below |
 | `camera` | `CameraOptions()` | zoom buttons, timer, grid and an overlay for the camera tabs, see below |
+| `useRootNavigator` | `false` | `false` opens the picker on the nearest navigator, so a tab bar or nested shell stays visible over it |
 
 When there's no crop, no filters, no sliders and no markup, next returns the picked items right away. Otherwise next opens the edit screen.
 
@@ -204,7 +206,7 @@ The output limits hold for every image, edited or not. An image over `maxWidth`,
 | `file` | the file to use, the original or the new JPEG |
 | `original` | the untouched source, the same as `file` when nothing was re-encoded |
 | `type`, `width`, `height` | of `file` |
-| `edited` | the user cropped or filtered it |
+| `edited` | the user cropped, turned, flipped, filtered, adjusted or marked it up |
 | `id` | the gallery id, `null` for camera photos and files from the system picker |
 | `edit` | the crop, ratio, turns, flip, filter, sliders and markup, `null` for videos |
 | `overLimit` | still over `maxBytes` after every try |
@@ -241,7 +243,7 @@ PickerSettings(
     barrier: Color(0x99000000),
     recording: Color(0xFFFF3B30),
   ),
-  texts: const PickerTexts(next: "Weiter", done: "Fertig"),
+  texts: const PickerTexts(next: "Suivant", done: "Terminé"),
 )
 ```
 
@@ -265,14 +267,11 @@ PickerSettings(texts: const ArabicTexts(done: "تم")) // Arabic with one text c
 | Turkish | `tr` | `TurkishTexts` |
 | Russian | `ru` | `RussianTexts` |
 
-A new language is one file in `lib/src/settings/languages/` with a `PickerTexts` subclass, and one line in `PickerTexts.languages`. A test fails when it leaves a text in English.
+A new language is one file in `lib/src/settings/languages/` with a `PickerTexts` subclass, one line in `PickerTexts.languages` and one export in `lib/image_picker_plus.dart`. A test fails when it leaves a text in English.
 
-### Sample
---------
-| Arabic | Chinesse | Germen |
+| Arabic | Chinese | German |
 |:---:|:---:|:---:|
-| <img src="snapshots/arabic.jpg" width="220" alt="pick, crop, filter and reorder" /> | <img src="snapshots/chinesse.jpg" width="220" alt="camera" /> | <img src="snapshots/germen.jpg" width="220" alt="recording a video" /> |
-
+| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/arabic.jpg" width="220" alt="picker in Arabic" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/chinese.jpg" width="220" alt="picker in Chinese" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/german.jpg" width="220" alt="picker in German" /> |
 
 ## Filters and sliders
 
@@ -353,8 +352,10 @@ await ImagePickerPlus.clearCache();
 | `filters: false` | `filters: []`, the default |
 | edited images are always `.jpg` | `.jpg` by default, `.png` with `OutputOptions(format: OutputFormat.png)` |
 | see through parts of an edited image come out black | white in a JPEG, kept in a PNG |
+| an edited image is up to 4096 pixels on its long side | up to 2048, pass `maxWidth` or `maxHeight` for more |
+| `maxWidth` and `maxHeight` only shrink edited images | they shrink every image, the untouched file is in `original` |
 
-Everything else in 2.0.0 is new and off by default, see the [changelog](CHANGELOG.md).
+Everything else in 2.0.0 is new. The rotate and flip buttons and the camera's zoom buttons, timer and grid show by default, turn them off with `rotate: false`, `flip: false` and `CameraOptions`. The rest is off by default, see the [changelog](CHANGELOG.md).
 
 # Migrating from 0.6.0
 
