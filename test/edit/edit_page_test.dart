@@ -6,6 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/edit/edit_tools.dart';
+import 'package:image_picker_plus/src/edit/filtered_image.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
@@ -49,6 +51,30 @@ void main() {
     final items = result! as List<PickedItem>;
     expect(items.map((e) => e.edited), [true, false]);
     expect(fakes.image.calls.single.$2.filterIndex, 2);
+  });
+
+  testWidgets("wide screens put the tools and the strip beside the image", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a, b], filterIndexes: filtersOf([a, b])),
+      settings: const PickerSettings(maxSelection: 5, filters: PickerFilter.all, adjustments: true),
+      size: const Size(1000, 700),
+    );
+    expect(
+      tester.getTopLeft(find.byType(EditTools)).dx,
+      greaterThan(tester.getTopRight(find.byType(FilteredImage).first).dx),
+    );
+    expect(tester.getTopLeft(find.byType(ReorderStrip)).dx, tester.getTopLeft(find.byType(EditTools)).dx);
+  });
+
+  testWidgets("no overflow beside on a short landscape phone", (tester) async {
+    await pumpPicker(
+      tester,
+      EditPage(items: [a, b], filterIndexes: filtersOf([a, b])),
+      settings: const PickerSettings(maxSelection: 5, filters: PickerFilter.all, adjustments: true),
+      size: const Size(740, 360),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets("a video shows the note and the filters are off", (tester) async {
