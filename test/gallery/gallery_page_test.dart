@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/camera/capture_button.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
+import 'package:image_picker_plus/src/gallery/album_picker.dart';
 import 'package:image_picker_plus/src/gallery/asset_thumbnail.dart';
 import 'package:image_picker_plus/src/gallery/gallery_cell.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
@@ -278,6 +279,45 @@ void main() {
     expect(held(), 0);
   });
 
+  testWidgets("a fast scrollbar drag loads only the thumbnails where it stops", (tester) async {
+    final gallery = FakeGalleryService.withItems(1000);
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery));
+    await tester.drag(find.byType(GridView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    final before = gallery.thumbnailCalls;
+
+    final gesture = await tester.startGesture(tester.getCenter(find.text("January 2026")));
+    for (var i = 0; i < 20; i++) {
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(gallery.thumbnailCalls, before);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    final loaded = gallery.thumbnailCalls - before;
+    expect(loaded, greaterThan(0));
+    // the grid also builds the cells just past the edge
+    expect(loaded, lessThanOrEqualTo(find.byType(GalleryCell, skipOffstage: false).evaluate().length));
+  });
+
+  testWidgets("holding the scrollbar still loads what's under it", (tester) async {
+    final gallery = FakeGalleryService.withItems(1000);
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery));
+    await tester.drag(find.byType(GridView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    final before = gallery.thumbnailCalls;
+
+    final gesture = await tester.startGesture(tester.getCenter(find.text("January 2026")));
+    await gesture.moveBy(const Offset(0, 100));
+    await tester.pump();
+    expect(gallery.thumbnailCalls, before);
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump();
+    expect(gallery.thumbnailCalls, greaterThan(before));
+    await gesture.up();
+  });
+
   testWidgets("denied shows the message with open settings and close", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(5, access: GalleryAccess.denied));
     Object? result = "not closed";
@@ -297,6 +337,32 @@ void main() {
     await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(0)));
     expect(find.text("There are no images"), findsOneWidget);
     expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+    expect(find.text("Next"), findsNothing);
+    // the album is there, but empty, so another album can still be picked
+    expect(find.byType(AlbumPicker), findsOneWidget);
+  });
+
+  for (final (name, gallery) in [
+    ("denied", () => FakeGalleryService.withItems(5, access: GalleryAccess.denied)),
+    ("no albums", () => FakeGalleryService(data: {})),
+  ]) {
+    testWidgets("$name shows no next and no albums", (tester) async {
+      await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: gallery()));
+      expect(find.byType(MessageView), findsOneWidget);
+      expect(find.text("Next"), findsNothing);
+      expect(find.byType(AlbumPicker), findsNothing);
+    });
+  }
+
+  testWidgets("a failed load shows try again, which loads the grid", (tester) async {
+    final fakes = Fakes(gallery: FakeGalleryService.withItems(5)..error = StateError("plugin"));
+    await pumpPicker(tester, const PickerHome(), fakes: fakes);
+    expect(find.text("Something went wrong"), findsOneWidget);
+    expect(find.text("Next"), findsNothing);
+    fakes.gallery.error = null;
+    await tester.tap(find.text("Try again"));
+    await tester.pumpAndSettle();
+    expect(find.byType(GalleryCell), findsNWidgets(5));
   });
 
   testWidgets("limited shows manage access", (tester) async {
@@ -526,5 +592,22 @@ void main() {
     await tester.tapAt(Offset(200, strip - 10));
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(find.byType(MediaPreview)).dy, top);
+
+    // shown fully away from the top, a small scroll either way slides it back to the strip
+    for (final dy in [-20.0, 20.0]) {
+      await tester.drag(find.byType(GridView), Offset(0, dy));
+      await tester.pumpAndSettle();
+      expect(tester.getBottomLeft(find.byType(MediaPreview)).dy, closeTo(strip, 0.5));
+      await tester.tapAt(Offset(200, strip - 10));
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets("at the top the preview still follows the grid", (tester) async {
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
+    final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
+    await tester.drag(find.byType(GridView), const Offset(0, -100));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(MediaPreview)).dy, closeTo(top - 100, 1));
   });
 }
