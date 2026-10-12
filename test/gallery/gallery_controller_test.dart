@@ -170,6 +170,17 @@ void main() {
     expect(noAlbums.state.value, GalleryState.empty);
   });
 
+  test("a failed load fails instead of loading forever, and init again loads it", () async {
+    final gallery = FakeGalleryService.withItems(5)..error = StateError("plugin");
+    final controller = controllerFor(gallery);
+    await controller.init();
+    expect(controller.state.value, GalleryState.failed);
+    gallery.error = null;
+    await controller.init();
+    expect(controller.state.value, GalleryState.ready);
+    expect(controller.items.value.length, 5);
+  });
+
   test("a tap replaces the item until counting starts, even with a max over 1", () async {
     final gallery = FakeGalleryService.withItems(10);
     final controller = controllerFor(gallery, max: 3);
