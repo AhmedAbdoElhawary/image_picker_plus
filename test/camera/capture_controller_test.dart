@@ -25,6 +25,16 @@ void main() {
     expect((await start(FakeCameraService(failure: CameraFailure.denied))).state.value, CaptureState.denied);
   });
 
+  test("any other error fails instead of loading forever, and try again opens it", () async {
+    final camera = FakeCameraService()..error = StateError("plugin");
+    final controller = await start(camera);
+    expect(controller.state.value, CaptureState.failed);
+    expect(camera.disposeCalls, 1);
+    camera.error = null;
+    await controller.init();
+    expect(controller.state.value, CaptureState.ready);
+  });
+
   test("switch and flash follow the device", () async {
     final one = await start(FakeCameraService(cameras: 1, flash: false));
     expect(one.cameraCount.value, 1);
