@@ -25,6 +25,7 @@ class EditController {
   /// an image has no crop when cropping is off, and no filter when filters are off.
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
+  final Map<String, ValueNotifier<double>> filterStrengths;
 
   /// per image id like the crops, empty when markup is off.
   final Map<String, MarkupController> markups;
@@ -43,6 +44,7 @@ class EditController {
     MediaItem? initial,
     this.crops = const {},
     this.filterIndexes = const {},
+    this.filterStrengths = const {},
     this.markups = const {},
     this.adjustments = const {},
   }) : items = ValueNotifier(items),
@@ -59,6 +61,7 @@ class EditController {
       cropRect: crop?.value ?? EditState.full,
       ratio: crop?.ratio,
       filterIndex: filterIndexes[item.id]?.value ?? 0,
+      filterStrength: filterStrengths[item.id]?.value ?? 1,
       markup: markups[item.id]?.value ?? const [],
       turns: crop?.turns ?? 0,
       flipped: crop?.flipped ?? false,
@@ -66,7 +69,13 @@ class EditController {
     );
   }
 
-  void setFilter(int index) => filterIndexes[current.value.id]?.value = index;
+  /// a new filter starts at full strength.
+  void setFilter(int index) {
+    final id = current.value.id;
+    if (filterIndexes[id]?.value == index) return;
+    filterIndexes[id]?.value = index;
+    filterStrengths[id]?.value = 1;
+  }
 
   void reorder(int oldIndex, int newIndex) {
     final list = [...items.value];
@@ -103,7 +112,7 @@ class EditController {
     final crop = [rect.left, rect.top, rect.width, rect.height].map((v) => v.toStringAsFixed(4)).join(",");
     final adjust = state.adjustments;
     return "edit:${item.id}:${item.modified.millisecondsSinceEpoch}:$crop:${state.filterIndex}"
-        ":${state.turns}:${state.flipped}"
+        ":${state.filterStrength}:${state.turns}:${state.flipped}"
         ":${adjust.brightness},${adjust.contrast},${adjust.saturation},${adjust.warmth}"
         ":${output.format.name}:${output.quality}:${output.maxWidth}x${output.maxHeight}:${output.maxBytes}";
   }
