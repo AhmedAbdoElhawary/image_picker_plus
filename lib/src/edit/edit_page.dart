@@ -64,6 +64,10 @@ class _EditPageState extends State<EditPage> {
   /// the tools switch inside the markup page, only the first one opens it.
   bool _markupOpen = false;
 
+  // a rotation moves them between the column and the row, they keep the crop and the picked tab
+  final GlobalKey _item = GlobalKey();
+  final GlobalKey _tools = GlobalKey();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -146,6 +150,13 @@ class _EditPageState extends State<EditPage> {
     final scope = PickerScope.of(context);
     final controller = _controller!;
     final back = widget.onBack ?? () => Navigator.of(context).pop();
+    final item = _CurrentItem(key: _item, controller: controller);
+    final tools = [
+      EditTools(key: _tools, controller: controller),
+      if (widget.items.length > 1 ||
+          (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
+        ReorderStrip(controller: controller, onAdd: widget.onAdd),
+    ];
     return ExportingOverlay(
       controller: controller,
       child: CallbackShortcuts(
@@ -176,16 +187,34 @@ class _EditPageState extends State<EditPage> {
             ),
             body: SafeArea(
               top: false,
-              child: Column(
-                children: [
-                  Expanded(child: _CurrentItem(controller: controller)),
-                  EditTools(controller: controller),
-                  if (widget.items.length > 1 ||
-                      (widget.onAdd != null && widget.items.length < scope.settings.maxSelection))
-                    ReorderStrip(controller: controller, onAdd: widget.onAdd),
-                  const SizedBox(height: PickerLayout.padding / 2),
-                ],
-              ),
+              // beside like the gallery, on wide and landscape screens
+              child: PickerLayout.of(context).previewBeside
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
+                            child: item,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              ...tools,
+                              const SizedBox(height: PickerLayout.padding / 2),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Expanded(child: item),
+                        ...tools,
+                        const SizedBox(height: PickerLayout.padding / 2),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -197,7 +226,7 @@ class _EditPageState extends State<EditPage> {
 class _CurrentItem extends StatelessWidget {
   final EditController controller;
 
-  const _CurrentItem({required this.controller});
+  const _CurrentItem({required this.controller, super.key});
 
   @override
   Widget build(BuildContext context) {
