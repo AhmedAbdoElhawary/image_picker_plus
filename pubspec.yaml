@@ -1,6 +1,6 @@
 name: image_picker_plus
 description: Image and video picker with gallery, camera, crop, filters, themes and optional caching, on mobile, web and desktop. No native code of its own.
-version: 1.1.0
+version: 2.0.0
 homepage: https://github.com/AhmedAbdoElhawary/image_picker_plus
 repository: https://github.com/AhmedAbdoElhawary/image_picker_plus
 issue_tracker: https://github.com/AhmedAbdoElhawary/image_picker_plus/issues
@@ -12,15 +12,15 @@ topics:
   - image-editing
   - crop
 
-# TODO(ahmed): snapshots/ is in .pubignore, pub.dev only shows screenshots that are in the package, so let these 4 files in (about 8 mb) or drop this list.
+# pub.dev only shows screenshots that are in the package, .pubignore lets these 4 in
 screenshots:
-  - description: The gallery with the crop preview and multi selection.
-    path: snapshots/gallery.gif
+  - description: The gallery with the crop preview and the ratio menu.
+    path: snapshots/gallery.jpg
+  - description: Cropping in the preview with multi selection, in the light theme.
+    path: snapshots/crop.jpg
   - description: The camera with photo and video tabs.
-    path: snapshots/camera.gif
-  - description: The picker on macOS, through the system file picker.
-    path: snapshots/macos.gif
-  - description: The picker on the web.
+    path: snapshots/camera.jpg
+  - description: The edit screen on macOS and the web.
     path: snapshots/web.png
 
 environment:
