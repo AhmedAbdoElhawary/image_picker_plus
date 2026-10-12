@@ -26,6 +26,7 @@ class EditPage extends StatefulWidget {
   final List<MediaItem> items;
   final Map<String, CropController> crops;
   final Map<String, ValueNotifier<int>> filterIndexes;
+  final Map<String, ValueNotifier<double>> filterStrengths;
   final Map<String, MarkupController> markups;
   final Map<String, ValueNotifier<Adjustments>> adjustments;
 
@@ -45,6 +46,7 @@ class EditPage extends StatefulWidget {
     required this.items,
     this.crops = const {},
     this.filterIndexes = const {},
+    this.filterStrengths = const {},
     this.markups = const {},
     this.adjustments = const {},
     this.onBack,
@@ -81,6 +83,7 @@ class _EditPageState extends State<EditPage> {
       initial: widget.initial,
       crops: widget.crops,
       filterIndexes: widget.filterIndexes,
+      filterStrengths: widget.filterStrengths,
       markups: widget.markups,
       adjustments: widget.adjustments,
     );
@@ -239,6 +242,7 @@ class _CurrentItem extends StatelessWidget {
         final image = FilteredImage(
           item: item,
           filter: controller.filterIndexes[item.id],
+          strength: controller.filterStrengths[item.id],
           adjustments: controller.adjustments[item.id],
           crop: crop,
           markup: markup,
