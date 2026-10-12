@@ -67,7 +67,7 @@ class Demo extends StatefulWidget {
 
 enum ThemeChoice { app, custom }
 
-enum TextsChoice { english, arabic, app }
+enum TextsChoice { english, arabic, chinese, japanese, hindi, spanish, german, turkish, russian, app }
 
 enum FiltersChoice { off, shipped, custom }
 
@@ -87,6 +87,8 @@ class _DemoState extends State<Demo> {
   final ValueNotifier<MediaType> mediaType = ValueNotifier(MediaType.all);
   final ValueNotifier<int> maxSelection = ValueNotifier(10);
   final ValueNotifier<Set<CropRatio>> ratios = ValueNotifier(allRatios.toSet());
+  final ValueNotifier<bool> rotate = ValueNotifier(true);
+  final ValueNotifier<bool> flip = ValueNotifier(true);
   final ValueNotifier<bool> showPreview = ValueNotifier(true);
   final ValueNotifier<bool> resizePreview = ValueNotifier(true);
 
@@ -134,6 +136,8 @@ class _DemoState extends State<Demo> {
       mediaType,
       maxSelection,
       ratios,
+      rotate,
+      flip,
       showPreview,
       resizePreview,
       gridColumns,
@@ -178,6 +182,8 @@ class _DemoState extends State<Demo> {
           for (final ratio in allRatios)
             if (ratios.value.contains(ratio)) ratio,
         ],
+        rotate: rotate.value,
+        flip: flip.value,
         showPreview: showPreview.value,
         resizePreview: resizePreview.value,
         gridColumns: gridColumns.value == 0 ? null : gridColumns.value,
@@ -200,6 +206,13 @@ class _DemoState extends State<Demo> {
         texts: switch (texts.value) {
           TextsChoice.english => PickerTexts(easternArabicNumerals: easternArabicNumerals.value),
           TextsChoice.arabic => ArabicTexts(easternArabicNumerals: easternArabicNumerals.value),
+          TextsChoice.chinese => const ChineseTexts(),
+          TextsChoice.japanese => const JapaneseTexts(),
+          TextsChoice.hindi => const HindiTexts(),
+          TextsChoice.spanish => const SpanishTexts(),
+          TextsChoice.german => const GermanTexts(),
+          TextsChoice.turkish => const TurkishTexts(),
+          TextsChoice.russian => const RussianTexts(),
           TextsChoice.app => PickerTexts.of(context),
         },
         cache: PickerCache(enabled: cache.value, maxBytes: cacheMb.value * 1024 * 1024),
@@ -260,7 +273,19 @@ class _DemoState extends State<Demo> {
 
   @override
   Widget build(BuildContext context) {
-    final addition = (MediaQuery.sizeOf(context).width - 950) / 2;
+    final width = MediaQuery.sizeOf(context).width;
+    // the switches and the pick button can't fit under this
+    if (width < 320) {
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text("Make the window bigger", textAlign: TextAlign.center),
+          ),
+        ),
+      );
+    }
+    final addition = (width - 950) / 2;
     final double padding = addition < 0 ? 0 : addition;
 
     return Scaffold(
@@ -296,6 +321,8 @@ class _DemoState extends State<Demo> {
               ),
             ),
           ),
+          _Switch(title: "Rotate", notifier: rotate),
+          _Switch(title: "Flip", notifier: flip),
           _Switch(title: "Show preview", notifier: showPreview),
           _Switch(
             title: "Resize preview",
@@ -384,7 +411,10 @@ class _DemoState extends State<Demo> {
                   spacing: 8,
                   children: [
                     if (items.isNotEmpty) ...[
-                      OutlinedButton(onPressed: () => _pick(selected: items), child: const Text("Edit")),
+                      OutlinedButton(
+                        onPressed: () => _pick(selected: items),
+                        child: const Text("Edit"),
+                      ),
                       OutlinedButton(onPressed: _save, child: const Text("Save")),
                     ] else
                       OutlinedButton(onPressed: _load, child: const Text("Load")),
@@ -468,12 +498,15 @@ class _Choice<T> extends StatelessWidget {
       title: Text(label),
       subtitle: ValueListenableBuilder<T>(
         valueListenable: notifier,
-        builder: (context, value, _) => SegmentedButton<T>(
-          segments: [
-            for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name)),
-          ],
-          selected: {value},
-          onSelectionChanged: (selected) => notifier.value = selected.first,
+        builder: (context, value, _) => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<T>(
+            segments: [
+              for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name)),
+            ],
+            selected: {value},
+            onSelectionChanged: (selected) => notifier.value = selected.first,
+          ),
         ),
       ),
     );
