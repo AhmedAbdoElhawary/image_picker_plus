@@ -55,6 +55,15 @@ void main() {
     );
   });
 
+  test("filter strength round trips, is only written below full, and loads full when missing or broken", () {
+    const state = EditState(filterIndex: 2, filterStrength: 0.4);
+    expect(roundTrip(state), state);
+    expect(const EditState(filterIndex: 2).toMap().containsKey("strength"), isFalse);
+    expect(EditState.fromMap(const {"filter": 2}).filterStrength, 1);
+    expect(EditState.fromMap(const {"strength": "x"}).filterStrength, 1);
+    expect(EditState.fromMap(const {"strength": 3}).filterStrength, 1);
+  });
+
   test("a map from before them, or a broken one, loads them as defaults", () {
     final older = EditState.fromMap(const {
       "crop": [0, 0, 1, 1],
