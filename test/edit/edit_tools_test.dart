@@ -57,6 +57,70 @@ void main() {
     });
   });
 
+  group("filter strength", () {
+    testWidgets("shows full for a picked filter, a drag lowers it, a new filter starts full", (tester) async {
+      final fakes = Fakes();
+      final filter = ValueNotifier(0);
+      final strength = ValueNotifier(1.0);
+      await pumpPicker(
+        tester,
+        EditPage(items: [a], filterIndexes: {"a": filter}, filterStrengths: {"a": strength}),
+        fakes: fakes,
+        settings: const PickerSettings(filters: PickerFilter.all),
+      );
+      expect(find.byType(Slider), findsNothing);
+
+      await tester.tap(find.text("Warm"));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsOneWidget);
+      expect(find.text("100"), findsOneWidget);
+
+      await tester.drag(find.byType(Slider), const Offset(-100, 0));
+      await tester.pumpAndSettle();
+      expect(strength.value, lessThan(1));
+      expect(find.text("${(strength.value * 100).round()}"), findsOneWidget);
+
+      await tester.tap(find.text("Cool"));
+      await tester.pumpAndSettle();
+      expect(strength.value, 1);
+      await tester.tap(find.text("Normal"));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsNothing);
+
+      await tester.tap(find.text("Cool"));
+      await tester.pumpAndSettle();
+      strength.value = 0.5;
+      await tester.tap(find.text("Done"));
+      await tester.pumpAndSettle();
+      expect(fakes.image.calls.single.$2.filterStrength, 0.5);
+      expect(
+        fakes.image.matrices.single,
+        composeMatrix(filterMatrix(PickerFilter.all, 2, strength: 0.5), Adjustments.neutral),
+      );
+    });
+
+    testWidgets("sits under the filters and adjust switch, only on filters", (tester) async {
+      await pumpPicker(
+        tester,
+        EditPage(
+          items: [a],
+          filterIndexes: {"a": ValueNotifier(1)},
+          filterStrengths: {"a": ValueNotifier(1.0)},
+          adjustments: slidersOf([a]),
+        ),
+        settings: const PickerSettings(filters: PickerFilter.all, adjustments: true),
+      );
+      expect(
+        tester.getTopLeft(find.byType(Slider)).dy,
+        greaterThan(tester.getBottomLeft(find.text("Filters")).dy),
+      );
+      expect(find.text("100"), findsOneWidget);
+      await tester.tap(find.text("Adjust"));
+      await tester.pumpAndSettle();
+      expect(find.text("100"), findsNothing);
+    });
+  });
+
   group("sliders", () {
     const both = PickerSettings(maxSelection: 5, filters: PickerFilter.all, adjustments: true);
 
