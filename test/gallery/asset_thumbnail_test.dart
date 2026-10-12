@@ -21,6 +21,33 @@ void main() {
     );
   });
 
+  testWidgets("a smaller tile reuses the smallest thumbnail already loaded for that item", (tester) async {
+    imageCache
+      ..clear()
+      ..clearLiveImages();
+    late _SlowGallery gallery;
+    await tester.runAsync(() async {
+      gallery = _SlowGallery()..gate.complete();
+      for (final size in [300, 1000]) {
+        final completer = Completer<void>();
+        AssetThumbnail(
+          item,
+          size,
+          gallery: gallery,
+        ).resolve(ImageConfiguration.empty).addListener(ImageStreamListener((_, _) => completer.complete()));
+        await completer.future;
+      }
+    });
+    expect(mediaImage(item, 200, gallery: gallery), AssetThumbnail(item, 300, gallery: gallery));
+    expect(mediaImage(item, 500, gallery: gallery), AssetThumbnail(item, 1000, gallery: gallery));
+    expect(mediaImage(item, 2000, gallery: gallery), AssetThumbnail(item, 2000, gallery: gallery));
+    expect(
+      mediaImage(fakeItem("8"), 200, gallery: gallery),
+      AssetThumbnail(fakeItem("8"), 200, gallery: gallery),
+    );
+    evictMediaImages();
+  });
+
   testWidgets("evicting drops every loaded thumbnail from the image cache", (tester) async {
     late AssetThumbnail provider;
     await tester.runAsync(() {

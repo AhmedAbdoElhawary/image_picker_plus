@@ -21,7 +21,20 @@ ImageProvider mediaImage(MediaItem item, int size, {required GalleryService? gal
     _loaded.add(image);
     return image;
   }
-  return AssetThumbnail(item, size, gallery: gallery!);
+  // a new one waits in line behind the big preview on ios, one already decoded at least this big shows right away
+  final cache = PaintingBinding.instance.imageCache;
+  AssetThumbnail? loaded;
+  for (final image in _loaded) {
+    if (image is AssetThumbnail &&
+        image.item.id == item.id &&
+        image.item.modified == item.modified &&
+        image.size >= size &&
+        (loaded == null || image.size < loaded.size) &&
+        cache.containsKey(image)) {
+      loaded = image;
+    }
+  }
+  return loaded ?? AssetThumbnail(item, size, gallery: gallery!);
 }
 
 /// the picker closed, the app gets the memory of every image it showed back.
