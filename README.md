@@ -199,7 +199,7 @@ The output limits hold for every image, edited or not. An image over `maxWidth`,
 
 ## Change photos
 
-Pass an earlier result back as `selected` and the picker opens with those items selected, in the same order, with their crops, turns, filters and sliders. On web and desktop it skips the system picker and opens the edit screen with them.
+Pass an earlier result back as `selected` and the picker opens with those items selected, in the same order, with their crops, turns, filters and sliders. With editing on it opens the edit screen with them, the gallery only shows from its plus. On web and desktop it skips the system picker.
 
 ```dart
 final items = await ImagePickerPlus.pick(context, settings: settings, selected: lastPick);
