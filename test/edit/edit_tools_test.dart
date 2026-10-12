@@ -308,5 +308,24 @@ void main() {
       );
       expect(find.byType(OrientationButtons), findsNothing);
     });
+
+    testWidgets("rotate off leaves flip alone", (tester) async {
+      await pumpPicker(
+        tester,
+        EditPage(items: [a], crops: {"a": cropOf(a)}),
+        settings: const PickerSettings(rotate: false),
+      );
+      expect(find.byTooltip("Rotate"), findsNothing);
+      expect(find.byTooltip("Flip"), findsOneWidget);
+    });
+
+    testWidgets("no buttons with rotate and flip off", (tester) async {
+      await pumpPicker(
+        tester,
+        EditPage(items: [a], crops: {"a": cropOf(a)}),
+        settings: const PickerSettings(rotate: false, flip: false),
+      );
+      expect(find.byType(OrientationButtons), findsNothing);
+    });
   });
 }
