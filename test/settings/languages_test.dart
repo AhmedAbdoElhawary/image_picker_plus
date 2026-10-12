@@ -18,6 +18,8 @@ List<String> strings(PickerTexts texts) => [
   texts.cameraDenied,
   texts.noMicrophone,
   texts.openSettings,
+  texts.somethingWentWrong,
+  texts.tryAgain,
   texts.manageAccess,
   texts.maxReached,
   texts.videoNotEditable,
