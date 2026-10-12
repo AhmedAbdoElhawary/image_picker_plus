@@ -34,7 +34,15 @@ class _EditToolsState extends State<EditTools> {
     final filters = scope.settings.filters.isNotEmpty;
     final adjustments = scope.settings.adjustments;
     if (!filters && !adjustments) return const SizedBox.shrink();
-    if (!adjustments) return FilterStrip(controller: widget.controller);
+    if (!adjustments) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _Strength(controller: widget.controller),
+          FilterStrip(controller: widget.controller),
+        ],
+      );
+    }
     final adjusting = _adjusting || !filters;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -65,6 +73,7 @@ class _EditToolsState extends State<EditTools> {
             ],
           ),
         ),
+        if (!adjusting) _Strength(controller: widget.controller),
         AnimatedSwitcher(
           duration: PickerDurations.of(context).short,
           child: adjusting
@@ -127,6 +136,109 @@ class _Reset extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// how much of the picked filter, it shows only while a filter other than Normal is on.
+class _Strength extends StatelessWidget {
+  final EditController controller;
+
+  const _Strength({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PickerScope.of(context);
+    return ValueListenableBuilder<MediaItem>(
+      valueListenable: controller.current,
+      builder: (context, item, _) {
+        final filter = controller.filterIndexes[item.id];
+        final strength = controller.filterStrengths[item.id];
+        // a video has no filter
+        if (filter == null || strength == null) return const SizedBox.shrink();
+        return ListenableBuilder(
+          listenable: Listenable.merge([filter, strength]),
+          builder: (context, _) {
+            final row = filter.value == 0
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: PickerLayout.padding),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 2,
+                              trackShape: const _EvenTrack(),
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                            ),
+                            child: SizedBox(
+                              height: 36,
+                              child: Slider(
+                                value: strength.value,
+                                semanticFormatterCallback: (value) =>
+                                    "${scope.texts.strength} ${scope.texts.number((value * 100).round())}",
+                                activeColor: scope.theme.onSurface,
+                                inactiveColor: scope.theme.onSurfaceMuted.withValues(alpha: 0.4),
+                                onChanged: (value) => strength.value = value,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 32,
+                          child: Text(
+                            scope.texts.number((strength.value * 100).round()),
+                            textAlign: TextAlign.end,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelLarge?.copyWith(color: scope.theme.onSurface),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+            final duration = PickerDurations.of(context).short;
+            // a zero long size animation asserts, reduced motion just swaps it
+            return duration == Duration.zero ? row : AnimatedSize(duration: duration, child: row);
+          },
+        );
+      },
+    );
+  }
+}
+
+/// the default track draws the filled part 2px thicker, this keeps it the same as the empty part.
+class _EvenTrack extends RoundedRectSliderTrackShape {
+  const _EvenTrack();
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 2,
+  }) {
+    super.paint(
+      context,
+      offset,
+      parentBox: parentBox,
+      sliderTheme: sliderTheme,
+      enableAnimation: enableAnimation,
+      textDirection: textDirection,
+      thumbCenter: thumbCenter,
+      secondaryOffset: secondaryOffset,
+      isDiscrete: isDiscrete,
+      isEnabled: isEnabled,
+      additionalActiveTrackHeight: 0,
     );
   }
 }
