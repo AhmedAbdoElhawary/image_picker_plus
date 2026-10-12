@@ -25,6 +25,7 @@ class ArabicTexts extends PickerTexts {
     super.manageAccess = "إدارة الوصول",
     super.maxReached = "يمكنك اختيار {max} عناصر كحد أقصى",
     super.videoNotEditable = "الفيديوهات يمكن ترتيبها فقط",
+    super.windowTooSmall = "كبّر النافذة للتعديل",
     super.notSupported = "هذه المنصة غير مدعومة بعد",
     super.crop = "قص",
     super.original = "الأصلي",
