@@ -58,7 +58,8 @@ class CameraServiceImpl implements CameraService {
     try {
       await controller.initialize();
     } catch (_) {
-      await controller.dispose();
+      // camerax can throw again closing a camera that never opened, that would hide the first error
+      await controller.dispose().catchError((Object _) {});
       rethrow;
     }
     return controller;
@@ -157,7 +158,8 @@ class CameraServiceImpl implements CameraService {
   Future<void> dispose() async {
     final controller = _controller;
     _controller = null;
-    if (controller != null) _closing = controller.dispose();
+    // a failed close would make every camera opened after it fail too
+    if (controller != null) _closing = controller.dispose().catchError((Object _) {});
     await _closing;
   }
 }
