@@ -16,6 +16,16 @@ void main() {
     expect(const PickerTexts().filesSkipped, "Some files couldn't be opened");
   });
 
+  test("eastern arabic numerals only when asked", () {
+    expect(const PickerTexts().number("1.5"), "1.5");
+    const eastern = ArabicTexts(easternArabicNumerals: true);
+    expect(eastern.number(1234567890), "١٢٣٤٥٦٧٨٩٠");
+    expect(eastern.number("4:5"), "٤:٥");
+    expect(eastern.number("1.5x"), "١٫٥x");
+    expect(eastern.maxReachedFor(10), contains("١٠"));
+    expect(eastern.monthOf(DateTime(2026, 10)), "أكتوبر ٢٠٢٦");
+  });
+
   test("one name per filter, Normal first", () {
     expect(const PickerTexts().filterNames.length, PickerFilter.all.length + 1);
     expect(const PickerTexts().filterNames.first, "Normal");
