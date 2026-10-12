@@ -12,12 +12,14 @@ import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/gallery/preselection.dart';
 import 'package:image_picker_plus/src/models/media_item.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
+import 'package:image_picker_plus/src/widgets/loading_box.dart';
 import 'package:image_picker_plus/src/widgets/picker_tabs.dart';
 
 /// the root of the picker: one page, or the pages with tabs under them.
 /// it opens the edit page, so the plus there can add from any tab.
 class PickerHome extends StatefulWidget {
   /// an earlier pick to open with, empty opens like new.
+  /// with editing on it opens on the edit page, the gallery only shows from its plus.
   final List<PickedItem> selected;
 
   const PickerHome({this.selected = const [], super.key});
@@ -41,6 +43,12 @@ class _PickerHomeState extends State<PickerHome> {
   /// the last photo's edits, kept until the next photo since the edit page uses them while it closes.
   ImageEdits _takenEdits = ImageEdits();
 
+  /// opened on the edit page with [PickerHome.selected], so back there leaves the picker.
+  bool _direct = false;
+
+  /// the gallery hides under a loading box until the edit page covers it or the plus needs it.
+  bool _hidden = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -51,6 +59,22 @@ class _PickerHomeState extends State<PickerHome> {
       settings: scope.settings,
       preselect: widget.selected.isEmpty ? null : _preselect,
     );
+    // the earlier pick is found by the gallery page, a camera only picker has none
+    _direct =
+        widget.selected.isNotEmpty &&
+        scope.settings.editing &&
+        PickerTabs.of(scope.settings).contains(PickerTab.gallery);
+    _hidden = _direct;
+    if (_direct) _gallery!.state.addListener(_openDirect);
+  }
+
+  /// the gallery is ready only after the preselection, nothing found shows the gallery.
+  void _openDirect() {
+    final gallery = _gallery!;
+    if (gallery.state.value == GalleryState.loading) return;
+    gallery.state.removeListener(_openDirect);
+    if (gallery.selection.value.isEmpty) return setState(() => _hidden = false);
+    _edit();
   }
 
   Future<Preselection> _preselect() async {
@@ -80,7 +104,9 @@ class _PickerHomeState extends State<PickerHome> {
     final items = await Navigator.of(
       context,
     ).push<List<PickedItem>>(PickerRoute(context: context, builder: (_) => scope.wrap(page)));
-    if (items != null && mounted) Navigator.of(context).pop(items);
+    if (!mounted) return;
+    if (items != null) return Navigator.of(context).pop(items);
+    if (_direct && !_gallery!.adding.value) Navigator.of(context).pop();
   }
 
   Future<void> _edit() {
@@ -110,6 +136,7 @@ class _PickerHomeState extends State<PickerHome> {
     // a single tap selection, the next tap would replace it instead of counting
     gallery.multi.value = true;
     gallery.adding.value = true;
+    if (_hidden) setState(() => _hidden = false);
     Navigator.of(context).pop();
   }
 
@@ -184,35 +211,44 @@ class _PickerHomeState extends State<PickerHome> {
         },
         child: ColoredBox(
           color: scope.theme.background,
-          child: Column(
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Expanded(
-                child: Stack(
+              Offstage(
+                offstage: _hidden,
+                child: Column(
                   children: [
-                    // the gallery stays alive so its selection survives a trip to the camera
-                    if (hasGallery)
-                      Offstage(
-                        offstage: current != PickerTab.gallery,
-                        child: TickerMode(enabled: current == PickerTab.gallery, child: _galleryPage),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          // the gallery stays alive so its selection survives a trip to the camera
+                          if (hasGallery)
+                            Offstage(
+                              offstage: current != PickerTab.gallery,
+                              child: TickerMode(enabled: current == PickerTab.gallery, child: _galleryPage),
+                            ),
+                          // the camera is built only while shown, so it's released when leaving.
+                          // no fade, two camera pages at once fight over the one camera
+                          if (current != PickerTab.gallery)
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height - (PickerLayout.pickerTabsHeight),
+                              child: CameraPage(
+                                key: ValueKey(current),
+                                video: current == PickerTab.video,
+                                adding: adding,
+                                onTaken: _taken,
+                                onClose: _close,
+                              ),
+                            ),
+                        ],
                       ),
-                    // the camera is built only while shown, so it's released when leaving.
-                    // no fade, two camera pages at once fight over the one camera
-                    if (current != PickerTab.gallery)
-                      SizedBox(
-                        height: MediaQuery.sizeOf(context).height - (PickerLayout.pickerTabsHeight),
-                        child: CameraPage(
-                          key: ValueKey(current),
-                          video: current == PickerTab.video,
-                          adding: adding,
-                          onTaken: _taken,
-                          onClose: _close,
-                        ),
-                      ),
+                    ),
+                    if (tabs.length > 1)
+                      PickerTabs(tabs: tabs, current: current, onChanged: (tab) => setState(() => _current = tab)),
                   ],
                 ),
               ),
-              if (tabs.length > 1)
-                PickerTabs(tabs: tabs, current: current, onChanged: (tab) => setState(() => _current = tab)),
+              if (_hidden) const LoadingBox(),
             ],
           ),
         ),
