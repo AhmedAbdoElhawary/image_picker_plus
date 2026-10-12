@@ -14,7 +14,7 @@ import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/gallery_service.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
-enum GalleryState { loading, ready, denied, empty }
+enum GalleryState { loading, ready, denied, empty, failed }
 
 class GalleryController {
   static const int pageSize = 20;
@@ -70,21 +70,35 @@ class GalleryController {
     edits.prepare(selection.value, settings);
   }
 
+  /// runs again from the retry after a failure.
   Future<void> init() async {
-    access.value = await service.requestAccess();
-    if (_disposed) return;
-    if (access.value == GalleryAccess.denied) {
-      state.value = GalleryState.denied;
-      return;
-    }
-    _changes = service.changes.listen((_) => reload());
-    final preselect = this.preselect;
-    if (preselect != null) {
-      final preselection = await preselect();
+    state.value = GalleryState.loading;
+    try {
+      access.value = await service.requestAccess();
       if (_disposed) return;
-      _preselect(preselection);
+      if (access.value == GalleryAccess.denied) {
+        state.value = GalleryState.denied;
+        return;
+      }
+      // a retry doesn't listen or preselect again
+      if (_changes == null) {
+        _changes = service.changes.listen((_) => reload());
+        final preselect = this.preselect;
+        if (preselect != null) {
+          final preselection = await preselect();
+          if (_disposed) return;
+          _preselect(preselection);
+        }
+      }
+      await _loadAlbums();
+    } catch (_) {
+      _fail(_generation);
     }
-    await _loadAlbums();
+  }
+
+  /// a stale load failing doesn't hide the newer one.
+  void _fail(int generation) {
+    if (!_disposed && generation == _generation) state.value = GalleryState.failed;
   }
 
   Future<void> _loadAlbums() async {
@@ -107,7 +121,13 @@ class GalleryController {
     items.value = const [];
     ended.value = false;
     _page = 0;
-    final page = await service.items(next, page: 0, size: pageSize);
+    final List<MediaItem> page;
+    try {
+      page = await service.items(next, page: 0, size: pageSize);
+    } catch (_) {
+      _fail(generation);
+      return;
+    }
     if (_disposed || generation != _generation) return;
     items.value = page;
     if (page.length < pageSize) ended.value = true;
@@ -128,13 +148,17 @@ class GalleryController {
 
   /// stops when the album changes or reloads, they start their own.
   Future<void> _loadRest(Album current, int generation) async {
-    while (!_disposed && generation == _generation && !ended.value) {
-      final page = await service.items(current, page: _page, size: restSize);
-      if (_disposed || generation != _generation) return;
-      // the first big page has the small first one in it, so it takes its place
-      items.value = _page == 0 ? page : [...items.value, ...page];
-      _page++;
-      if (page.length < restSize) ended.value = true;
+    try {
+      while (!_disposed && generation == _generation && !ended.value) {
+        final page = await service.items(current, page: _page, size: restSize);
+        if (_disposed || generation != _generation) return;
+        // the first big page has the small first one in it, so it takes its place
+        items.value = _page == 0 ? page : [...items.value, ...page];
+        _page++;
+        if (page.length < restSize) ended.value = true;
+      }
+    } catch (_) {
+      _fail(generation);
     }
   }
 
@@ -147,11 +171,16 @@ class GalleryController {
     final generation = ++_generation;
     final fresh = <MediaItem>[];
     var end = false;
-    for (var page = 0; page < pages && !end; page++) {
-      final list = await service.items(current, page: page, size: restSize);
-      if (_disposed || generation != _generation) return;
-      fresh.addAll(list);
-      end = list.length < restSize;
+    try {
+      for (var page = 0; page < pages && !end; page++) {
+        final list = await service.items(current, page: page, size: restSize);
+        if (_disposed || generation != _generation) return;
+        fresh.addAll(list);
+        end = list.length < restSize;
+      }
+    } catch (_) {
+      _fail(generation);
+      return;
     }
     final now = fresh.toSet();
     _page = pages;
