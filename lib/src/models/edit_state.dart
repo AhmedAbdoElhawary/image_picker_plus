@@ -16,6 +16,9 @@ class EditState {
   /// 0 means no filter.
   final int filterIndex;
 
+  /// how much of the filter, 0 none to 1 full.
+  final double filterStrength;
+
   /// what was added on top, in draw order. opaque to apps, it round trips through the map.
   final List<MarkupItem> markup;
 
@@ -33,6 +36,7 @@ class EditState {
     this.cropRect = full,
     this.ratio,
     this.filterIndex = 0,
+    this.filterStrength = 1,
     this.markup = const [],
     this.turns = 0,
     this.flipped = false,
@@ -56,6 +60,7 @@ class EditState {
     Rect? cropRect,
     CropRatio? ratio,
     int? filterIndex,
+    double? filterStrength,
     List<MarkupItem>? markup,
     int? turns,
     bool? flipped,
@@ -64,6 +69,7 @@ class EditState {
     cropRect: cropRect ?? this.cropRect,
     ratio: ratio ?? this.ratio,
     filterIndex: filterIndex ?? this.filterIndex,
+    filterStrength: filterStrength ?? this.filterStrength,
     markup: markup ?? this.markup,
     turns: turns ?? this.turns,
     flipped: flipped ?? this.flipped,
@@ -77,6 +83,7 @@ class EditState {
       "crop": [cropRect.left, cropRect.top, cropRect.width, cropRect.height],
       if (ratio != null) "ratio": ratio == CropRatio.original ? "original" : [ratio.width, ratio.height],
       "filter": filterIndex,
+      if (filterStrength != 1) "strength": filterStrength,
       if (markup.isNotEmpty) "markup": [for (final item in markup) item.toMap()],
       if (turns != 0) "turns": turns,
       if (flipped) "flip": true,
@@ -90,6 +97,7 @@ class EditState {
     final crop = map["crop"];
     final ratio = map["ratio"];
     final filter = map["filter"];
+    final strength = map["strength"];
     final markup = map["markup"];
     final turns = map["turns"];
     final adjust = map["adjust"];
@@ -111,6 +119,7 @@ class EditState {
         _ => null,
       },
       filterIndex: filter is int && filter >= 0 ? filter : 0,
+      filterStrength: strength is num ? strength.toDouble().clamp(0, 1) : 1,
       markup: markup is List
           ? [
               for (final item in markup)
@@ -136,14 +145,23 @@ class EditState {
       other.cropRect == cropRect &&
       other.ratio == ratio &&
       other.filterIndex == filterIndex &&
+      other.filterStrength == filterStrength &&
       listEquals(other.markup, markup) &&
       other.turns == turns &&
       other.flipped == flipped &&
       other.adjustments == adjustments;
 
   @override
-  int get hashCode =>
-      Object.hash(cropRect, ratio, filterIndex, Object.hashAll(markup), turns, flipped, adjustments);
+  int get hashCode => Object.hash(
+    cropRect,
+    ratio,
+    filterIndex,
+    filterStrength,
+    Object.hashAll(markup),
+    turns,
+    flipped,
+    adjustments,
+  );
 
   // pan math leaves tiny float errors, they're not a real crop
   static bool _isFull(Rect rect) =>
