@@ -161,12 +161,21 @@ void main() {
       expect(edits.filterIndexes, isEmpty);
     });
 
-    test("a filter out of range is no filter", () async {
+    test("a filter out of range is no filter, at full strength", () async {
       final edits = restored(
-        await one(const EditState(filterIndex: 99)),
+        await one(const EditState(filterIndex: 99, filterStrength: 0.3)),
         settings: const PickerSettings(filters: PickerFilter.all),
       );
       expect(edits.filterIndexes["0"]!.value, 0);
+      expect(edits.filterStrengths["0"]!.value, 1);
+    });
+
+    test("the filter strength comes back", () async {
+      final edits = restored(
+        await one(const EditState(filterIndex: 3, filterStrength: 0.3)),
+        settings: const PickerSettings(filters: PickerFilter.all),
+      );
+      expect(edits.filterStrengths["0"]!.value, 0.3);
     });
 
     test("the turns, flip and sliders come back", () async {
