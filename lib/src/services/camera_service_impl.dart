@@ -72,10 +72,15 @@ class CameraServiceImpl implements CameraService {
   bool get hasMicrophone => _microphone;
 
   @override
-  double get aspectRatio => 1 / _camera.value.aspectRatio;
+  double get aspectRatio => _camera.value.aspectRatio;
 
+  // the plugin turns its box by the sensor, which is wrong on an open foldable or a locked app.
+  // a tight box makes its ratio give way
   @override
-  Widget preview() => cam.CameraPreview(_camera);
+  Widget preview({required bool portrait, Widget? child}) => AspectRatio(
+    aspectRatio: portrait ? 1 / aspectRatio : aspectRatio,
+    child: cam.CameraPreview(_camera, child: child),
+  );
 
   @override
   Future<void> switchCamera() async {
