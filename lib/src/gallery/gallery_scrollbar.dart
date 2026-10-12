@@ -12,6 +12,9 @@ import 'package:image_picker_plus/src/core/selector.dart';
 class GalleryScrollbar extends StatefulWidget {
   final ScrollController controller;
 
+  /// true while the thumb is moving, the grid holds new thumbnails back until it stops.
+  final ValueNotifier<bool> moving;
+
   /// the grid's padding over the first row, where the preview sits.
   final double top;
 
@@ -24,6 +27,7 @@ class GalleryScrollbar extends StatefulWidget {
 
   const GalleryScrollbar({
     required this.controller,
+    required this.moving,
     required this.top,
     required this.collapse,
     required this.label,
@@ -38,9 +42,13 @@ class GalleryScrollbar extends StatefulWidget {
 class _GalleryScrollbarState extends State<GalleryScrollbar> {
   static const Duration _hideDelay = Duration(seconds: 1);
 
+  /// holding the thumb still this long loads what's under it.
+  static const Duration _settleDelay = Duration(milliseconds: 150);
+
   final ValueNotifier<bool> _visible = ValueNotifier(false);
   final ValueNotifier<bool> _dragging = ValueNotifier(false);
   Timer? _hide;
+  Timer? _settle;
 
   // made once, the grid rebuilds this on every page it loads
   late final Listenable _changes = Listenable.merge([widget.controller, widget.collapse, _dragging]);
@@ -48,6 +56,7 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
   @override
   void dispose() {
     _hide?.cancel();
+    _settle?.cancel();
     _visible.dispose();
     _dragging.dispose();
     super.dispose();
@@ -75,7 +84,22 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
 
   void _endDrag() {
     _dragging.value = false;
+    _stopMoving();
     _hideLater();
+  }
+
+  void _moved() {
+    widget.moving.value = true;
+    _settle?.cancel();
+    _settle = Timer(_settleDelay, _stopMoving);
+  }
+
+  void _stopMoving() {
+    _settle?.cancel();
+    if (!widget.moving.value) return;
+    widget.moving.value = false;
+    // the held back thumbnails only check again on a frame
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   double get _top => max(0.0, widget.top - widget.collapse.value);
@@ -130,6 +154,7 @@ class _GalleryScrollbarState extends State<GalleryScrollbar> {
                   final track = _track;
                   if (track == null) return;
                   final position = controller.position;
+                  _moved();
                   controller.jumpTo(
                     (position.pixels + details.delta.dy / track * position.maxScrollExtent).clamp(
                       0,
