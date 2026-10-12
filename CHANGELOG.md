@@ -7,6 +7,11 @@
 * English and Arabic built in: `PickerTexts.of(context)` follows the app's language, `ArabicTexts()` picks Arabic. Still English by default
 * `EditState` has `turns`, `flipped` and `adjustments`, in its map too. maps saved before load with none of them
 * new texts `rotate`, `flip`, `filters`, `adjust`, `brightness`, `contrast`, `saturation`, `warmth` and `reset`
+* a strength slider for the picked filter, full by default. `EditState` has `filterStrength`, in its map too, maps saved before load at full
+* new texts `strength` and `minAdd`
+* adding more from the edit page keeps at least one item selected in the gallery
+* the camera is let go while the edit page is open
+* a text or emoji dragged to the delete area stays seen past the image's edges
 * every exported class and setting is documented, topics and screenshots for pub.dev
 * `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
 * new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. with editing on it opens the edit page, the gallery only from its plus. on web and desktop it skips the system picker
