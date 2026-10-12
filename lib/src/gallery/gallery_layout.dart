@@ -28,6 +28,7 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
   /// how far the preview is slid up.
   final ValueNotifier<double> _collapse = ValueNotifier(0);
   double _maxCollapse = 0;
+  double _target = 0;
   late final AnimationController _snap = AnimationController.unbounded(vsync: this)
     ..addListener(() => _collapse.value = _snap.value);
 
@@ -58,12 +59,18 @@ class _GalleryLayoutState extends State<GalleryLayout> with SingleTickerProvider
   }
 
   void _animateTo(double target) {
+    _target = target;
     _snap.value = _collapse.value;
     _snap.animateTo(target, duration: PickerDurations.of(context).medium, curve: Curves.easeOutCubic);
   }
 
   bool _onScroll(ScrollUpdateNotification notification) {
     if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) return false;
+    // shown fully away from the top, by a drag or a tap, so any scroll slides it back to the strip
+    if (notification.metrics.pixels > _maxCollapse && _collapse.value < _maxCollapse) {
+      if (!_snap.isAnimating || _target != _maxCollapse) _animateTo(_maxCollapse);
+      return false;
+    }
     _snap.stop();
     final delta = notification.scrollDelta ?? 0;
     // up slides it with the grid, down leaves it until the grid is back near the top
