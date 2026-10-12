@@ -45,6 +45,12 @@ class PickerTexts {
   /// opens the app's settings from a denied state.
   final String openSettings;
 
+  /// the camera or gallery when loading or capturing fails.
+  final String somethingWentWrong;
+
+  /// loads the camera or gallery again after it failed.
+  final String tryAgain;
+
   /// picks more photos when ios access is limited.
   final String manageAccess;
 
@@ -177,6 +183,9 @@ class PickerTexts {
   /// january first, shown with the year while scrolling the gallery.
   final List<String> months;
 
+  /// shows numbers as ٠١٢٣٤٥٦٧٨٩, off by default.
+  final bool easternArabicNumerals;
+
   /// the english texts, pass any one by name to change it.
   const PickerTexts({
     this.gallery = "Gallery",
@@ -195,6 +204,8 @@ class PickerTexts {
     this.cameraDenied = "Allow camera access to continue",
     this.noMicrophone = "Allow microphone access to record sound",
     this.openSettings = "Open settings",
+    this.somethingWentWrong = "Something went wrong",
+    this.tryAgain = "Try again",
     this.manageAccess = "Manage access",
     this.maxReached = "You can select up to {max} items",
     this.videoNotEditable = "Videos can only be reordered",
@@ -266,6 +277,7 @@ class PickerTexts {
       "November",
       "December",
     ],
+    this.easternArabicNumerals = false,
   });
 
   /// the shipped languages by language code. a new language is one file and one line here.
@@ -276,17 +288,27 @@ class PickerTexts {
       languages[Localizations.maybeLocaleOf(context)?.languageCode] ?? const PickerTexts();
 
   /// [maxReached] with the number in.
-  String maxReachedFor(int max) => maxReached.replaceAll("{max}", "$max");
+  String maxReachedFor(int max) => maxReached.replaceAll("{max}", number(max));
 
   /// [maxKept] with the number in.
-  String maxKeptFor(int max) => maxKept.replaceAll("{max}", "$max");
+  String maxKeptFor(int max) => maxKept.replaceAll("{max}", number(max));
 
   /// [timerSeconds] with the number in.
-  String timerSecondsFor(int seconds) => timerSeconds.replaceAll("{seconds}", "$seconds");
+  String timerSecondsFor(int seconds) => timerSeconds.replaceAll("{seconds}", number(seconds));
 
   /// [zoomLevel] with the zoom in.
-  String zoomLevelFor(String zoom) => zoomLevel.replaceAll("{zoom}", zoom);
+  String zoomLevelFor(String zoom) => zoomLevel.replaceAll("{zoom}", number(zoom));
 
   /// the month and year of [date], for the gallery scrollbar.
-  String monthOf(DateTime date) => "${months[date.month - 1]} ${date.year}";
+  String monthOf(DateTime date) => "${months[date.month - 1]} ${number(date.year)}";
+
+  /// [value] as text, in eastern arabic digits when [easternArabicNumerals] is on.
+  String number(Object value) {
+    var text = "$value";
+    if (!easternArabicNumerals) return text;
+    for (var i = 0; i < 10; i++) {
+      text = text.replaceAll("$i", "٠١٢٣٤٥٦٧٨٩"[i]);
+    }
+    return text.replaceAll(".", "٫");
+  }
 }
