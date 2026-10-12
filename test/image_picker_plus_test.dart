@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/core/x_file.dart';
+import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/files/files_flow.dart';
 import 'package:image_picker_plus/src/gallery/gallery_page.dart';
 import 'package:image_picker_plus/src/image_picker_plus.dart';
@@ -166,6 +167,48 @@ void main() {
       expect((await result)!.map((e) => e.id), ["3", "1", "7"]);
     }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
+    group("with editing", () {
+      const editing = PickerSettings(maxSelection: 5, filters: PickerFilter.all);
+
+      testWidgets("opens the edit page right away and back closes the picker", (tester) async {
+        final result = await open(tester, settings: editing, selected: [picked("3"), picked("1")]);
+        expect(find.byType(EditPage), findsOneWidget);
+        expect(find.byType(GalleryPage, skipOffstage: false), findsOneWidget);
+        expect(find.byType(GalleryPage), findsNothing);
+        await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+        await tester.pumpAndSettle();
+        expect(find.byType(GalleryPage, skipOffstage: false), findsNothing);
+        expect(await result, isNull);
+      }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+      testWidgets("the plus shows the gallery, and back on the edit page after adding still closes", (
+        tester,
+      ) async {
+        final result = await open(tester, settings: editing, selected: [picked("3")]);
+        await tester.tap(find.byIcon(Icons.add_rounded));
+        await tester.pumpAndSettle();
+        expect(find.byType(EditPage), findsNothing);
+        expect(find.byType(GalleryPage), findsOneWidget);
+
+        await tester.tap(find.byKey(const ValueKey("0")));
+        await tester.pump();
+        await tester.tap(find.text("Add"));
+        await tester.pumpAndSettle();
+        expect(tester.widget<EditPage>(find.byType(EditPage)).items.map((e) => e.id), ["3", "0"]);
+        await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+        await tester.pumpAndSettle();
+        expect(await result, isNull);
+      }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+      testWidgets("all of them gone opens the gallery", (tester) async {
+        fakes.gallery.gone.addAll(["3", "1"]);
+        await open(tester, settings: editing, selected: [picked("3"), picked("1")]);
+        expect(find.byType(EditPage), findsNothing);
+        expect(find.byType(GalleryPage), findsOneWidget);
+        expect(find.text("Some files couldn't be opened"), findsOneWidget);
+      }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+    });
+
     testWidgets("a gone item shows the skipped message once", (tester) async {
       fakes.gallery.gone.add("1");
       await open(tester, settings: multi, selected: [picked("3"), picked("1")]);
@@ -206,8 +249,6 @@ void main() {
         (jsonDecode(jsonEncode(first.toMap())) as Map).cast<String, Object?>(),
       );
       final result = await open(tester, settings: settings, selected: [saved]);
-      await tester.tap(find.text("Next"));
-      await tester.pumpAndSettle();
       await tester.tap(find.text("Done"));
       await tester.pumpAndSettle();
       expect(fakes.image.calls.single.$2, edit);
