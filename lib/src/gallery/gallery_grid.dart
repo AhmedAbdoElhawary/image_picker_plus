@@ -35,6 +35,8 @@ class GalleryGrid extends StatefulWidget {
 
 class _GalleryGridState extends State<GalleryGrid> {
   final ScrollController _scroll = ScrollController();
+  final ValueNotifier<bool> _moving = ValueNotifier(false);
+  late final ScrollPhysics _physics = _DeferPhysics(_moving);
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _GalleryGridState extends State<GalleryGrid> {
   void dispose() {
     widget.controller.album.removeListener(_toTop);
     _scroll.dispose();
+    _moving.dispose();
     super.dispose();
   }
 
@@ -79,6 +82,7 @@ class _GalleryGridState extends State<GalleryGrid> {
               final count = ended ? items.length : items.length + columns;
               return GalleryScrollbar(
                 controller: _scroll,
+                moving: _moving,
                 top: padding.top,
                 collapse: widget.collapse,
                 label: (fraction) {
@@ -88,6 +92,7 @@ class _GalleryGridState extends State<GalleryGrid> {
                 },
                 child: GridView.builder(
                   controller: _scroll,
+                  physics: _physics,
                   padding: padding,
                   itemCount: count,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -116,4 +121,19 @@ class _GalleryGridState extends State<GalleryGrid> {
       },
     );
   }
+}
+
+/// a fling already holds new thumbnails back, a scrollbar drag jumps so it needs this.
+/// else every cell it passes asks the gallery for a thumbnail, and the ones it stops on wait behind them.
+class _DeferPhysics extends ScrollPhysics {
+  final ValueListenable<bool> moving;
+
+  const _DeferPhysics(this.moving, {super.parent});
+
+  @override
+  _DeferPhysics applyTo(ScrollPhysics? ancestor) => _DeferPhysics(moving, parent: buildParent(ancestor));
+
+  @override
+  bool recommendDeferredLoading(double velocity, ScrollMetrics metrics, BuildContext context) =>
+      moving.value || super.recommendDeferredLoading(velocity, metrics, context);
 }
