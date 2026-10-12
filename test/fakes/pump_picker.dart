@@ -1,3 +1,5 @@
+import 'dart:ui' show DisplayFeature;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
@@ -45,6 +47,8 @@ Future<void> pumpPicker(
   // loading boxes animate forever, which pumpAndSettle never gets past
   bool disableAnimations = true,
   double textScale = 1,
+  // a fold or hinge, like on an open foldable
+  List<DisplayFeature> displayFeatures = const [],
   void Function(Object? result)? onResult,
   bool settle = true,
 }) async {
@@ -58,6 +62,7 @@ Future<void> pumpPicker(
         size: size,
         disableAnimations: disableAnimations,
         textScaler: TextScaler.linear(textScale),
+        displayFeatures: displayFeatures,
       ),
       child: MaterialApp(
         theme: ThemeData(brightness: brightness),
