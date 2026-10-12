@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
+import 'package:image_picker_plus/src/widgets/picker_popup.dart';
 
 /// the popular emojis, a tap gives back the one picked.
 class EmojiSheet extends StatelessWidget {
@@ -10,6 +11,12 @@ class EmojiSheet extends StatelessWidget {
 
   static Future<String?> show(BuildContext context) {
     final scope = PickerScope.of(context);
+    if (PickerLayout.of(context).popups) {
+      return showDialog<String>(
+        context: context,
+        builder: (_) => scope.wrap(PickerPopup(color: scope.theme.surface, child: const EmojiSheet())),
+      );
+    }
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -38,23 +45,25 @@ class EmojiSheet extends StatelessWidget {
       child: CustomScrollView(
         controller: scroll,
         slivers: [
-          // inside the scroll view, so dragging it slides the sheet up as well as down
-          PinnedHeaderSliver(
-            child: ColoredBox(
-              color: scope.theme.surface,
-              child: Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(vertical: PickerLayout.padding / 2),
-                  decoration: BoxDecoration(
-                    color: scope.theme.onSurfaceMuted,
-                    borderRadius: const BorderRadius.all(Radius.circular(2)),
+          // inside the scroll view, so dragging it slides the sheet up as well as down.
+          // only the sheet gives a scroll, a popup doesn't drag
+          if (scroll != null)
+            PinnedHeaderSliver(
+              child: ColoredBox(
+                color: scope.theme.surface,
+                child: Center(
+                  child: Container(
+                    width: 32,
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(vertical: PickerLayout.padding / 2),
+                    decoration: BoxDecoration(
+                      color: scope.theme.onSurfaceMuted,
+                      borderRadius: const BorderRadius.all(Radius.circular(2)),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           SliverPadding(
             padding: const EdgeInsets.all(PickerLayout.padding),
             sliver: SliverGrid.builder(
