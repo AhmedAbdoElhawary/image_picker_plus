@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/models/picked_item.dart';
 import 'package:image_picker_plus/src/services/camera_service.dart';
 
-enum CaptureState { initializing, ready, recording, noCamera, denied }
+enum CaptureState { initializing, ready, recording, noCamera, denied, failed }
 
 class CaptureController with WidgetsBindingObserver {
   /// a new service each time, since a paused app gives the camera back.
@@ -51,6 +51,12 @@ class CaptureController with WidgetsBindingObserver {
     } on CameraException catch (error) {
       if (_disposed) return;
       state.value = error.failure == CameraFailure.noCamera ? CaptureState.noCamera : CaptureState.denied;
+      return;
+    } catch (_) {
+      // it can fail after opening the camera, so it's closed here
+      unawaited(service.dispose());
+      if (_disposed) return;
+      state.value = CaptureState.failed;
       return;
     }
     if (_disposed || _service != service) {
