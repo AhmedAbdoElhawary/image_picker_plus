@@ -45,11 +45,20 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   void _onTap(MediaItem item) {
-    if (widget.controller.toggle(item)) return;
+    final controller = widget.controller;
     final scope = PickerScope.of(context);
+    final selection = controller.selection.value;
+    // a tap on the shown one takes it out, adding with nothing selected would empty the edit page
+    final last = selection.length == 1 && selection.first == item && controller.preview.value == item;
+    if (controller.adding.value && last) return _tell(scope.texts.minAdd);
+    if (controller.toggle(item)) return;
+    _tell(scope.texts.maxReachedFor(scope.settings.maxSelection));
+  }
+
+  void _tell(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(scope.texts.maxReachedFor(scope.settings.maxSelection))));
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _onLongPress(MediaItem item) {
