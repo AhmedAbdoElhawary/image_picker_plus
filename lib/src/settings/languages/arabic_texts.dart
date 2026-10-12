@@ -20,6 +20,8 @@ class ArabicTexts extends PickerTexts {
     super.cameraDenied = "اسمح بالوصول إلى الكاميرا للمتابعة",
     super.noMicrophone = "اسمح بالوصول إلى الميكروفون لتسجيل الصوت",
     super.openSettings = "فتح الإعدادات",
+    super.somethingWentWrong = "حدث خطأ ما",
+    super.tryAgain = "حاول مرة أخرى",
     super.manageAccess = "إدارة الوصول",
     super.maxReached = "يمكنك اختيار {max} عناصر كحد أقصى",
     super.videoNotEditable = "الفيديوهات يمكن ترتيبها فقط",
@@ -91,5 +93,6 @@ class ArabicTexts extends PickerTexts {
       "نوفمبر",
       "ديسمبر",
     ],
+    super.easternArabicNumerals = false,
   });
 }
