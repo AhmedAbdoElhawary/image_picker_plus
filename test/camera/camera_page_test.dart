@@ -41,6 +41,25 @@ void main() {
     expect(fakes.gallery.openSettingsCalls, 1);
   });
 
+  testWidgets("a plugin error shows try again, which opens the camera", (tester) async {
+    final fakes = Fakes(camera: FakeCameraService()..error = StateError("plugin"));
+    await pumpPicker(tester, const PickerHome(), settings: camera, fakes: fakes);
+    expect(find.text("Something went wrong"), findsOneWidget);
+    fakes.camera.error = null;
+    await tester.tap(find.text("Try again"));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key("fake-preview")), findsOneWidget);
+  });
+
+  testWidgets("a failed photo shows a message and the camera stays", (tester) async {
+    final fakes = Fakes(camera: FakeCameraService()..photoError = StateError("plugin"));
+    await pumpPicker(tester, const PickerHome(), settings: camera, fakes: fakes);
+    await tester.tap(find.byType(CaptureButton));
+    await tester.pumpAndSettle();
+    expect(find.text("Something went wrong"), findsOneWidget);
+    expect(find.byKey(const Key("fake-preview")), findsOneWidget);
+  });
+
   testWidgets("a photo with editing off pops the item", (tester) async {
     Object? result;
     await pumpPicker(
