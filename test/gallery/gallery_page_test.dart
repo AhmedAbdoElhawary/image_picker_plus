@@ -354,6 +354,22 @@ void main() {
     });
   }
 
+  for (final (name, size, popup) in [
+    ("a phone opens the albums in a sheet", const Size(400, 800), false),
+    ("a tablet opens the albums in a popup", const Size(1000, 800), true),
+  ]) {
+    testWidgets(name, (tester) async {
+      await pumpPicker(tester, const PickerHome(), size: size);
+      await tester.tap(find.byType(AlbumPicker));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), popup ? findsOneWidget : findsNothing);
+      expect(find.byType(BottomSheet), popup ? findsNothing : findsOneWidget);
+      await tester.tap(find.text("Recent").last);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+    });
+  }
+
   testWidgets("a failed load shows try again, which loads the grid", (tester) async {
     final fakes = Fakes(gallery: FakeGalleryService.withItems(5)..error = StateError("plugin"));
     await pumpPicker(tester, const PickerHome(), fakes: fakes);
