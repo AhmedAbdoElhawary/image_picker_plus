@@ -17,7 +17,7 @@
 ### Markup
 * markup on the edit screen: text with emoji and right to left, freehand drawing with undo, redo and an eraser, and the popular emojis, each one on by itself. drawn into the saved image at full size
 * new `PickerSettings.markup` with `MarkupOptions`, all off by default. `editing` is now true when a markup tool is on
-* a text or emoji dragged to the delete area stays seen past the image's edges
+* a text or emoji dragged to the delete area stays visible past the image's edges
 
 ### Camera
 * pinch zoom and quick zoom buttons (0.5x where the phone has it, 1x, 2x and the max, up to 10x), a 3 and 10 second timer, and a rule of thirds grid
@@ -34,10 +34,9 @@
 * new `OutputOptions.format`: JPEG or PNG. PNG keeps transparency, a JPEG now gets white where it was see through instead of black
 * new `OutputOptions.maxBytes`, the quality goes down to 50 first, then the size. what still can't fit comes back with `overLimit: true`
 * `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
-* saving an edited image is faster and lighter on memory, it is drawn and encoded in small strips one at a time. `image` is no longer a dependency
-* the strips are drawn and encoded one at a time, not four at once in isolates. sending a strip to an isolate copies its pixels, and four of them in flight were 30 mb of pixels for a 12 mp photo. an export now holds about half the memory and takes about half again as long, which is the trade a 2 gb phone needs
+* saving an edited image is lighter on memory, it is drawn and encoded in small strips one at a time, so a 2 gb phone can export a big photo. `image` is no longer a dependency
 * a photo is decoded at 16 mp at most while exporting, a tight crop of a 50 mp one used to decode all 200 mb of it. a crop that wants more than the cap comes back at the size the cap gives, not upscaled to it
-* the thumbnails and previews the picker cached are given back when an export starts, they can be a hundred mb the export needs more
+* the thumbnails and previews the picker cached are given back when an export starts, they can be a hundred mb and the export needs it more
 
 ### Texts
 * English and Arabic built in: `PickerTexts.of(context)` follows the app's language, `ArabicTexts()` picks Arabic. Still English by default
