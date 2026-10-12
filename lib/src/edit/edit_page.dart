@@ -169,56 +169,89 @@ class _EditPageState extends State<EditPage> {
         },
         child: Focus(
           autofocus: true,
-          child: Scaffold(
-            backgroundColor: scope.theme.background,
-            appBar: PickerAppBar(
-              title: MarkupButtons(controller: controller),
-              onClose: back,
-              action: TextButton(
-                onPressed: _done,
-                style: TextButton.styleFrom(
-                  foregroundColor: scope.theme.accent,
-                  minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
-                ),
-                child: Text(
-                  scope.texts.done,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-            body: SafeArea(
-              top: false,
-              // beside like the gallery, on wide and landscape screens
-              child: PickerLayout.of(context).previewBeside
-                  ? Row(
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
-                            child: item,
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ...tools,
-                              const SizedBox(height: PickerLayout.padding / 2),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        Expanded(child: item),
-                        ...tools,
-                        const SizedBox(height: PickerLayout.padding / 2),
-                      ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < PickerLayout.editMinWidth ||
+                  constraints.maxHeight < PickerLayout.editMinHeight) {
+                return _TooSmall(text: scope.texts.windowTooSmall);
+              }
+              return Scaffold(
+                backgroundColor: scope.theme.background,
+                appBar: PickerAppBar(
+                  title: MarkupButtons(controller: controller),
+                  onClose: back,
+                  action: TextButton(
+                    onPressed: _done,
+                    style: TextButton.styleFrom(
+                      foregroundColor: scope.theme.accent,
+                      minimumSize: const Size(PickerLayout.minTouch, PickerLayout.minButtonTouchHeight),
                     ),
-            ),
+                    child: Text(
+                      scope.texts.done,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: scope.theme.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                body: SafeArea(
+                  top: false,
+                  // beside like the gallery, on wide and landscape screens
+                  child: PickerLayout.of(context).previewBeside
+                      ? Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
+                                child: item,
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ...tools,
+                                  const SizedBox(height: PickerLayout.padding / 2),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            Expanded(child: item),
+                            ...tools,
+                            const SizedBox(height: PickerLayout.padding / 2),
+                          ],
+                        ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TooSmall extends StatelessWidget {
+  final String text;
+
+  const _TooSmall({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PickerScope.of(context);
+    return Scaffold(
+      backgroundColor: scope.theme.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsetsDirectional.all(PickerLayout.padding),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: scope.theme.onSurfaceMuted, fontWeight: FontWeight.w500),
           ),
         ),
       ),
@@ -273,12 +306,13 @@ class _CurrentItem extends StatelessWidget {
                   bottom: PickerLayout.ratioButtonBottomPadding,
                   child: RatioButton(controller: crop),
                 ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: PickerLayout.ratioButtonBottomPadding,
-                child: Center(child: OrientationButtons(controller: crop)),
-              ),
+              if (scope.settings.rotate || scope.settings.flip)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: PickerLayout.ratioButtonBottomPadding,
+                  child: Center(child: OrientationButtons(controller: crop)),
+                ),
             ],
           );
         } else {
