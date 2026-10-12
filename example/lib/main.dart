@@ -17,50 +17,51 @@ class DemoApp extends StatefulWidget {
 }
 
 class _DemoAppState extends State<DemoApp> {
-  bool dark = false;
-  bool rtl = false;
-  double textScale = 1;
+  final ValueNotifier<bool> dark = ValueNotifier(false);
+  final ValueNotifier<bool> rtl = ValueNotifier(false);
+  final ValueNotifier<double> textScale = ValueNotifier(1);
+
+  @override
+  void dispose() {
+    for (final notifier in [dark, rtl, textScale]) {
+      notifier.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      themeMode: dark ? ThemeMode.dark : ThemeMode.light,
-      theme: ThemeData(colorSchemeSeed: Colors.blue),
-      darkTheme: ThemeData(colorSchemeSeed: Colors.blue, brightness: Brightness.dark),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
-        child: Directionality(textDirection: rtl ? TextDirection.rtl : TextDirection.ltr, child: child!),
-      ),
-      home: Demo(
-        dark: dark,
-        rtl: rtl,
-        textScale: textScale,
-        onDark: (value) => setState(() => dark = value),
-        onRtl: (value) => setState(() => rtl = value),
-        onTextScale: (value) => setState(() => textScale = value),
+    return ValueListenableBuilder<bool>(
+      valueListenable: dark,
+      // same demo instance, so the dark switch doesn't build it again
+      child: Demo(dark: dark, rtl: rtl, textScale: textScale),
+      builder: (context, isDark, home) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+        theme: ThemeData(colorSchemeSeed: Colors.blue),
+        darkTheme: ThemeData(colorSchemeSeed: Colors.blue, brightness: Brightness.dark),
+        builder: (context, child) => ListenableBuilder(
+          listenable: Listenable.merge([rtl, textScale]),
+          builder: (context, _) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale.value)),
+            child: Directionality(
+              textDirection: rtl.value ? TextDirection.rtl : TextDirection.ltr,
+              child: child!,
+            ),
+          ),
+        ),
+        home: home,
       ),
     );
   }
 }
 
 class Demo extends StatefulWidget {
-  final bool dark;
-  final bool rtl;
-  final double textScale;
-  final ValueChanged<bool> onDark;
-  final ValueChanged<bool> onRtl;
-  final ValueChanged<double> onTextScale;
+  final ValueNotifier<bool> dark;
+  final ValueNotifier<bool> rtl;
+  final ValueNotifier<double> textScale;
 
-  const Demo({
-    required this.dark,
-    required this.rtl,
-    required this.textScale,
-    required this.onDark,
-    required this.onRtl,
-    required this.onTextScale,
-    super.key,
-  });
+  const Demo({required this.dark, required this.rtl, required this.textScale, super.key});
 
   @override
   State<Demo> createState() => _DemoState();
@@ -84,43 +85,43 @@ class _DemoState extends State<Demo> {
 */
   static const List<CropRatio> allRatios = CropRatio.all;
 
-  PickerSource source = PickerSource.both;
-  MediaType mediaType = MediaType.all;
-  int maxSelection = 10;
-  Set<CropRatio> ratios = allRatios.toSet();
-  bool showPreview = true;
-  bool resizePreview = true;
+  final ValueNotifier<PickerSource> source = ValueNotifier(PickerSource.both);
+  final ValueNotifier<MediaType> mediaType = ValueNotifier(MediaType.all);
+  final ValueNotifier<int> maxSelection = ValueNotifier(10);
+  final ValueNotifier<Set<CropRatio>> ratios = ValueNotifier(allRatios.toSet());
+  final ValueNotifier<bool> showPreview = ValueNotifier(true);
+  final ValueNotifier<bool> resizePreview = ValueNotifier(true);
 
   /// 0 follows the screen width.
-  int gridColumns = 0;
-  double gridCellAspectRatio = 1;
-  FiltersChoice filters = FiltersChoice.shipped;
-  bool adjustments = true;
-  bool png = false;
-  int quality = 90;
+  final ValueNotifier<int> gridColumns = ValueNotifier(0);
+  final ValueNotifier<double> gridCellAspectRatio = ValueNotifier(1);
+  final ValueNotifier<FiltersChoice> filters = ValueNotifier(FiltersChoice.shipped);
+  final ValueNotifier<bool> adjustments = ValueNotifier(true);
+  final ValueNotifier<bool> png = ValueNotifier(false);
+  final ValueNotifier<int> quality = ValueNotifier(90);
 
   /// 0 keeps the image size.
-  int maxWidth = 0;
-  int maxHeight = 0;
+  final ValueNotifier<int> maxWidth = ValueNotifier(0);
+  final ValueNotifier<int> maxHeight = ValueNotifier(0);
 
   /// 0 has no limit.
-  int maxKb = 0;
-  ThemeChoice theme = ThemeChoice.app;
-  bool alwaysDarkTheme = true;
-  TextsChoice texts = TextsChoice.english;
-  bool cache = false;
+  final ValueNotifier<int> maxKb = ValueNotifier(0);
+  final ValueNotifier<ThemeChoice> theme = ValueNotifier(ThemeChoice.app);
+  final ValueNotifier<bool> alwaysDarkTheme = ValueNotifier(true);
+  final ValueNotifier<TextsChoice> texts = ValueNotifier(TextsChoice.english);
+  final ValueNotifier<bool> cache = ValueNotifier(false);
 
-  bool text = true;
-  bool emojis = true;
-  bool drawing = true;
+  final ValueNotifier<bool> text = ValueNotifier(true);
+  final ValueNotifier<bool> emojis = ValueNotifier(true);
+  final ValueNotifier<bool> drawing = ValueNotifier(true);
 
   /// grid on at start.
-  bool cameraGrid = false;
+  final ValueNotifier<bool> cameraGrid = ValueNotifier(false);
 
   /// an id card frame over the camera.
-  bool cardFrame = false;
-  int cacheMb = 100;
-  List<PickedItem> items = const [];
+  final ValueNotifier<bool> cardFrame = ValueNotifier(false);
+  final ValueNotifier<int> cacheMb = ValueNotifier(100);
+  final ValueNotifier<List<PickedItem>> items = ValueNotifier(const []);
 
   /// web has no temp dir, the saved pick stays in memory there.
   String? _savedOnWeb;
@@ -129,6 +130,36 @@ class _DemoState extends State<Demo> {
 
   @override
   void dispose() {
+    for (final notifier in <ChangeNotifier>[
+      source,
+      mediaType,
+      maxSelection,
+      ratios,
+      showPreview,
+      resizePreview,
+      gridColumns,
+      gridCellAspectRatio,
+      filters,
+      adjustments,
+      png,
+      quality,
+      maxWidth,
+      maxHeight,
+      maxKb,
+      theme,
+      alwaysDarkTheme,
+      texts,
+      cache,
+      text,
+      emojis,
+      drawing,
+      cameraGrid,
+      cardFrame,
+      cacheMb,
+      items,
+    ]) {
+      notifier.dispose();
+    }
     _scroll.dispose();
     super.dispose();
   }
@@ -139,45 +170,45 @@ class _DemoState extends State<Demo> {
       context,
       selected: selected,
       settings: PickerSettings(
-        source: source,
-        mediaType: mediaType,
-        maxSelection: maxSelection,
+        source: source.value,
+        mediaType: mediaType.value,
+        maxSelection: maxSelection.value,
         // the first one is where the crop starts, so keep the list order
         cropRatios: [
           for (final ratio in allRatios)
-            if (ratios.contains(ratio)) ratio,
+            if (ratios.value.contains(ratio)) ratio,
         ],
-        showPreview: showPreview,
-        resizePreview: resizePreview,
-        gridColumns: gridColumns == 0 ? null : gridColumns,
-        gridCellAspectRatio: gridCellAspectRatio,
-        filters: switch (filters) {
+        showPreview: showPreview.value,
+        resizePreview: resizePreview.value,
+        gridColumns: gridColumns.value == 0 ? null : gridColumns.value,
+        gridCellAspectRatio: gridCellAspectRatio.value,
+        filters: switch (filters.value) {
           FiltersChoice.off => const [],
           FiltersChoice.shipped => PickerFilter.all,
           FiltersChoice.custom => customFilters,
         },
-        adjustments: adjustments,
+        adjustments: adjustments.value,
         output: OutputOptions(
-          format: png ? OutputFormat.png : OutputFormat.jpeg,
-          quality: quality,
-          maxWidth: maxWidth == 0 ? null : maxWidth,
-          maxHeight: maxHeight == 0 ? null : maxHeight,
-          maxBytes: maxKb == 0 ? null : maxKb * 1024,
+          format: png.value ? OutputFormat.png : OutputFormat.jpeg,
+          quality: quality.value,
+          maxWidth: maxWidth.value == 0 ? null : maxWidth.value,
+          maxHeight: maxHeight.value == 0 ? null : maxHeight.value,
+          maxBytes: maxKb.value == 0 ? null : maxKb.value * 1024,
         ),
-        theme: theme == ThemeChoice.custom ? customTheme : null,
-        alwaysDarkTheme: alwaysDarkTheme,
-        texts: switch (texts) {
+        theme: theme.value == ThemeChoice.custom ? customTheme : null,
+        alwaysDarkTheme: alwaysDarkTheme.value,
+        texts: switch (texts.value) {
           TextsChoice.english => const PickerTexts(),
           TextsChoice.arabic => const ArabicTexts(),
           TextsChoice.app => PickerTexts.of(context),
         },
-        cache: PickerCache(enabled: cache, maxBytes: cacheMb * 1024 * 1024),
-        markup: MarkupOptions(text: text, emojis: emojis, drawing: drawing),
-        camera: CameraOptions(gridOn: cameraGrid, overlay: cardFrame ? _cardFrame : null),
+        cache: PickerCache(enabled: cache.value, maxBytes: cacheMb.value * 1024 * 1024),
+        markup: MarkupOptions(text: text.value, emojis: emojis.value, drawing: drawing.value),
+        camera: CameraOptions(gridOn: cameraGrid.value, overlay: cardFrame.value ? _cardFrame : null),
       ),
     );
     if (picked == null) return;
-    setState(() => items = picked);
+    items.value = picked;
     // the results grid only has its height after this frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
@@ -190,6 +221,7 @@ class _DemoState extends State<Demo> {
   }
 
   Future<void> _save() async {
+    final items = this.items.value;
     try {
       final json = jsonEncode([for (final item in items) item.toMap()]);
       kIsWeb ? _savedOnWeb = json : await _savedFile.writeAsString(json);
@@ -211,8 +243,8 @@ class _DemoState extends State<Demo> {
     try {
       final json = kIsWeb ? _savedOnWeb : (_savedFile.existsSync() ? await _savedFile.readAsString() : null);
       if (json == null) return _tell("Nothing saved yet");
-      setState(() => items = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)]);
-      _tell("Loaded ${items.length} items, change photos opens them with their edits");
+      items.value = [for (final map in jsonDecode(json) as List) PickedItem.fromMap(map)];
+      _tell("Loaded ${items.value.length} items, change photos opens them with their edits");
     } catch (error) {
       _tell("Couldn't load: $error");
     }
@@ -244,197 +276,123 @@ class _DemoState extends State<Demo> {
         controller: _scroll,
         padding: const EdgeInsetsDirectional.only(bottom: 96),
         children: [
-          _Choice<PickerSource>(
-            label: "Source",
-            value: source,
-            values: PickerSource.values,
-            onChanged: (value) => setState(() => source = value),
-          ),
-          _Choice<MediaType>(
-            label: "Media",
-            value: mediaType,
-            values: MediaType.values,
-            onChanged: (value) => setState(() => mediaType = value),
-          ),
-          ListTile(
-            title: Text("Max selection: $maxSelection"),
-            subtitle: Slider(
-              value: maxSelection.toDouble(),
-              min: 1,
-              max: 20,
-              divisions: 19,
-              onChanged: (value) => setState(() => maxSelection = value.round()),
+          _Choice<PickerSource>(label: "Source", notifier: source, values: PickerSource.values),
+          _Choice<MediaType>(label: "Media", notifier: mediaType, values: MediaType.values),
+          _Slider(label: "Max selection", notifier: maxSelection, min: 1, max: 20),
+          ValueListenableBuilder<Set<CropRatio>>(
+            valueListenable: ratios,
+            builder: (context, selectedRatios, _) => ListTile(
+              title: Text("Crop ratios${selectedRatios.isEmpty ? ": off" : ""}"),
+              subtitle: Wrap(
+                spacing: 8,
+                children: [
+                  for (final ratio in allRatios)
+                    FilterChip(
+                      label: Text("$ratio"),
+                      selected: selectedRatios.contains(ratio),
+                      onSelected: (selected) => ratios.value = selected
+                          ? {...selectedRatios, ratio}
+                          : ({...selectedRatios}..remove(ratio)),
+                    ),
+                ],
+              ),
             ),
           ),
-          ListTile(
-            title: Text("Crop ratios${ratios.isEmpty ? ": off" : ""}"),
-            subtitle: Wrap(
-              spacing: 8,
-              children: [
-                for (final ratio in allRatios)
-                  FilterChip(
-                    label: Text("$ratio"),
-                    selected: ratios.contains(ratio),
-                    onSelected: (selected) =>
-                        setState(() => ratios = selected ? {...ratios, ratio} : ({...ratios}..remove(ratio))),
-                  ),
-              ],
-            ),
-          ),
-          SwitchListTile(
-            title: const Text("Show preview"),
-            value: showPreview,
-            onChanged: (value) => setState(() => showPreview = value),
-          ),
-          SwitchListTile(
-            title: const Text("Resize preview"),
-            subtitle: const Text("off decodes the preview at 1080 pixels"),
-            value: resizePreview,
-            onChanged: (value) => setState(() => resizePreview = value),
+          _Switch(title: "Show preview", notifier: showPreview),
+          _Switch(
+            title: "Resize preview",
+            subtitle: "off decodes the preview at 1080 pixels",
+            notifier: resizePreview,
           ),
           _Choice<int>(
             label: "Grid columns",
-            value: gridColumns,
+            notifier: gridColumns,
             values: const [0, 3, 4, 5],
             name: (value) => value == 0 ? "auto" : "$value",
-            onChanged: (value) => setState(() => gridColumns = value),
           ),
           _Choice<double>(
             label: "Grid cell aspect ratio",
-            value: gridCellAspectRatio,
+            notifier: gridCellAspectRatio,
             values: const [0.5, 0.75, 1, 1.5],
             name: (value) => "$value",
-            onChanged: (value) => setState(() => gridCellAspectRatio = value),
           ),
-          _Choice<FiltersChoice>(
-            label: "Filters",
-            value: filters,
-            values: FiltersChoice.values,
-            onChanged: (value) => setState(() => filters = value),
-          ),
-          SwitchListTile(
-            title: const Text("Adjustments"),
-            value: adjustments,
-            onChanged: (value) => setState(() => adjustments = value),
-          ),
-          SwitchListTile(
-            title: const Text("PNG output"),
-            subtitle: const Text("keeps transparency, quality does nothing"),
-            value: png,
-            onChanged: (value) => setState(() => png = value),
-          ),
-          ListTile(
-            title: Text("Output quality: $quality"),
-            subtitle: Slider(
-              value: quality.toDouble(),
-              min: 1,
-              max: 100,
-              divisions: 99,
-              onChanged: (value) => setState(() => quality = value.round()),
-            ),
-          ),
+          _Choice<FiltersChoice>(label: "Filters", notifier: filters, values: FiltersChoice.values),
+          _Switch(title: "Adjustments", notifier: adjustments),
+          _Switch(title: "PNG output", subtitle: "keeps transparency, quality does nothing", notifier: png),
+          _Slider(label: "Output quality", notifier: quality, min: 1, max: 100),
           _Choice<int>(
             label: "Output max width",
-            value: maxWidth,
+            notifier: maxWidth,
             values: const [0, 1080, 2048, OutputOptions.safeMaxSide],
             name: (value) => value == 0 ? "off" : "$value",
-            onChanged: (value) => setState(() => maxWidth = value),
           ),
           _Choice<int>(
             label: "Output max height",
-            value: maxHeight,
+            notifier: maxHeight,
             values: const [0, 1080, 2048, OutputOptions.safeMaxSide],
             name: (value) => value == 0 ? "off" : "$value",
-            onChanged: (value) => setState(() => maxHeight = value),
           ),
           _Choice<int>(
             label: "Output max size",
-            value: maxKb,
+            notifier: maxKb,
             values: const [0, 500, 1024, 2048],
             name: (value) => value == 0 ? "off" : "$value KB",
-            onChanged: (value) => setState(() => maxKb = value),
           ),
-          _Choice<ThemeChoice>(
-            label: "Picker theme",
-            value: theme,
-            values: ThemeChoice.values,
-            onChanged: (value) => setState(() => theme = value),
+          _Choice<ThemeChoice>(label: "Picker theme", notifier: theme, values: ThemeChoice.values),
+          _Switch(
+            title: "Always dark theme",
+            subtitle: "off follows the dark switch below",
+            notifier: alwaysDarkTheme,
           ),
-          SwitchListTile(
-            title: const Text("Always dark theme"),
-            subtitle: const Text("off follows the dark switch below"),
-            value: alwaysDarkTheme,
-            onChanged: (value) => setState(() => alwaysDarkTheme = value),
-          ),
-          _Choice<TextsChoice>(
-            label: "Picker texts",
-            value: texts,
-            values: TextsChoice.values,
-            onChanged: (value) => setState(() => texts = value),
-          ),
-          SwitchListTile(
-            title: const Text("Cache"),
-            value: cache,
-            onChanged: (value) => setState(() => cache = value),
-          ),
+          _Choice<TextsChoice>(label: "Picker texts", notifier: texts, values: TextsChoice.values),
+          _Switch(title: "Cache", notifier: cache),
           _Choice<int>(
             label: "Cache max size",
-            value: cacheMb,
+            notifier: cacheMb,
             values: const [50, 100, 500],
             name: (value) => "$value MB",
-            onChanged: (value) => setState(() => cacheMb = value),
           ),
-          SwitchListTile(
-            title: const Text("Text"),
-            value: text,
-            onChanged: (value) => setState(() => text = value),
-          ),
-          SwitchListTile(
-            title: const Text("Emojis"),
-            value: emojis,
-            onChanged: (value) => setState(() => emojis = value),
-          ),
-          SwitchListTile(
-            title: const Text("Drawing"),
-            value: drawing,
-            onChanged: (value) => setState(() => drawing = value),
-          ),
-          SwitchListTile(
-            title: const Text("Camera grid on at start"),
-            value: cameraGrid,
-            onChanged: (value) => setState(() => cameraGrid = value),
-          ),
-          SwitchListTile(
-            title: const Text("Card frame over the camera"),
-            value: cardFrame,
-            onChanged: (value) => setState(() => cardFrame = value),
-          ),
-          SwitchListTile(title: const Text("Dark"), value: widget.dark, onChanged: widget.onDark),
-          SwitchListTile(title: const Text("Right to left"), value: widget.rtl, onChanged: widget.onRtl),
-          ListTile(
-            title: Text("Text scale: ${widget.textScale.toStringAsFixed(1)}"),
-            subtitle: Slider(
-              value: widget.textScale,
-              min: 0.8,
-              max: 2,
-              divisions: 12,
-              onChanged: widget.onTextScale,
+          _Switch(title: "Text", notifier: text),
+          _Switch(title: "Emojis", notifier: emojis),
+          _Switch(title: "Drawing", notifier: drawing),
+          _Switch(title: "Camera grid on at start", notifier: cameraGrid),
+          _Switch(title: "Card frame over the camera", notifier: cardFrame),
+          _Switch(title: "Dark", notifier: widget.dark),
+          _Switch(title: "Right to left", notifier: widget.rtl),
+          ValueListenableBuilder<double>(
+            valueListenable: widget.textScale,
+            builder: (context, value, _) => ListTile(
+              title: Text("Text scale: ${value.toStringAsFixed(1)}"),
+              subtitle: Slider(
+                value: value,
+                min: 0.8,
+                max: 2,
+                divisions: 12,
+                onChanged: (value) => widget.textScale.value = value,
+              ),
             ),
           ),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            children: [
-              if (items.isNotEmpty)
-                OutlinedButton(
-                  onPressed: () => _pick(selected: items),
-                  child: const Text("Change photos"),
+          ValueListenableBuilder<List<PickedItem>>(
+            valueListenable: items,
+            builder: (context, items, _) => Column(
+              children: [
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  children: [
+                    if (items.isNotEmpty)
+                      OutlinedButton(
+                        onPressed: () => _pick(selected: items),
+                        child: const Text("Change photos"),
+                      ),
+                    if (items.isNotEmpty) OutlinedButton(onPressed: _save, child: const Text("Save")),
+                    OutlinedButton(onPressed: _load, child: const Text("Load")),
+                  ],
                 ),
-              if (items.isNotEmpty) OutlinedButton(onPressed: _save, child: const Text("Save")),
-              OutlinedButton(onPressed: _load, child: const Text("Load")),
-            ],
+                _Results(items),
+              ],
+            ),
           ),
-          _Results(items),
         ],
       ),
     );
@@ -495,31 +453,74 @@ const List<PickerFilter> customFilters = [
 
 class _Choice<T> extends StatelessWidget {
   final String label;
-  final T value;
+  final ValueNotifier<T> notifier;
   final List<T> values;
 
   /// null uses the enum name.
   final String Function(T value)? name;
-  final ValueChanged<T> onChanged;
 
-  const _Choice({
-    required this.label,
-    required this.value,
-    required this.values,
-    required this.onChanged,
-    this.name,
-  });
+  const _Choice({required this.label, required this.notifier, required this.values, this.name});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(label),
-      subtitle: SegmentedButton<T>(
-        segments: [
-          for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name)),
-        ],
-        selected: {value},
-        onSelectionChanged: (selected) => onChanged(selected.first),
+      subtitle: ValueListenableBuilder<T>(
+        valueListenable: notifier,
+        builder: (context, value, _) => SegmentedButton<T>(
+          segments: [
+            for (final v in values) ButtonSegment(value: v, label: Text(name?.call(v) ?? (v as Enum).name)),
+          ],
+          selected: {value},
+          onSelectionChanged: (selected) => notifier.value = selected.first,
+        ),
+      ),
+    );
+  }
+}
+
+class _Switch extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final ValueNotifier<bool> notifier;
+
+  const _Switch({required this.title, required this.notifier, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: notifier,
+      builder: (context, value, _) => SwitchListTile(
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        value: value,
+        onChanged: (value) => notifier.value = value,
+      ),
+    );
+  }
+}
+
+class _Slider extends StatelessWidget {
+  final String label;
+  final ValueNotifier<int> notifier;
+  final int min;
+  final int max;
+
+  const _Slider({required this.label, required this.notifier, required this.min, required this.max});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: notifier,
+      builder: (context, value, _) => ListTile(
+        title: Text("$label: $value"),
+        subtitle: Slider(
+          value: value.toDouble(),
+          min: min.toDouble(),
+          max: max.toDouble(),
+          divisions: max - min,
+          onChanged: (value) => notifier.value = value.round(),
+        ),
       ),
     );
   }
