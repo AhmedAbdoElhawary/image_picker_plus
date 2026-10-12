@@ -1,37 +1,54 @@
 ## 2.0.0
-* **breaking:** `PickerSettings.filters` is a list now. `filters: true` is `filters: PickerFilter.all`, and `[]` (the default) hides the strip
+
+### Breaking
+* `PickerSettings.filters` is a list now. `filters: true` is `filters: PickerFilter.all`, and `[]` (the default) hides the strip
+* an edited image with no `maxWidth` or `maxHeight` is written at up to 2048 pixels on its long side, it was 4096. an export holds about 8 bytes for every pixel it writes, so the old cap was about 100 mb for one photo and this is a quarter of those pixels. pass `maxWidth` to ask for more
+
+### Editing
 * custom filters with `PickerFilter(name, matrix)`, after a "Normal" that's always first
+* a strength slider for the picked filter, full by default
 * new `PickerSettings.adjustments`: brightness, contrast, saturation and warmth sliders on top of the filter, with a switch when filters are on too
 * rotate left and flip in the crop, kept per image, with the markup following
-* new `OutputOptions.format`: JPEG or PNG. PNG keeps transparency, a JPEG now gets white where it was see through instead of black
-* English and Arabic built in: `PickerTexts.of(context)` follows the app's language, `ArabicTexts()` picks Arabic. Still English by default
-* `EditState` has `turns`, `flipped` and `adjustments`, in its map too. maps saved before load with none of them
-* new texts `rotate`, `flip`, `filters`, `adjust`, `brightness`, `contrast`, `saturation`, `warmth` and `reset`
-* a strength slider for the picked filter, full by default. `EditState` has `filterStrength`, in its map too, maps saved before load at full
-* new texts `strength` and `minAdd`
+* new `PickerSettings.rotate` and `PickerSettings.flip` to hide either button, both on by default
 * adding more from the edit page keeps at least one item selected in the gallery
 * the camera is let go while the edit page is open
-* a text or emoji dragged to the delete area stays seen past the image's edges
-* every exported class and setting is documented, topics and screenshots for pub.dev
-* `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
-* new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. with editing on it opens the edit page, the gallery only from its plus. on web and desktop it skips the system picker
-* a tap on a gallery cell scrolls its row right under the preview
-* `PickedItem` has `id`, `original`, `edit` and `overLimit`, and `toMap()` / `PickedItem.fromMap()` to keep a pick between launches
-* `EditState` is public
-* new `OutputOptions.maxBytes`, the quality goes down to 50 first, then the size. what still can't fit comes back with `overLimit: true`
-* camera: pinch zoom and quick zoom buttons (0.5x where the phone has it, 1x, 2x and the max, up to 10x), a 3 and 10 second timer, and a rule of thirds grid
-* new `PickerSettings.camera` with `CameraOptions`: turn each of them off, start with the grid on, or draw an overlay over the preview
-* new texts `timer`, `timerOff`, `timerSeconds`, `grid` and `zoomLevel`
-* the capture button turns red while recording, new `PickerTheme.recording` to change it
+* in a window too small for it, the edit page says to make the window bigger instead of overflowing
+
+### Markup
 * markup on the edit screen: text with emoji and right to left, freehand drawing with undo, redo and an eraser, and the popular emojis, each one on by itself. drawn into the saved image at full size
 * new `PickerSettings.markup` with `MarkupOptions`, all off by default. `editing` is now true when a markup tool is on
-* markup is part of `EditState` and its map
-* new texts `text`, `draw`, `emojis`, `undo`, `redo`, `eraser`, `delete`, `font`, `textBackground`, `color`, `size` and `doneEditing`
+* a text or emoji dragged to the delete area stays seen past the image's edges
+
+### Camera
+* pinch zoom and quick zoom buttons (0.5x where the phone has it, 1x, 2x and the max, up to 10x), a 3 and 10 second timer, and a rule of thirds grid
+* new `PickerSettings.camera` with `CameraOptions`: turn each of them off, start with the grid on, or draw an overlay over the preview
+* the capture button turns red while recording, new `PickerTheme.recording` to change it
+
+### Picking
+* new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. with editing on it opens the edit page, the gallery only from its plus. on web and desktop it skips the system picker
+* `PickedItem` has `id`, `original`, `edit` and `overLimit`, and `toMap()` / `PickedItem.fromMap()` to keep a pick between launches
+* `EditState` is public. it has `turns`, `flipped`, `adjustments`, `filterStrength` and the markup, in its map too. maps saved before load with none of them, at full strength
+* a tap on a gallery cell scrolls its row right under the preview
+
+### Export
+* new `OutputOptions.format`: JPEG or PNG. PNG keeps transparency, a JPEG now gets white where it was see through instead of black
+* new `OutputOptions.maxBytes`, the quality goes down to 50 first, then the size. what still can't fit comes back with `overLimit: true`
+* `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
 * saving an edited image is faster and lighter on memory, it is drawn and encoded in small strips one at a time. `image` is no longer a dependency
+* the strips are drawn and encoded one at a time, not four at once in isolates. sending a strip to an isolate copies its pixels, and four of them in flight were 30 mb of pixels for a 12 mp photo. an export now holds about half the memory and takes about half again as long, which is the trade a 2 gb phone needs
 * a photo is decoded at 16 mp at most while exporting, a tight crop of a 50 mp one used to decode all 200 mb of it. a crop that wants more than the cap comes back at the size the cap gives, not upscaled to it
 * the thumbnails and previews the picker cached are given back when an export starts, they can be a hundred mb the export needs more
-* **breaking:** an edited image with no `maxWidth` or `maxHeight` is written at up to 2048 pixels on its long side, it was 4096. an export holds about 8 bytes for every pixel it writes, so the old cap was about 100 mb for one photo and this is a quarter of those pixels. pass `maxWidth` to ask for more
-* the strips of an edited image are drawn and encoded one at a time, not four at once in isolates. sending a strip to an isolate copies its pixels, and four of them in flight were 30 mb of pixels for a 12 mp photo. an export now holds about half the memory and takes about half again as long, which is the trade a 2 gb phone needs
+
+### Texts
+* English and Arabic built in: `PickerTexts.of(context)` follows the app's language, `ArabicTexts()` picks Arabic. Still English by default
+* Chinese (simplified), Japanese, Hindi, Spanish, German, Turkish and Russian built in too: `ChineseTexts()`, `JapaneseTexts()`, `HindiTexts()`, `SpanishTexts()`, `GermanTexts()`, `TurkishTexts()` and `RussianTexts()`, and `PickerTexts.of(context)` picks them by the app's language
+* new texts `rotate`, `flip`, `filters`, `adjust`, `brightness`, `contrast`, `saturation`, `warmth`, `reset`, `strength` and `minAdd`
+* new texts `timer`, `timerOff`, `timerSeconds`, `grid` and `zoomLevel`
+* new texts `text`, `draw`, `emojis`, `undo`, `redo`, `eraser`, `delete`, `font`, `textBackground`, `color`, `size` and `doneEditing`
+* new text `windowTooSmall`
+
+### Docs
+* every exported class and setting is documented, topics and screenshots for pub.dev
 
 ## 1.1.0
 * Improve export performance by 80%
