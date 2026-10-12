@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/camera/capture_button.dart';
+import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/edit/crop_view.dart';
 import 'package:image_picker_plus/src/edit/edit_page.dart';
 import 'package:image_picker_plus/src/gallery/album_picker.dart';
@@ -617,6 +618,34 @@ void main() {
       await tester.tapAt(Offset(200, strip - 10));
       await tester.pumpAndSettle();
     }
+  });
+
+  testWidgets("a tap shows the preview fully with the tapped row right under it", (tester) async {
+    await pumpPicker(tester, const PickerHome(), fakes: Fakes(gallery: FakeGalleryService.withItems(80)));
+    final top = tester.getTopLeft(find.byType(MediaPreview)).dy;
+    await tester.drag(find.byType(GridView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(MediaPreview)).dy, lessThan(top));
+
+    await tester.tap(cell("30"));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(MediaPreview)).dy, top);
+    expect(
+      tester.getTopLeft(cell("30")).dy,
+      closeTo(tester.getBottomLeft(find.byType(MediaPreview)).dy + PickerLayout.gap, 0.5),
+    );
+  });
+
+  testWidgets("with the preview beside, a tap doesn't scroll", (tester) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      fakes: Fakes(gallery: FakeGalleryService.withItems(80)),
+      size: const Size(1300, 900),
+    );
+    await tester.tap(cell("20"));
+    await tester.pumpAndSettle();
+    expect(tester.widget<GridView>(find.byType(GridView)).controller!.offset, 0);
   });
 
   testWidgets("at the top the preview still follows the grid", (tester) async {
