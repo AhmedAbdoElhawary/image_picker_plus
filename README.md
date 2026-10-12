@@ -15,16 +15,20 @@
   <img src="https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-blue" alt="platforms" />
 </p>
 
-# SnapShots
-###  [Color glitching from the compression of the GIF, not the app]
+# Snapshots
+##  [This is just a sample; try the package to see all the functionalities 🚀]
 
-| Pick, crop, filter and reorder | Camera | Video |
+| Gallery | Filters | Adjustments |
 |:---:|:---:|:---:|
-| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/gallery.gif" width="220" alt="pick, crop, filter and reorder" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/camera.gif" width="220" alt="camera" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/video_img.jpeg" width="220" alt="recording a video" /> |
+| <img src="snapshots/gallery.jpg" width="220" alt="pick, crop, filter and reorder" /> | <img src="snapshots/filters.jpg" width="220" alt="camera" /> | <img src="snapshots/adjust2.jpg" width="220" alt="recording a video" /> |
 
-| MacOS | Web
+| Crop | Camera | Video |
+|:---:|:---:|:---:|
+| <img src="snapshots/crop.jpg" width="220" alt="pick, crop, filter and reorder" /> | <img src="snapshots/camera.jpg" width="220" alt="camera" /> | <img src="snapshots/video.jpg" width="220" alt="recording a video" /> |
+
+| Phone Landscape | Web |
 |:---:|:---:|
-| <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/macos.gif" width="410" alt="edit screen on macOS" /> | <img src="https://raw.githubusercontent.com/AhmedAbdoElhawary/image_picker_plus/main/snapshots/web.png" width="410" alt="edit screen on web" /> |
+| <img src="snapshots/landscape2.jpg" width="340" alt="edit screen on macOS" /><br><img src="snapshots/landscape1.jpg" width="340" alt="edit screen on web" /> | <img src="snapshots/web.png" width="490" alt="edit screen on web" /> |
 
 # Why
 
@@ -151,6 +155,12 @@ for (final item in items) {
 
 `items` keeps the order the user picked, or the order they set on the edit screen.
 
+### You can see the main app to see the usage:
+
+|  |  |  |  |
+|:---:|:---:|:---:|:---:|
+| <img src="snapshots/main1.jpg" width="250" alt="pick, crop, filter and reorder" /> | <img src="snapshots/main2.jpg" width="250" alt="camera" /> | <img src="snapshots/main3.jpg" width="250" alt="recording a video" /> | <img src="snapshots/main4.jpg" width="250" alt="recording a video" /> |
+
 ## Settings
 
 | Setting | Default | |
@@ -159,6 +169,8 @@ for (final item in items) {
 | `mediaType` | `MediaType.image` | `image`, `video` or `all` |
 | `maxSelection` | `1` | `1` is single selection. above 1, counting starts on a long press or the select button |
 | `cropRatios` | `CropRatio.all` | the ratios the user can pick, `[]` means no crop. `CropRatio.all` is original, square, portrait (4:5) and landscape (16:9), or pass your own like `CropRatio(3, 2)`. Only these show in the ratio menu |
+| `rotate` | `true` | the rotate left button under the crop on the edit screen |
+| `flip` | `true` | the flip button under the crop on the edit screen |
 | `showPreview` | `true` | `false` hides the preview above the grid. The crop is then only on the edit screen |
 | `resizePreview` | `true` | decodes the preview and edit images at the size they're shown. `false` decodes them at 1080 pixels, more memory but sharper when zooming the crop |
 | `gridColumns` | `null` | images per row, `null` follows the screen width (4, 6 or 8) |
@@ -175,7 +187,7 @@ for (final item in items) {
 
 When there's no crop, no filters, no sliders and no markup, next returns the picked items right away. Otherwise next opens the edit screen.
 
-The edit screen has rotate left and flip buttons under the image, for images only. Text, drawings and emojis turn with the photo, and a flip moves them without mirroring the letters.
+The edit screen has rotate left and flip buttons under the image, for images only. Turn each off with `rotate: false` or `flip: false`. Text, drawings and emojis turn with the photo, and a flip moves them without mirroring the letters.
 
 Edited images are returned as new JPEG files with no metadata, or PNG with `OutputOptions(format: OutputFormat.png)`. PNG keeps transparency and ignores `quality`. A JPEG gets white where the image was see through. Items that weren't edited, and all videos, are returned as the original file.
 
@@ -233,15 +245,34 @@ PickerSettings(
 )
 ```
 
-English and Arabic ship with the package. The picker stays English unless you ask:
+English, Arabic, Chinese (simplified), Japanese, Hindi, Spanish, German, Turkish and Russian ship with the package. The picker stays English unless you ask:
 
 ```dart
 PickerSettings(texts: PickerTexts.of(context))          // the app's language, English when it isn't shipped
 PickerSettings(texts: const ArabicTexts())              // always Arabic
-PickerSettings(texts: const ArabicTexts(done: "خلاص")) // Arabic with one text changed
+PickerSettings(texts: const ArabicTexts(done: "تم")) // Arabic with one text changed
 ```
 
+| Language | Code | Class |
+| --- | --- | --- |
+| English | `en` | `PickerTexts` |
+| Arabic | `ar` | `ArabicTexts` |
+| Chinese (simplified) | `zh` | `ChineseTexts` |
+| Japanese | `ja` | `JapaneseTexts` |
+| Hindi | `hi` | `HindiTexts` |
+| Spanish | `es` | `SpanishTexts` |
+| German | `de` | `GermanTexts` |
+| Turkish | `tr` | `TurkishTexts` |
+| Russian | `ru` | `RussianTexts` |
+
 A new language is one file in `lib/src/settings/languages/` with a `PickerTexts` subclass, and one line in `PickerTexts.languages`. A test fails when it leaves a text in English.
+
+### Sample
+--------
+| Arabic | Chinesse | Germen |
+|:---:|:---:|:---:|
+| <img src="snapshots/arabic.jpg" width="220" alt="pick, crop, filter and reorder" /> | <img src="snapshots/chinesse.jpg" width="220" alt="camera" /> | <img src="snapshots/germen.jpg" width="220" alt="recording a video" /> |
+
 
 ## Filters and sliders
 
