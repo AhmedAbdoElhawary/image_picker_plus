@@ -94,7 +94,10 @@ class _GalleryPageState extends State<GalleryPage> {
             child: ValueListenableBuilder<bool>(
               valueListenable: controller.adding,
               builder: (context, adding, _) => PickerAppBar(
-                title: AlbumPicker(controller: controller),
+                // an empty album keeps it, so another album can be picked
+                title: state == GalleryState.loading || controller.albums.value.isNotEmpty
+                    ? AlbumPicker(controller: controller)
+                    : null,
                 closeIcon: adding ? CloseButtonEnum.back : CloseButtonEnum.close,
                 onClose: widget.onClose,
                 action: AnimatedSwitcher(
@@ -123,6 +126,12 @@ class _GalleryPageState extends State<GalleryPage> {
               GalleryState.empty => MessageView(
                 scope.texts.noImages,
                 key: const ValueKey(GalleryState.empty),
+              ),
+              GalleryState.failed => MessageView(
+                scope.texts.somethingWentWrong,
+                key: const ValueKey(GalleryState.failed),
+                actionText: scope.texts.tryAgain,
+                onAction: controller.init,
               ),
               _ => Column(
                 children: [
