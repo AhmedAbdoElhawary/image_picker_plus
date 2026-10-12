@@ -9,6 +9,7 @@ import 'package:image_picker_plus/src/edit/filtered_image.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_controller.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_item_view.dart';
+import 'package:image_picker_plus/src/edit/markup/markup_painter.dart';
 import 'package:image_picker_plus/src/edit/markup/markup_view.dart';
 import 'package:image_picker_plus/src/edit/markup/emoji_sheet.dart';
 import 'package:image_picker_plus/src/edit/markup/text_editor.dart';
@@ -152,6 +153,16 @@ void main() {
       }
       await gesture.moveTo(tester.getCenter(find.byType(DeleteArea)));
       await tester.pump();
+      // past the image it's still drawn, nothing clips it on the way to the delete area
+      final drawn = find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter is MarkupPainter &&
+            (widget.painter! as MarkupPainter).items.isNotEmpty,
+      );
+      expect(drawn, findsOneWidget);
+      final clips = find.descendant(of: find.byType(MarkupView), matching: find.byType(ClipRect));
+      expect(find.ancestor(of: drawn, matching: clips), findsNothing);
       await gesture.up();
       await tester.pump();
       expect(markup.value, isEmpty);
