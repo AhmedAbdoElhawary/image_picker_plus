@@ -61,7 +61,7 @@ class ZoomButtons extends StatelessWidget {
                         ),
                         child: ExcludeSemantics(
                           child: Text(
-                            level == active ? _zoomLabel(zoom) : _zoomLabel(level),
+                            scope.texts.number(level == active ? _zoomLabel(zoom) : _zoomLabel(level)),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -110,7 +110,7 @@ class TimerButton extends StatelessWidget {
                   bottom: -4,
                   child: ExcludeSemantics(
                     child: Text(
-                      "$seconds",
+                      scope.texts.number(seconds),
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: scope.theme.accent),
                     ),
                   ),
@@ -203,7 +203,7 @@ class Countdown extends StatelessWidget {
             child: seconds == null
                 ? const SizedBox.shrink()
                 : Text(
-                    "$seconds",
+                    scope.texts.number(seconds),
                     key: ValueKey(seconds),
                     style: TextStyle(
                       fontSize: 96,

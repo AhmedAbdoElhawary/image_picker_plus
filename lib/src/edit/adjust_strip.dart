@@ -98,7 +98,7 @@ class _AdjustStripState extends State<AdjustStrip> {
                               value: picked.valueOf(adjustments),
                               min: -1,
                               semanticFormatterCallback: (value) =>
-                                  "${labels[picked]!.$1} ${(value * 100).round()}",
+                                  "${labels[picked]!.$1} ${scope.texts.number((value * 100).round())}",
                               activeColor: scope.theme.onSurface,
                               inactiveColor: scope.theme.onSurfaceMuted.withValues(alpha: 0.4),
                               onChanged: (value) => notifier?.value = picked.apply(adjustments, value),

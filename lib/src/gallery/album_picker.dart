@@ -101,7 +101,7 @@ class _AlbumTile extends StatelessWidget {
         ),
       ),
       trailing: Text(
-        "${album.count}",
+        scope.texts.number(album.count),
         style: TextStyle(
           color: selected ? scope.theme.accent : scope.theme.onSurfaceMuted,
           fontWeight: FontWeight.w600,

@@ -94,7 +94,8 @@ class _TimerState extends State<_Timer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = PickerScope.of(context).theme;
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
     final seconds = (_seconds % 60).toString().padLeft(2, "0");
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),
@@ -106,7 +107,7 @@ class _TimerState extends State<_Timer> {
           ? Padding(
               padding: const EdgeInsetsDirectional.only(bottom: 8),
               child: Text(
-                "${_seconds ~/ 60}:$seconds",
+                scope.texts.number("${_seconds ~/ 60}:$seconds"),
                 style: TextStyle(color: theme.onSurface, fontFeatures: const [FontFeature.tabularFigures()]),
               ),
             )

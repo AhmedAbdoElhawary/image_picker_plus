@@ -104,7 +104,8 @@ class _OrderBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = PickerScope.of(context).theme;
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
     final selected = order > 0;
     return Align(
       alignment: AlignmentDirectional.topEnd,
@@ -124,7 +125,7 @@ class _OrderBadge extends StatelessWidget {
             ),
             child: selected
                 ? Text(
-                    "$order",
+                    scope.texts.number(order),
                     textScaler: TextScaler.noScaling,
                     style: TextStyle(color: theme.onAccent, fontSize: 12, fontWeight: FontWeight.w600),
                   )
@@ -143,7 +144,8 @@ class _Duration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = PickerScope.of(context).theme;
+    final scope = PickerScope.of(context);
+    final theme = scope.theme;
     final minutes = duration.inMinutes;
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, "0");
     return Align(
@@ -151,7 +153,7 @@ class _Duration extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsetsDirectional.all(6),
         child: Text(
-          "$minutes:$seconds",
+          scope.texts.number("$minutes:$seconds"),
           textScaler: TextScaler.noScaling,
           style: TextStyle(
             color: theme.onAccent,

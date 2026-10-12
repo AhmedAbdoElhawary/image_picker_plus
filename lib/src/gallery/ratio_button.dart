@@ -147,7 +147,7 @@ class _RatioMenu extends StatelessWidget {
   static const double padding = 6;
 
   static String label(CropRatio ratio, PickerScope scope) =>
-      ratio == CropRatio.original ? scope.texts.original : "$ratio";
+      ratio == CropRatio.original ? scope.texts.original : scope.texts.number(ratio);
 
   @override
   Widget build(BuildContext context) {
