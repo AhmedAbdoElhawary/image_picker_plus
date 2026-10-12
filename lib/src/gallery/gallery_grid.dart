@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/gallery/gallery_cell.dart';
@@ -38,6 +39,9 @@ class _GalleryGridState extends State<GalleryGrid> {
   final ValueNotifier<bool> _moving = ValueNotifier(false);
   late final ScrollPhysics _physics = _DeferPhysics(_moving);
 
+  /// scrolls a tap started and hasn't finished, the preview doesn't slide up for them.
+  int _tapScrolls = 0;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +59,20 @@ class _GalleryGridState extends State<GalleryGrid> {
   /// the preview follows the grid, so it shows fully again too.
   void _toTop() {
     if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  /// the tapped row goes right under the preview, which the tap shows fully again.
+  Future<void> _scrollTo(double offset) async {
+    if (!_scroll.hasClients) return;
+    final position = _scroll.position;
+    final to = offset.clamp(position.minScrollExtent, position.maxScrollExtent);
+    final duration = PickerDurations.of(context).medium;
+    _tapScrolls++;
+    // a scroll animation can't be zero long
+    duration == Duration.zero
+        ? _scroll.jumpTo(to)
+        : await _scroll.animateTo(to, duration: duration, curve: Curves.easeOutCubic);
+    _tapScrolls--;
   }
 
   @override
@@ -80,39 +98,48 @@ class _GalleryGridState extends State<GalleryGrid> {
             builder: (context, ended, _) {
               // one loading row at the end while more pages exist
               final count = ended ? items.length : items.length + columns;
-              return GalleryScrollbar(
-                controller: _scroll,
-                moving: _moving,
-                top: padding.top,
-                collapse: widget.collapse,
-                label: (fraction) {
-                  if (items.isEmpty) return null;
-                  final item = items[(fraction * (items.length - 1)).round()];
-                  return texts.monthOf(item.created ?? item.modified);
-                },
-                child: GridView.builder(
+              return NotificationListener<ScrollUpdateNotification>(
+                onNotification: (_) => _tapScrolls > 0,
+                child: GalleryScrollbar(
                   controller: _scroll,
-                  physics: _physics,
-                  padding: padding,
-                  itemCount: count,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    childAspectRatio: aspect,
-                    mainAxisSpacing: PickerLayout.gap,
-                    crossAxisSpacing: PickerLayout.gap,
-                  ),
-                  itemBuilder: (context, index) {
-                    if (index >= items.length) return ColoredBox(color: scope.theme.surface);
-                    final item = items[index];
-                    return GalleryCell(
-                      key: ValueKey(item.id),
-                      item: item,
-                      controller: controller,
-                      size: size,
-                      onTap: () => widget.onTap(item),
-                      onLongPress: () => widget.onLongPress(item),
-                    );
+                  moving: _moving,
+                  top: padding.top,
+                  collapse: widget.collapse,
+                  label: (fraction) {
+                    if (items.isEmpty) return null;
+                    final item = items[(fraction * (items.length - 1)).round()];
+                    return texts.monthOf(item.created ?? item.modified);
                   },
+                  child: GridView.builder(
+                    controller: _scroll,
+                    physics: _physics,
+                    padding: padding,
+                    itemCount: count,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      childAspectRatio: aspect,
+                      mainAxisSpacing: PickerLayout.gap,
+                      crossAxisSpacing: PickerLayout.gap,
+                    ),
+                    itemBuilder: (context, index) {
+                      if (index >= items.length) return ColoredBox(color: scope.theme.surface);
+                      final item = items[index];
+                      return GalleryCell(
+                        key: ValueKey(item.id),
+                        item: item,
+                        controller: controller,
+                        size: size,
+                        onTap: () {
+                          widget.onTap(item);
+                          // no top padding when the preview is beside or off, nothing to go under
+                          if (padding.top > 0 && controller.preview.value == item) {
+                            _scrollTo(index ~/ columns * (cellHeight + PickerLayout.gap));
+                          }
+                        },
+                        onLongPress: () => widget.onLongPress(item),
+                      );
+                    },
+                  ),
                 ),
               );
             },
