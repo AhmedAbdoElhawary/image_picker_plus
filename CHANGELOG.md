@@ -9,7 +9,8 @@
 * new texts `rotate`, `flip`, `filters`, `adjust`, `brightness`, `contrast`, `saturation`, `warmth` and `reset`
 * every exported class and setting is documented, topics and screenshots for pub.dev
 * `maxWidth` and `maxHeight` now apply to unedited images too, an image over them comes back scaled with its original attached
-* new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. on web and desktop it skips the system picker
+* new `selected` on `pick`: an earlier result opens selected, in the same order and with its crops and filters. with editing on it opens the edit page, the gallery only from its plus. on web and desktop it skips the system picker
+* a tap on a gallery cell scrolls its row right under the preview
 * `PickedItem` has `id`, `original`, `edit` and `overLimit`, and `toMap()` / `PickedItem.fromMap()` to keep a pick between launches
 * `EditState` is public
 * new `OutputOptions.maxBytes`, the quality goes down to 50 first, then the size. what still can't fit comes back with `overLimit: true`
