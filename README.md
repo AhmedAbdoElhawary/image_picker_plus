@@ -261,7 +261,7 @@ PickerSettings(
 )
 ```
 
-A matrix that isn't 20 values throws when `pick` is called. With `adjustments` on, the edit screen has brightness, contrast, saturation and warmth sliders, on top of the filter. With both on, a switch picks between them. Every slider back at 0 and Normal is no edit, so the original comes back.
+A matrix that isn't 20 values throws when `pick` is called. A picked filter gets a strength slider under the tabs, it starts full and each new filter starts full again. With `adjustments` on, the edit screen has brightness, contrast, saturation and warmth sliders, on top of the filter. With both on, a switch picks between them. Every slider back at 0 and Normal is no edit, so the original comes back.
 
 ## Markup
 
