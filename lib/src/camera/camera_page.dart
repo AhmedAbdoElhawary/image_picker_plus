@@ -64,7 +64,16 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _captureNow() async {
     final controller = _controller!;
-    final item = widget.video ? await controller.toggleRecording() : await controller.takePhoto();
+    final PickedItem? item;
+    try {
+      item = widget.video ? await controller.toggleRecording() : await controller.takePhoto();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(PickerScope.of(context).texts.somethingWentWrong)));
+      return;
+    }
     if (item != null && mounted) widget.onTaken(item);
   }
 
@@ -77,7 +86,7 @@ class _CameraPageState extends State<CameraPage> {
       listenable: controller.state,
       // initializing, ready and recording share one screen, its parts listen for themselves
       select: () => switch (controller.state.value) {
-        CaptureState.noCamera || CaptureState.denied => controller.state.value,
+        CaptureState.noCamera || CaptureState.denied || CaptureState.failed => controller.state.value,
         _ => CaptureState.ready,
       },
       builder: (context, state, _) => AnimatedSwitcher(
@@ -95,14 +104,22 @@ class _CameraPageState extends State<CameraPage> {
             actionText: scope.texts.openSettings,
             onAction: scope.services.gallery!.openSettings,
           ),
+          CaptureState.failed => MessageView(
+            scope.texts.somethingWentWrong,
+            key: const ValueKey(CaptureState.failed),
+            onClose: widget.onClose,
+            actionText: scope.texts.tryAgain,
+            onAction: controller.init,
+          ),
           _ => SafeArea(
             child: SizedBox(
               height: MediaQuery.sizeOf(context).height - (PickerLayout.pickerTabsHeight),
 
-              child: Material(
+              // a scaffold so a failed capture can show its snackbar here
+              child: Scaffold(
                 key: const ValueKey(CaptureState.ready),
-                color: scope.theme.background,
-                child: Stack(
+                backgroundColor: scope.theme.background,
+                body: Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
                     _Preview(controller: controller, grid: _grid),
