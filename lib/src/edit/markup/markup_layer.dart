@@ -8,7 +8,7 @@ import 'package:image_picker_plus/src/edit/markup/markup_painter.dart';
 class MarkupLayer extends StatelessWidget {
   final MarkupController controller;
 
-  /// an item being moved, drawn where it is now until the move ends.
+  /// an item being moved, left out until the move ends, it's drawn over the crop so it can go past the image.
   final ValueListenable<(MarkupItem, MarkupItem)?>? moving;
 
   /// left out, like a text open in the editor.
@@ -28,7 +28,7 @@ class MarkupLayer extends StatelessWidget {
         final moving = this.moving?.value;
         final items = [
           for (final item in controller.value)
-            if (item != hidden) moving != null && item == moving.$1 ? moving.$2 : item,
+            if (item != hidden && item != moving?.$1) item,
         ];
         return CustomPaint(
           size: Size.infinite,
