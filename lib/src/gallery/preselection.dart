@@ -77,12 +77,12 @@ class Preselection {
         );
         if (kept) crop.value = edit.cropRect;
       }
+      final filterKept = edit.filterIndex <= settings.filters.length;
       edits.put(
         item.id,
         crop: crop,
-        filterIndex: settings.filters.isEmpty
-            ? null
-            : ValueNotifier(edit.filterIndex <= settings.filters.length ? edit.filterIndex : 0),
+        filterIndex: settings.filters.isEmpty ? null : ValueNotifier(filterKept ? edit.filterIndex : 0),
+        filterStrength: settings.filters.isEmpty ? null : ValueNotifier(filterKept ? edit.filterStrength : 1),
         markup: settings.markup.enabled ? MarkupController(edit.markup) : null,
         adjustment: settings.adjustments ? ValueNotifier(edit.adjustments) : null,
       );
