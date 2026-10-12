@@ -8,6 +8,12 @@ import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 class FakeCameraService implements CameraService {
   CameraFailure? failure;
+
+  /// thrown by [init] when set, like a plugin error that isn't a [CameraException].
+  Object? error;
+
+  /// thrown by [takePhoto] when set.
+  Object? photoError;
   int cameras;
   bool flash;
   bool mic;
@@ -36,6 +42,7 @@ class FakeCameraService implements CameraService {
   Future<int> init({bool front = false}) async {
     initCalls++;
     if (failure != null) throw CameraException(failure!);
+    if (error != null) throw error!;
     return cameras;
   }
 
@@ -61,8 +68,10 @@ class FakeCameraService implements CameraService {
   bool get hasFlash => flash;
 
   @override
-  Future<PickedItem> takePhoto() async =>
-      PickedItem(file: XFile(photoPath), type: MediaType.image, width: 300, height: 400, edited: false);
+  Future<PickedItem> takePhoto() async {
+    if (photoError != null) throw photoError!;
+    return PickedItem(file: XFile(photoPath), type: MediaType.image, width: 300, height: 400, edited: false);
+  }
 
   @override
   Future<void> startVideo() async => recording = true;
