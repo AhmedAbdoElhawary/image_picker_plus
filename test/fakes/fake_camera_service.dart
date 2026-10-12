@@ -50,10 +50,19 @@ class FakeCameraService implements CameraService {
   bool get hasMicrophone => mic;
 
   @override
-  double get aspectRatio => 3 / 4;
+  double get aspectRatio => 4 / 3;
 
   @override
-  Widget preview() => const SizedBox.expand(key: Key("fake-preview"));
+  Widget preview({required bool portrait, Widget? child}) => AspectRatio(
+    aspectRatio: portrait ? 3 / 4 : 4 / 3,
+    child: Stack(
+      fit: StackFit.expand,
+      children: [
+        const SizedBox(key: Key("fake-preview")),
+        ?child,
+      ],
+    ),
+  );
 
   @override
   Future<void> switchCamera() async => switchCalls++;
