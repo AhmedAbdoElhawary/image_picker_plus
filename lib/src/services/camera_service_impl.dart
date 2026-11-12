@@ -9,6 +9,11 @@ import 'package:image_picker_plus/src/services/camera_service.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';
 
 class CameraServiceImpl implements CameraService {
+  /// false when only photos can be picked, so ios never asks for the microphone.
+  final bool audio;
+
+  CameraServiceImpl({this.audio = true});
+
   /// android can't open the camera while the last page's one is still closing.
   static Future<void> _closing = Future.value();
 
@@ -33,9 +38,9 @@ class CameraServiceImpl implements CameraService {
     final lens = front ? cam.CameraLensDirection.front : cam.CameraLensDirection.back;
     _index = max(0, _cameras.indexWhere((camera) => camera.lensDirection == lens));
     try {
-      _controller = await _open(audio: true);
+      _controller = await _open(audio: audio);
     } on cam.CameraException catch (error) {
-      if (!error.code.startsWith("AudioAccess")) throw _failure(error);
+      if (!audio || !error.code.startsWith("AudioAccess")) throw _failure(error);
       // no microphone still allows photos and silent videos
       _microphone = false;
       try {
@@ -69,7 +74,7 @@ class CameraServiceImpl implements CameraService {
       error.code.startsWith("CameraAccess") ? const CameraException(CameraFailure.denied) : error;
 
   @override
-  bool get hasMicrophone => _microphone;
+  bool get hasMicrophone => audio && _microphone;
 
   @override
   double get aspectRatio => _camera.value.aspectRatio;
