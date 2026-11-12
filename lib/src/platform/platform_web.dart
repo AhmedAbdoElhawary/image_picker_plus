@@ -15,7 +15,7 @@ import 'package:web/web.dart' as web;
 
 PickerServices platformServices(PickerSettings settings) => PickerServices(
   gallery: null,
-  camera: CameraServiceImpl.new,
+  camera: () => CameraServiceImpl(audio: settings.mediaType != MediaType.image),
   image: ImageServiceImpl(),
   files: FilesServiceImpl(),
 );
