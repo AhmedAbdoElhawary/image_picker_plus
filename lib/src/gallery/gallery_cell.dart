@@ -57,6 +57,13 @@ class GalleryCell extends StatelessWidget {
             ),
             _PreviewDim(controller: controller, item: item),
             if (item.isVideo) _Duration(item.duration),
+            if (controller.settings.selectedBuilder case final selectedBuilder?)
+              Selector<int>(
+                listenable: controller.selection,
+                select: () => controller.orderOf(item),
+                builder: (context, order, _) =>
+                    order > 0 ? selectedBuilder(context, order) : const SizedBox(),
+              ),
             if (controller.settings.multi)
               ValueListenableBuilder<bool>(
                 valueListenable: controller.multi,

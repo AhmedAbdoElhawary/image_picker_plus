@@ -121,6 +121,10 @@ class _DemoState extends State<Demo> {
 
   /// an id card frame over the camera.
   final ValueNotifier<bool> cardFrame = ValueNotifier(false);
+
+  /// a check mark on selected gallery cells.
+  final ValueNotifier<bool> selectedCheck = ValueNotifier(true);
+  final ValueNotifier<bool> autoSelectPreview = ValueNotifier(true);
   final ValueNotifier<int> cacheMb = ValueNotifier(100);
   final ValueNotifier<List<PickedItem>> items = ValueNotifier(const []);
 
@@ -159,6 +163,8 @@ class _DemoState extends State<Demo> {
       drawing,
       cameraGrid,
       cardFrame,
+      selectedCheck,
+      autoSelectPreview,
       cacheMb,
       items,
     ]) {
@@ -170,6 +176,11 @@ class _DemoState extends State<Demo> {
 
   /// [selected] opens with an earlier pick, its crops and filters.
   Future<void> _pick({List<PickedItem>? selected}) async {
+    // the same theme the picker resolves, so the check mark matches its number badge
+    final pickerTheme = PickerTheme.resolve(
+      theme.value == ThemeChoice.custom ? customTheme : null,
+      alwaysDarkTheme.value ? Brightness.dark : Theme.of(context).brightness,
+    );
     final picked = await ImagePickerPlus.pick(
       context,
       selected: selected,
@@ -218,6 +229,8 @@ class _DemoState extends State<Demo> {
         cache: PickerCache(enabled: cache.value, maxBytes: cacheMb.value * 1024 * 1024),
         markup: MarkupOptions(text: text.value, emojis: emojis.value, drawing: drawing.value),
         camera: CameraOptions(gridOn: cameraGrid.value, overlay: cardFrame.value ? _cardFrame : null),
+        selectedBuilder: selectedCheck.value ? (context, order) => _selectedCheck(pickerTheme) : null,
+        autoSelectPreviewOnSelect: autoSelectPreview.value,
       ),
     );
     if (picked == null) return;
@@ -387,6 +400,8 @@ class _DemoState extends State<Demo> {
           _Switch(title: "Drawing", notifier: drawing),
           _Switch(title: "Camera grid on at start", notifier: cameraGrid),
           _Switch(title: "Card frame over the camera", notifier: cardFrame),
+          _Switch(title: "Check mark on selected cells", notifier: selectedCheck),
+          _Switch(title: "Select button picks the shown photo", notifier: autoSelectPreview),
           _Switch(title: "Dark", notifier: widget.dark),
           _Switch(title: "Right to left", notifier: widget.rtl),
           ValueListenableBuilder<double>(
@@ -438,6 +453,22 @@ Widget _cardFrame(BuildContext context, Size size) => Center(
       border: Border.all(color: Colors.white, width: 2),
       borderRadius: BorderRadius.circular(12),
     ),
+  ),
+);
+
+// same size and place as the order badge, so it reads as the single select version of it
+Widget _selectedCheck(PickerTheme theme) => Align(
+  alignment: AlignmentDirectional.topEnd,
+  child: Container(
+    margin: const EdgeInsetsDirectional.all(6),
+    width: 22,
+    height: 22,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: theme.accent,
+      border: Border.all(color: theme.onAccent),
+    ),
+    child: Icon(Icons.check, size: 14, color: theme.onAccent),
   ),
 );
 

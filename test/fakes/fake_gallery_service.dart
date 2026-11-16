@@ -66,10 +66,11 @@ class FakeGalleryService implements GalleryService {
   @override
   Future<List<Album>> albums(MediaType type) async {
     if (error != null) throw error!;
-    return [
-      for (final entry in data.entries) Album(id: entry.key, name: entry.key, count: entry.value.length),
-    ];
+    return [for (final entry in data.entries) Album(id: entry.key, name: entry.key)];
   }
+
+  @override
+  Future<int> count(Album album) async => data[album.id]?.length ?? 0;
 
   @override
   Future<List<MediaItem>> items(Album album, {required int page, required int size}) async {

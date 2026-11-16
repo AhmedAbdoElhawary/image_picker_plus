@@ -1,3 +1,10 @@
+## Unreleased
+
+### Gallery
+* the gallery shows its photos right away on big or iCloud libraries. Album counts load when the album menu shows them, they took minutes before
+* new `PickerSettings.selectedBuilder` to draw your own widget on top of each selected gallery cell, with its 1 based order
+* new `PickerSettings.autoSelectPreviewOnSelect`, `true` by default so the select button still counts the photo in the preview as 1. `false` starts with nothing selected
+
 ## 3.0.0
 
 ### Breaking

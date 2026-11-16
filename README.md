@@ -186,6 +186,8 @@ The [example app](https://github.com/AhmedAbdoElhawary/image_picker_plus/blob/ma
 | `markup` | `MarkupOptions()` | text, emojis and drawing on the edit screen, off by default, see below |
 | `camera` | `CameraOptions()` | zoom buttons, timer, grid and an overlay for the camera tabs, see below |
 | `useRootNavigator` | `false` | `false` opens the picker on the nearest navigator, so a tab bar or nested shell stays visible over it |
+| `selectedBuilder` | `null` | your own widget on top of each selected gallery cell, see below |
+| `autoSelectPreviewOnSelect` | `true` | the select button counts the photo in the preview as 1, `false` starts with nothing selected |
 
 When there's no crop, no filters, no sliders and no markup, next returns the picked items right away. Otherwise next opens the edit screen.
 
@@ -198,6 +200,24 @@ A photo is decoded at 16 MP at most while exporting, so a phone with little memo
 An export holds about 8 bytes for every pixel of the image it writes, so the output size is what decides its memory. With no `maxWidth` or `maxHeight` an edited image is written at up to 2048 pixels on its long side, about 65 MB while it runs. Ask for more with `maxWidth` when you need it, and know what it costs: 4096 pixels is four times the pixels and about 100 MB. PNG takes nearly twice as much as JPEG, the engine's PNG encoder needs the whole image at once.
 
 The output limits hold for every image, edited or not. An image over `maxWidth`, `maxHeight` or `maxBytes` comes back as a smaller JPEG, with `edited` still `false` and the untouched file in `original`. For `maxBytes` the quality goes down first, to 50 at the lowest, then the size. A PNG has no quality, so only its size goes down. If it still can't fit, the smallest try comes back with `overLimit: true`. Videos are never re-encoded.
+
+Use `selectedBuilder` to draw your own mark on selected cells. `order` starts at 1.
+
+```dart
+PickerSettings(
+  selectedBuilder: (context, order) => Align(
+    alignment: AlignmentDirectional.topEnd,
+    child: Padding(
+      padding: const EdgeInsetsDirectional.all(6),
+      child: CircleAvatar(
+        radius: 11,
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.check, size: 14, color: Colors.white),
+      ),
+    ),
+  ),
+)
+```
 
 ## What comes back
 
