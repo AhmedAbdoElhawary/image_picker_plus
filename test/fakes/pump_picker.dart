@@ -1,6 +1,6 @@
 import 'dart:ui' show DisplayFeature;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/settings/picker_settings.dart';

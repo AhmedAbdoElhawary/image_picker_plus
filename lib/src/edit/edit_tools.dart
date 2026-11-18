@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
@@ -191,9 +191,8 @@ class _Strength extends StatelessWidget {
                           child: Text(
                             scope.texts.number((strength.value * 100).round()),
                             textAlign: TextAlign.end,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelLarge?.copyWith(color: scope.theme.onSurface),
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(color: scope.theme.onSurface),
                           ),
                         ),
                       ],

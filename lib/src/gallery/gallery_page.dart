@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/haptic_feedback.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
@@ -197,9 +197,8 @@ class _NextButton extends StatelessWidget {
         ),
         child: Text(
           adding ? scope.texts.add : scope.texts.next,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
         ),
       ),
     );

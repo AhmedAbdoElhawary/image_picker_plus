@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/picker_route.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/edit/export_item.dart';
@@ -71,9 +71,8 @@ abstract final class ImagePickerPlus {
         );
         if (!context.mounted) return null;
         if (preselection.skipped && Scaffold.maybeOf(context) != null) {
-          ScaffoldMessenger.maybeOf(
-            context,
-          )?.showSnackBar(SnackBar(content: Text(settings.texts.filesSkipped)));
+          ScaffoldMessenger.maybeOf(context)
+              ?.showSnackBar(SnackBar(content: Text(settings.texts.filesSkipped)));
         }
         if (preselection.items.isEmpty) return null;
         return await navigator(route(FilesFlow(preselection: preselection), barrier: theme.barrier));

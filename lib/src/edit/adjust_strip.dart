@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
@@ -173,10 +173,8 @@ class _SliderButton extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: picked ? FontWeight.w700 : FontWeight.w600,
-                ),
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(color: color, fontWeight: picked ? FontWeight.w700 : FontWeight.w600),
               ),
             ],
           ),

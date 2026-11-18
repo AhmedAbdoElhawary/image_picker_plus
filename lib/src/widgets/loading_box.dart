@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 
 /// placeholder with a light band moving over the surface color.

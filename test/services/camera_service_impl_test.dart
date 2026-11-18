@@ -21,7 +21,10 @@ class _FakeCameraPlatform extends CameraPlatform {
   Stream<DeviceOrientationChangedEvent> onDeviceOrientationChanged() => const Stream.empty();
 
   @override
-  Future<int> createCameraWithSettings(CameraDescription cameraDescription, MediaSettings? mediaSettings) async {
+  Future<int> createCameraWithSettings(
+    CameraDescription cameraDescription,
+    MediaSettings? mediaSettings,
+  ) async {
     final audio = mediaSettings?.enableAudio ?? false;
     opens.add(audio);
     if (audio && micDenied) throw PlatformException(code: "AudioAccessDenied");
@@ -29,14 +32,18 @@ class _FakeCameraPlatform extends CameraPlatform {
   }
 
   @override
-  Stream<CameraInitializedEvent> onCameraInitialized(int cameraId) =>
-      Stream.value(CameraInitializedEvent(cameraId, 1920, 1080, ExposureMode.auto, true, FocusMode.auto, true));
+  Stream<CameraInitializedEvent> onCameraInitialized(int cameraId) => Stream.value(
+    CameraInitializedEvent(cameraId, 1920, 1080, ExposureMode.auto, true, FocusMode.auto, true),
+  );
 
   @override
   Stream<CameraErrorEvent> onCameraError(int cameraId) => StreamController<CameraErrorEvent>().stream;
 
   @override
-  Future<void> initializeCamera(int cameraId, {ImageFormatGroup imageFormatGroup = ImageFormatGroup.unknown}) async {}
+  Future<void> initializeCamera(
+    int cameraId, {
+    ImageFormatGroup imageFormatGroup = ImageFormatGroup.unknown,
+  }) async {}
 
   @override
   Future<double> getMinZoomLevel(int cameraId) async => 1;

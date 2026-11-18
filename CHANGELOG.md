@@ -1,3 +1,15 @@
+## 3.0.0
+
+### Breaking
+* needs flutter 3.50 and dart 3.14 now
+* uses `package:material_ui` in place of `package:flutter/material.dart`, which flutter deprecated. move your app to it with `dart fix --apply --code=migrate_design_widgets`, or wrap it in `MaterialUiCompatibilityBridge` from `MaterialApp.builder`, or the picker won't get your theme
+
+### Fixes
+* a photos only picker opens the camera without the microphone, so an ios app with no `NSMicrophoneUsageDescription` doesn't crash on the camera tab
+
+### Other
+* camera, web and image raised to their latest versions
+
 ## 2.0.0
 
 ### Breaking

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 import 'package:image_picker_plus/src/core/edit_frame.dart';
@@ -188,10 +188,8 @@ class _EditPageState extends State<EditPage> {
                     ),
                     child: Text(
                       scope.texts.done,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: scope.theme.accent,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(color: scope.theme.accent, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),

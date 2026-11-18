@@ -89,7 +89,7 @@ The minimum iOS version is 13. Add these keys to `ios/Runner/Info.plist`:
 <string>your usage description here</string>
 ```
 
-The microphone is only needed to record videos with sound.
+The microphone is only needed to record videos with sound. With `mediaType: MediaType.image` the camera never opens it, so you can leave `NSMicrophoneUsageDescription` out.
 
 ## Android
 
@@ -343,6 +343,16 @@ With `PickerCache(enabled: true, maxBytes: 100 * 1024 * 1024)` edited images are
 ```dart
 await ImagePickerPlus.clearCache();
 ```
+
+# Migrating from 2.x
+
+3.0.0 needs flutter 3.50 and is built on `package:material_ui`, not `package:flutter/material.dart`. Your app has to use it too, or the picker can't see your theme. Flutter has a fix that moves your imports:
+
+```sh
+dart fix --apply --code=migrate_design_widgets
+```
+
+If you can't move yet, wrap your app with `MaterialUiCompatibilityBridge` in `MaterialApp.builder`.
 
 # Migrating from 1.x
 
