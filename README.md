@@ -89,7 +89,7 @@ The minimum iOS version is 13. Add these keys to `ios/Runner/Info.plist`:
 <string>your usage description here</string>
 ```
 
-The microphone is only needed to record videos with sound.
+The microphone is only needed to record videos with sound. With `mediaType: MediaType.image` the camera never opens it, so you can leave `NSMicrophoneUsageDescription` out.
 
 ## Android
 
