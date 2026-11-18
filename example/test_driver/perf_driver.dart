@@ -24,9 +24,8 @@ Future<void> main() => integrationDriver(
       "rss_before_mb": data["rss_before_mb"],
       "rss_after_mb": data["rss_after_mb"],
     };
-    await File(
-      "build/gallery_numbers.json",
-    ).writeAsString(const JsonEncoder.withIndent("  ").convert(numbers));
+    await File("build/gallery_numbers.json")
+        .writeAsString(const JsonEncoder.withIndent("  ").convert(numbers));
     stdout.writeln(numbers);
   },
 );
