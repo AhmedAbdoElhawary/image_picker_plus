@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:image_picker_plus/src/settings/camera_options.dart';
 import 'package:image_picker_plus/src/settings/crop_ratio.dart';
 import 'package:image_picker_plus/src/settings/markup_options.dart';
@@ -95,6 +96,12 @@ class PickerSettings {
   /// shell visible over the picker.
   final bool useRootNavigator;
 
+  /// drawn on top of each selected gallery cell, [order] is its 1 based place in the selection.
+  final Widget Function(BuildContext context, int order)? selectedBuilder;
+
+  /// true makes the select button count the photo in the preview as 1, false starts with nothing selected.
+  final bool autoSelectPreviewOnSelect;
+
   /// a single image from the gallery, with the crop.
   const PickerSettings({
     this.useRootNavigator = false,
@@ -117,6 +124,8 @@ class PickerSettings {
     this.alwaysDarkTheme = true,
     this.texts = const PickerTexts(),
     this.cache = const PickerCache(),
+    this.selectedBuilder,
+    this.autoSelectPreviewOnSelect = true,
   }) : assert(maxSelection >= 1),
        assert(gridColumns == null || gridColumns > 0),
        assert(gridCellAspectRatio > 0);

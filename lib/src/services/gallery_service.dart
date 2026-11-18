@@ -13,6 +13,9 @@ abstract class GalleryService {
   /// the first one is recent (all items).
   Future<List<Album>> albums(MediaType type);
 
+  /// how many items of the picked media type it has.
+  Future<int> count(Album album);
+
   Future<List<MediaItem>> items(Album album, {required int page, required int size});
 
   /// null when it's gone, outside a limited selection, or not an image or video.

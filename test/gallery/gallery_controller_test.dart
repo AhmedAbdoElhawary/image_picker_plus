@@ -54,7 +54,7 @@ void main() {
     final controller = controllerFor(gallery, max: 3);
     await controller.init();
     controller.toggle(controller.items.value[3]);
-    await controller.switchAlbum(const Album(id: "other", name: "other", count: 5));
+    await controller.switchAlbum(const Album(id: "other", name: "other"));
     expect(controller.preview.value?.id, "b0");
     expect(controller.selection.value.map((e) => e.id), ["b0"]);
   });
@@ -105,7 +105,7 @@ void main() {
     );
     final controller = await counting(gallery, max: 5);
     controller.toggle(controller.items.value[2]);
-    await controller.switchAlbum(const Album(id: "other", name: "other", count: 5));
+    await controller.switchAlbum(const Album(id: "other", name: "other"));
     expect(controller.preview.value?.id, "b0");
     controller.toggle(controller.items.value[1]);
     expect(controller.selection.value.map((e) => e.id), ["a0", "a2", "b1"]);
@@ -141,7 +141,9 @@ void main() {
     gallery.emitChange();
     await pumpEventQueue();
     expect(controller.items.value.first.id, "new");
-    expect(controller.albums.value.map((album) => (album.name, album.count)), [("all", 4), ("Download", 1)]);
+    final counts = await Future.wait(controller.albums.value.map(controller.countOf));
+    expect(controller.albums.value.map((album) => album.name), ["all", "Download"]);
+    expect(counts, [4, 1]);
   });
 
   test("an old page result is dropped after an album switch", () async {
@@ -157,7 +159,7 @@ void main() {
     final init = controller.init();
     await pumpEventQueue();
     gallery.itemsGate = null;
-    await controller.switchAlbum(const Album(id: "other", name: "other", count: 5));
+    await controller.switchAlbum(const Album(id: "other", name: "other"));
     gate.complete();
     await init;
     expect(controller.items.value.map((e) => e.id), everyElement(startsWith("b")));
@@ -223,6 +225,10 @@ void main() {
     controller.cancelMulti();
     expect(controller.multi.value, isFalse);
     expect(controller.selection.value, [items[6]]);
+
+    controller.startMulti(null);
+    expect(controller.selection.value, isEmpty);
+    expect(controller.preview.value, items[6]);
   });
 
   test("counting stays on with nothing selected", () async {

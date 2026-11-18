@@ -28,10 +28,13 @@ class GalleryServiceImpl implements GalleryService {
     final albums = <Album>[];
     for (final path in paths) {
       _paths[path.id] = path;
-      albums.add(Album(id: path.id, name: path.name, count: await path.assetCountAsync));
+      albums.add(Album(id: path.id, name: path.name));
     }
     return albums;
   }
+
+  @override
+  Future<int> count(Album album) async => await _paths[album.id]?.assetCountAsync ?? 0;
 
   @override
   Future<List<MediaItem>> items(Album album, {required int page, required int size}) async {

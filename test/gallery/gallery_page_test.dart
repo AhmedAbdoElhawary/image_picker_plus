@@ -101,6 +101,33 @@ void main() {
     expect((result! as List<PickedItem>).map((e) => e.file.path), ["/fake/4"]);
   });
 
+  testWidgets("with autoSelectPreviewOnSelect off, select starts empty and a tap counts from 1", (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      const PickerHome(),
+      fakes: Fakes(gallery: FakeGalleryService.withItems(30)),
+      settings: const PickerSettings(maxSelection: 3, cropRatios: [], autoSelectPreviewOnSelect: false),
+    );
+    await tester.tap(find.text("Select"));
+    await tester.pumpAndSettle();
+    expect(find.text("1"), findsNothing);
+    expect(
+      tester
+          .widget<TextButton>(find.ancestor(of: find.text("Next"), matching: find.byType(TextButton)))
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(cell("0"));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: cell("0"), matching: find.text("1")), findsOneWidget);
+    await tester.tap(cell("4"));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: cell("4"), matching: find.text("2")), findsOneWidget);
+  });
+
   group("adding from the edit page", () {
     const editing = PickerSettings(maxSelection: 3, filters: PickerFilter.all);
 

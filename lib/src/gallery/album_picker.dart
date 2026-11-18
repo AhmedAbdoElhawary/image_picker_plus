@@ -108,12 +108,15 @@ class _AlbumTile extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
-      trailing: Text(
-        scope.texts.number(album.count),
-        style: TextStyle(
-          color: selected ? scope.theme.accent : scope.theme.onSurfaceMuted,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
+      trailing: FutureBuilder<int>(
+        future: controller.countOf(album),
+        builder: (context, count) => Text(
+          count.hasData ? scope.texts.number(count.data!) : "",
+          style: TextStyle(
+            color: selected ? scope.theme.accent : scope.theme.onSurfaceMuted,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
         ),
       ),
     );

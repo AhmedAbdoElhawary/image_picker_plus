@@ -48,6 +48,9 @@ class GalleryController {
   int _generation = 0;
   StreamSubscription<void>? _changes;
 
+  /// album id to its count, cached since the sheet is built again on every open.
+  final Map<String, Future<int>> _counts = {};
+
   /// the edits of each selected image, kept while it stays selected.
   final ImageEdits edits = ImageEdits();
   Map<String, CropController> get crops => edits.crops;
@@ -176,6 +179,7 @@ class GalleryController {
       // the first download or screenshot makes a new album, and the counts change
       final list = await service.albums(settings.mediaType);
       if (_disposed || generation != _generation) return;
+      _counts.clear();
       albums.value = list;
       for (var page = 0; page < pages && !end; page++) {
         final list = await service.items(current, page: page, size: restSize);
@@ -238,13 +242,12 @@ class GalleryController {
     return true;
   }
 
-  /// [first] is counted 1, null when nothing is shown yet.
+  /// [first] is counted 1, null starts with nothing selected.
   void startMulti(MediaItem? first) {
     if (!settings.multi) return;
     multi.value = true;
-    if (first == null) return;
-    selection.value = [first];
-    preview.value = first;
+    selection.value = first == null ? const [] : [first];
+    if (first != null) preview.value = first;
   }
 
   /// keeps only the shown item.
@@ -279,4 +282,7 @@ class GalleryController {
       notifier.dispose();
     }
   }
+
+  /// counted only when its row shows, counting all albums up front takes minutes on big ios libraries.
+  Future<int> countOf(Album album) => _counts[album.id] ??= service.count(album);
 }

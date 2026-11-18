@@ -24,7 +24,11 @@ class SelectButton extends StatelessWidget {
             shape: const StadiumBorder(),
             child: InkWell(
               customBorder: const StadiumBorder(),
-              onTap: () => multi ? controller.cancelMulti() : controller.startMulti(controller.preview.value),
+              onTap: () => multi
+                  ? controller.cancelMulti()
+                  : controller.startMulti(
+                      controller.settings.autoSelectPreviewOnSelect ? controller.preview.value : null,
+                    ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
                   minHeight: PickerLayout.minTouch * 0.8,
