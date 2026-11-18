@@ -27,7 +27,7 @@ PickerServices platformServices(PickerSettings settings) {
   final cache = mobile && settings.cache.enabled ? CacheServiceImpl(maxBytes: settings.cache.maxBytes) : null;
   return PickerServices(
     gallery: mobile ? GalleryServiceImpl() : null,
-    camera: CameraServiceImpl.new,
+    camera: () => CameraServiceImpl(audio: settings.mediaType != MediaType.image),
     image: ImageServiceImpl(cache: cache),
     files: FilesServiceImpl(),
     cache: cache,
