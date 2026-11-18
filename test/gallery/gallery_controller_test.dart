@@ -339,7 +339,7 @@ void main() {
     // a second tap on the shown one unselects it
     controller.toggle(controller.items.value[4]);
     expect(controller.markups.keys, ["0"]);
-    expect(() => markup.addListener(() {}), throwsFlutterError);
+    expect(() => markup.addListener(() {}), throwsStateError);
     controller.dispose();
   });
 
@@ -355,7 +355,7 @@ void main() {
     final sliders = controller.adjustments["4"]!;
     controller.toggle(controller.items.value[4]);
     expect(controller.adjustments.keys, ["0"]);
-    expect(() => sliders.addListener(() {}), throwsFlutterError);
+    expect(() => sliders.addListener(() {}), throwsStateError);
     controller.dispose();
   });
 
