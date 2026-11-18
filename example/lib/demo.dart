@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker_plus/image_picker_plus.dart';
 import 'package:video_player/video_player.dart';
@@ -239,7 +239,7 @@ class _DemoState extends State<Demo> {
       final json = jsonEncode([for (final item in items) item.toMap()]);
       kIsWeb ? _savedOnWeb = json : await _savedFile.writeAsString(json);
       if (kIsWeb) return _tell("Saved ${items.length} items for load, web has no gallery");
-      final allowed = await Gal.hasAccess() || await Gal.requestAccess();
+      final allowed = await Gal.hasPermission() || await Gal.requestPermission();
       if (!allowed) return _tell("Allow adding to photos to save");
       for (final item in items) {
         item.type == MediaType.video
