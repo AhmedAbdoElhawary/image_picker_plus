@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/durations.dart';
 
 /// fade with a small slide up, instant with reduced motion.

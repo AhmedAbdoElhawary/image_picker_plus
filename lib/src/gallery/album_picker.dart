@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 import 'package:image_picker_plus/src/core/picker_scope.dart';
 import 'package:image_picker_plus/src/gallery/gallery_controller.dart';
@@ -28,9 +28,8 @@ class AlbumPicker extends StatelessWidget {
               child: Text(
                 album == null ? scope.texts.gallery : _AlbumTile.nameOf(album, controller, scope),
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: scope.theme.onSurface, fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(color: scope.theme.onSurface, fontWeight: FontWeight.w600),
               ),
             ),
             const Icon(Icons.expand_more_rounded),

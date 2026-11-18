@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui' show DisplayFeatureType;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/camera/camera_controls.dart';
 import 'package:image_picker_plus/src/camera/camera_tools.dart';
 import 'package:image_picker_plus/src/camera/capture_button.dart';
@@ -313,9 +313,9 @@ class _Preview extends StatelessWidget {
         final size = MediaQuery.sizeOf(context);
         // an open foldable's camera sits on one half, so its image has that half's shape.
         // the plugin only knows the screen is on its side and stretches it
-        final fold = MediaQuery.displayFeaturesOf(
-          context,
-        ).where((feature) => feature.type != DisplayFeatureType.cutout).firstOrNull;
+        final fold = MediaQuery.displayFeaturesOf(context)
+            .where((feature) => feature.type != DisplayFeatureType.cutout)
+            .firstOrNull;
         final across = fold != null && fold.bounds.height >= fold.bounds.width;
         final portrait = fold == null
             ? size.height >= size.width

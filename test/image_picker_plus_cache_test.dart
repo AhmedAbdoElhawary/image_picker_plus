@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker_plus/src/image_picker_plus.dart';
 import 'package:image_picker_plus/src/services/cache_service_impl.dart';

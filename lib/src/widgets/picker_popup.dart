@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker_plus/src/core/picker_layout.dart';
 
 /// what's a bottom sheet on phones, in the middle of a big screen.
